@@ -54,4 +54,13 @@ const setProductStatus = async (req, res) => {
     }
 };
 
-module.exports = { getProducts, getProductById, createProduct, updateProduct, deleteProduct, setProductStatus };
+const getSimilarProducts = async (req, res) => {
+    try {
+        const products = await productService.getSimilarProducts(req.params.id);
+        return res.json(products);
+    } catch (err) {
+        return res.status(err.status || 500).json({ message: err.message });
+    }
+};
+
+module.exports = { getProducts, getProductById, createProduct, updateProduct, deleteProduct, setProductStatus, getSimilarProducts };

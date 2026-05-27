@@ -21,7 +21,8 @@ const Product = sequelize.define('Product', {
         defaultValue: 'active'
     },
     rating: { type: DataTypes.DECIMAL(3, 2), allowNull: false, defaultValue: 0 },
-    reviewCount: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 }
+    reviewCount: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    views: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, defaultValue: 0 }
 }, { tableName: 'products', timestamps: true });
 
 module.exports = Product;

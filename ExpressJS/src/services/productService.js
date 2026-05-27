@@ -1,5 +1,7 @@
 const { Op } = require('sequelize');
 const Product = require('../models/Product');
+const { Order, OrderItem } = require('../models/Order');
+const { ProductReview } = require('../models/Review');
 
 const slugify = (text) =>
     text
@@ -31,6 +33,7 @@ const normalizeProduct = (product) => {
         status: p.status,
         rating: Number(p.rating),
         reviewCount: p.reviewCount,
+        views: Number(p.views || 0),
         similar: Array.isArray(p.similarIds) ? p.similarIds.map(String) : [],
         colors: Array.isArray(p.colors) ? p.colors : []
     };
@@ -59,7 +62,8 @@ const getProducts = async ({ ids, category, search, shopId, minPrice, maxPrice, 
         price_asc:  [['price', 'ASC']],
         price_desc: [['price', 'DESC']],
         popular:    [['sold', 'DESC']],
-        rating:     [['rating', 'DESC']]
+        rating:     [['rating', 'DESC']],
+        views:      [['views', 'DESC']]
     };
     const order = orderMap[sort] || orderMap.newest;
     const offset = (page - 1) * limit;
@@ -71,7 +75,29 @@ const getProducts = async ({ ids, category, search, shopId, minPrice, maxPrice, 
 const getProductById = async (id) => {
     const product = await Product.findOne({ where: { id, status: 'active' } });
     if (!product) throw Object.assign(new Error('Sản phẩm không tồn tại.'), { status: 404 });
-    return normalizeProduct(product);
+
+    // Increment views count
+    await product.increment('views');
+
+    const buyersCount = await Order.count({
+        include: [{
+            model: OrderItem,
+            as: 'items',
+            where: { productId: id }
+        }],
+        where: {
+            status: { [Op.ne]: 'cancelled' }
+        }
+    });
+
+    const commentersCount = await ProductReview.count({
+        where: { productId: id, isHidden: 0 }
+    });
+
+    const normalized = normalizeProduct(product);
+    normalized.buyersCount = buyersCount;
+    normalized.commentersCount = commentersCount;
+    return normalized;
 };
 
 const createProduct = async (shopId, data) => {
@@ -108,4 +134,47 @@ const setProductStatus = async (productId, status) => {
     return normalizeProduct(product);
 };
 
-module.exports = { normalizeProduct, getProducts, getProductById, createProduct, updateProduct, deleteProduct, setProductStatus };
+const getSimilarProducts = async (id) => {
+    const product = await Product.findByPk(id);
+    if (!product) return [];
+
+    const category = product.category || '';
+    const catWords = category.split(/[\s,]+/);
+    const mainCatWord = catWords[0] ? catWords[0].trim() : '';
+
+    const clauses = [];
+    if (category) {
+        clauses.push({ category: { [Op.like]: `%${category}%` } });
+    }
+    if (mainCatWord && mainCatWord.length >= 2) {
+        clauses.push({ category: { [Op.like]: `%${mainCatWord}%` } });
+        clauses.push({ title: { [Op.like]: `%${mainCatWord}%` } });
+    }
+
+    if (clauses.length === 0) {
+        clauses.push({ category: 'others' });
+    }
+
+    const similar = await Product.findAll({
+        where: {
+            id: { [Op.ne]: id },
+            status: 'active',
+            [Op.or]: clauses
+        },
+        limit: 4,
+        order: [['sold', 'DESC']]
+    });
+
+    return similar.map(normalizeProduct);
+};
+
+module.exports = {
+    normalizeProduct,
+    getProducts,
+    getProductById,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+    setProductStatus,
+    getSimilarProducts
+};

@@ -30,6 +30,10 @@ const ProductDetail = () => {
     const [adding, setAdding] = useState(false);
     const [success, setSuccess] = useState(false);
 
+    // Engagement & History states
+    const [recentlyViewed, setRecentlyViewed] = useState([]);
+    const [isFavorite, setIsFavorite] = useState(false);
+
     useEffect(() => {
         const controller = new AbortController();
 
@@ -56,17 +60,19 @@ const ProductDetail = () => {
                     setSelectedColor("");
                 }
 
-                if (Array.isArray(data?.similar) && data.similar.length) {
+                // Fetch similar products recommendation from custom endpoint
+                try {
                     const r = await fetch(
-                        `${API_BASE}/api/products?ids=${data.similar.join(",")}`,
+                        `${API_BASE}/api/products/${id}/similar`,
                         { signal: controller.signal }
                     );
-                    const simData = await r.json();
-                    const list = normalizeArray(simData);
-                    setSimilarProducts(
-                        list.filter(p => String(p.id) !== String(data.id))
-                    );
-                } else {
+                    if (r.ok) {
+                        const simData = await r.json();
+                        setSimilarProducts(simData);
+                    } else {
+                        setSimilarProducts([]);
+                    }
+                } catch (e) {
                     setSimilarProducts([]);
                 }
             } catch (err) {
@@ -96,6 +102,129 @@ const ProductDetail = () => {
         }
         return product.image ? [product.image] : [];
     }, [product]);
+
+    // Check wishlist status on mount/product change
+    useEffect(() => {
+        if (!product) return;
+        
+        const token = localStorage.getItem("accessToken");
+        if (token) {
+            fetch(`${API_BASE}/api/wishlists`, {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                const list = normalizeArray(data);
+                setIsFavorite(list.some(p => String(p.id) === String(product.id)));
+            })
+            .catch(() => {
+                let favorites = [];
+                try {
+                    const raw = localStorage.getItem("wishlist");
+                    favorites = raw ? JSON.parse(raw) : [];
+                } catch (e) {
+                    favorites = [];
+                }
+                setIsFavorite(favorites.some(fav => String(fav.id) === String(product.id)));
+            });
+        } else {
+            let favorites = [];
+            try {
+                const raw = localStorage.getItem("wishlist");
+                favorites = raw ? JSON.parse(raw) : [];
+            } catch (e) {
+                favorites = [];
+            }
+            setIsFavorite(favorites.some(fav => String(fav.id) === String(product.id)));
+        }
+    }, [product]);
+
+    // Track recently viewed history
+    useEffect(() => {
+        if (!product) return;
+        
+        let items = [];
+        try {
+            const raw = localStorage.getItem("recentlyViewed");
+            items = raw ? JSON.parse(raw) : [];
+        } catch (e) {
+            items = [];
+        }
+        
+        // Remove duplicate of current product if it exists
+        items = items.filter(item => String(item.id) !== String(product.id));
+        
+        // Add current product details
+        const newItem = {
+            id: product.id,
+            title: product.title,
+            price: product.price,
+            originalPrice: product.originalPrice,
+            category: product.category,
+            colors: product.colors,
+            image: images[0] || product.image,
+            rating: product.rating
+        };
+        items.unshift(newItem);
+        
+        // Keep only top 10 items
+        items = items.slice(0, 10);
+        
+        localStorage.setItem("recentlyViewed", JSON.stringify(items));
+        
+        // Filter out current product to display in list below
+        setRecentlyViewed(items.filter(item => String(item.id) !== String(product.id)));
+    }, [product, images]);
+
+    const toggleFavorite = async () => {
+        if (!product) return;
+        const token = localStorage.getItem("accessToken");
+        if (token) {
+            try {
+                const res = await fetch(`${API_BASE}/api/wishlists/${product.id}`, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+                if (res.ok) {
+                    const result = await res.json();
+                    setIsFavorite(!!result.added);
+                    return;
+                }
+            } catch (e) {
+                console.error("Backend wishlist toggle failed, using local storage", e);
+            }
+        }
+
+        let favorites = [];
+        try {
+            const raw = localStorage.getItem("wishlist");
+            favorites = raw ? JSON.parse(raw) : [];
+        } catch (e) {
+            favorites = [];
+        }
+
+        const exists = favorites.some(fav => String(fav.id) === String(product.id));
+        if (exists) {
+            favorites = favorites.filter(fav => String(fav.id) !== String(product.id));
+            setIsFavorite(false);
+        } else {
+            favorites.push({
+                id: product.id,
+                title: product.title,
+                price: product.price,
+                image: images[0] || product.image,
+                rating: product.rating
+            });
+            setIsFavorite(true);
+        }
+        localStorage.setItem("wishlist", JSON.stringify(favorites));
+    };
+
+
 
     const handleQuantityChange = (val) => {
         if (val < 1) return;
@@ -161,12 +290,35 @@ const ProductDetail = () => {
 
                     {/* Right: Info */}
                     <div className="w-1/2">
-                        <h1 className="text-3xl font-bold text-gray-900 leading-tight">{product.title}</h1>
+                        <div className="flex items-start justify-between gap-4">
+                            <h1 className="text-3xl font-bold text-gray-900 leading-tight flex-1">{product.title}</h1>
+                            <button 
+                                onClick={toggleFavorite}
+                                className={`p-3 rounded-full border transition-all cursor-pointer ${
+                                    isFavorite 
+                                        ? "bg-red-50 border-red-200 text-red-500 shadow-sm" 
+                                        : "bg-white border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-100 hover:bg-gray-50"
+                                }`}
+                                title={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
+                            >
+                                <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                </svg>
+                            </button>
+                        </div>
 
-                        <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                            <span className="flex items-center gap-1 text-orange-400">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-3 text-xs text-gray-500 border-b border-gray-150 pb-4">
+                            <span className="flex items-center gap-1 text-orange-400 text-sm">
                                 {'★'.repeat(Math.round(product.rating || 5)) + '☆'.repeat(5 - Math.round(product.rating || 5))}
-                                <span className="text-gray-500 ml-1">{product.rating ? Number(product.rating).toFixed(1) : '5.0'} ({product.reviewCount || 124} reviews)</span>
+                                <span className="text-gray-500 ml-1 text-xs font-semibold">{product.rating ? Number(product.rating).toFixed(1) : '5.0'}</span>
+                            </span>
+                            <span className="text-gray-300">|</span>
+                            <span className="flex items-center gap-1 text-gray-600 font-medium">
+                                👥 <strong>{product.buyersCount || 0}</strong> khách mua
+                            </span>
+                            <span className="text-gray-300">|</span>
+                            <span className="flex items-center gap-1 text-gray-600 font-medium">
+                                💬 <strong>{product.commentersCount || 0}</strong> lượt bình luận
                             </span>
                         </div>
 
@@ -295,14 +447,56 @@ const ProductDetail = () => {
 
                 <div className="mt-10 mb-16">
                     <h2 className="font-bold text-xl mb-6 text-gray-900 border-b pb-3 border-gray-200">Sản phẩm tương tự</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {similarProducts.map(p => (
-                            <div key={p.id} onClick={() => navigate(`/product/${p.id}`)} className="cursor-pointer h-full">
-                                <ProductCard product={p} />
-                            </div>
-                        ))}
-                    </div>
+                    {similarProducts.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {similarProducts.map(p => (
+                                <div key={p.id} onClick={() => navigate(`/product/${p.id}`)} className="cursor-pointer h-full">
+                                    <ProductCard product={p} />
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-gray-400 text-sm italic">Chưa có sản phẩm tương tự.</p>
+                    )}
                 </div>
+
+                {/* Recently Viewed */}
+                {recentlyViewed.length > 0 && (
+                    <div className="mt-10 mb-16">
+                        <h2 className="font-bold text-xl mb-6 text-gray-900 border-b pb-3 border-gray-200">Sản phẩm đã xem gần đây</h2>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                            {recentlyViewed.map(p => {
+                                const imgSrc = p.image 
+                                    ? (p.image.startsWith("http") ? p.image : `${API_BASE}${p.image}`) 
+                                    : null;
+                                return (
+                                    <div 
+                                        key={p.id} 
+                                        onClick={() => navigate(`/product/${p.id}`)} 
+                                        className="bg-white border border-gray-150 rounded-xl p-3 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+                                    >
+                                        <div>
+                                            <div className="aspect-[4/3] rounded-lg overflow-hidden bg-gray-50 border border-gray-100 mb-2">
+                                                {imgSrc ? (
+                                                    <img src={imgSrc} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-400">Không có ảnh</div>
+                                                )}
+                                            </div>
+                                            <h4 className="font-semibold text-gray-800 text-xs line-clamp-2 min-h-[32px]">{p.title}</h4>
+                                        </div>
+                                        <div className="mt-2 pt-2 border-t border-gray-50 flex items-center justify-between">
+                                            <span className="font-bold text-[#0057b7] text-xs">{Number(p.price).toLocaleString()}đ</span>
+                                            <span className="text-[10px] text-amber-500 font-bold flex items-center gap-0.5">
+                                                ★ {p.rating ? Number(p.rating).toFixed(1) : "5.0"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
             </main>
 
             <Footer />

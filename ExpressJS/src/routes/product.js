@@ -8,10 +8,12 @@ const {
     createProduct,
     updateProduct,
     deleteProduct,
-    setProductStatus
+    setProductStatus,
+    getSimilarProducts
 } = require('../controllers/productController');
 
 router.get('/', getProducts);
+router.get('/:id/similar', getSimilarProducts);
 router.get('/:id', getProductById);
 
 router.post('/', createProduct);
