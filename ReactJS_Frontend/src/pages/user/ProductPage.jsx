@@ -70,7 +70,7 @@ const ProductPage = () => {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [search, selectedCategory, priceRange, stockFilter, onlyDiscount, sortBy]);
+    }, [search, selectedCategory, priceRange, customMin, customMax, stockFilter, onlyDiscount, sortBy]);
 
     useEffect(() => {
         const token = localStorage.getItem("accessToken");
@@ -153,9 +153,9 @@ const ProductPage = () => {
             list = list.filter((p) => p.category === selectedCategory);
         }
 
-        if (priceRange === "custom") {
-            const cMin = Number(customMin) || 0;
-            const cMax = Number(customMax) || 999999999;
+        if (customMin || customMax) {
+            const cMin = customMin ? Number(customMin) : 0;
+            const cMax = customMax ? Number(customMax) : 999999999;
             list = list.filter((p) => Number(p.price) >= cMin && Number(p.price) <= cMax);
         } else if (priceRange !== "all") {
             const [min, max] = priceRange.split("-").map(Number);
@@ -184,7 +184,7 @@ const ProductPage = () => {
         }
 
         return list;
-    }, [products, search, selectedCategory, priceRange, stockFilter, onlyDiscount, sortBy]);
+    }, [products, search, selectedCategory, priceRange, customMin, customMax, stockFilter, onlyDiscount, sortBy]);
 
     const activeFilterCount = [
         selectedCategory !== "all",
@@ -271,35 +271,25 @@ const ProductPage = () => {
                                                 type="radio" 
                                                 name="priceRange"
                                                 className="w-4 h-4 border-2 border-gray-300 rounded-full appearance-none checked:bg-blue-600 checked:border-blue-600 cursor-pointer transition-colors"
-                                                checked={priceRange === pr.value}
-                                                onChange={() => setPriceRange(pr.value)}
+                                                checked={priceRange === pr.value && !customMin && !customMax}
+                                                onChange={() => {
+                                                    setPriceRange(pr.value);
+                                                    setCustomMin("");
+                                                    setCustomMax("");
+                                                }}
                                             />
-                                            {priceRange === pr.value && (
+                                            {(priceRange === pr.value && !customMin && !customMax) && (
                                                 <div className="w-2 h-2 bg-white rounded-full absolute pointer-events-none"></div>
                                             )}
                                         </div>
-                                        <span className={`text-sm ${priceRange === pr.value ? 'text-gray-900 font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>{pr.label}</span>
+                                        <span className={`text-sm ${(priceRange === pr.value && !customMin && !customMax) ? 'text-gray-900 font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>{pr.label}</span>
                                     </label>
                                 ))}
                             </div>
                             <div className="mt-4 pt-4 border-t border-gray-100">
-                                <label className="flex items-center gap-3 cursor-pointer group mb-3">
-                                    <div className="relative flex items-center justify-center">
-                                        <input 
-                                            type="radio" 
-                                            name="priceRange"
-                                            className="w-4 h-4 border-2 border-gray-300 rounded-full appearance-none checked:bg-blue-600 checked:border-blue-600 cursor-pointer transition-colors"
-                                            checked={priceRange === "custom"}
-                                            onChange={() => setPriceRange("custom")}
-                                        />
-                                        {priceRange === "custom" && (
-                                            <div className="w-2 h-2 bg-white rounded-full absolute pointer-events-none"></div>
-                                        )}
-                                    </div>
-                                    <span className={`text-sm ${priceRange === "custom" ? 'text-gray-900 font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>Tự chọn</span>
-                                </label>
-                                <div className={`flex items-center gap-2 transition-all ${priceRange === "custom" ? 'opacity-100 h-auto' : 'opacity-50 pointer-events-none h-0 overflow-hidden'}`}>
-                                    <div className="flex-1 border border-gray-300 rounded-md p-1.5">
+                                <span className="block text-xs font-bold text-gray-700 mb-3">Tự chọn khoảng giá</span>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex-1 border border-gray-300 rounded-md p-1.5 bg-white">
                                         <input 
                                             type="number" 
                                             placeholder="Tối thiểu" 
@@ -307,12 +297,11 @@ const ProductPage = () => {
                                             value={customMin}
                                             onChange={(e) => {
                                                 setCustomMin(e.target.value);
-                                                setPriceRange("custom");
                                             }}
                                         />
                                     </div>
-                                    <span className="text-gray-400">-</span>
-                                    <div className="flex-1 border border-gray-300 rounded-md p-1.5">
+                                    <span className="text-gray-400 text-xs font-semibold">-</span>
+                                    <div className="flex-1 border border-gray-300 rounded-md p-1.5 bg-white">
                                         <input 
                                             type="number" 
                                             placeholder="Tối đa" 
@@ -320,11 +309,22 @@ const ProductPage = () => {
                                             value={customMax}
                                             onChange={(e) => {
                                                 setCustomMax(e.target.value);
-                                                setPriceRange("custom");
                                             }}
                                         />
                                     </div>
                                 </div>
+                                {(customMin || customMax) && (
+                                    <button 
+                                        type="button"
+                                        onClick={() => {
+                                            setCustomMin("");
+                                            setCustomMax("");
+                                        }}
+                                        className="mt-2.5 w-full py-1 text-[11px] font-bold text-red-500 bg-red-50 border border-red-200 rounded hover:bg-red-100 transition-all cursor-pointer"
+                                    >
+                                        Xóa tự chọn
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>

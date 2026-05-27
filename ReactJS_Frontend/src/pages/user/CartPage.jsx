@@ -188,22 +188,7 @@ const CartPage = () => {
                                     Proceed to Checkout
                                 </button>
 
-                                {/* Coupon */}
-                                <div className="mt-4 flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={coupon}
-                                        onChange={(e) => setCoupon(e.target.value)}
-                                        placeholder="Enter code"
-                                        className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#00b14f] focus:ring-1 focus:ring-[#00b14f]"
-                                    />
-                                    <button
-                                        onClick={() => setCouponApplied(true)}
-                                        className="px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-700 transition-colors"
-                                    >
-                                        Apply
-                                    </button>
-                                </div>
+
 
                                 {/* Shipping Info */}
                                 <div className="mt-5 p-3.5 bg-green-50 rounded-xl flex items-start gap-3">
@@ -218,21 +203,7 @@ const CartPage = () => {
                     </div>
                 )}
 
-                {/* Footer Features */}
-                <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 border-t border-gray-100 pt-10">
-                    {[
-                        { icon: "🚚", title: "Free Logistics", desc: "Enterprise-grade shipping on all orders." },
-                        { icon: "✅", title: "Guaranteed Authenticity", desc: "Direct partnerships with global brands." },
-                        { icon: "🎧", title: "24/7 Expert Help", desc: "Human support for your technical needs." },
-                        { icon: "🔒", title: "Secure Transactions", desc: "Encrypted, multi-tenant payment gateway." },
-                    ].map((f) => (
-                        <div key={f.title} className="text-center">
-                            <div className="text-2xl mb-2">{f.icon}</div>
-                            <p className="text-sm font-semibold text-gray-800">{f.title}</p>
-                            <p className="text-xs text-gray-400 mt-1">{f.desc}</p>
-                        </div>
-                    ))}
-                </div>
+
             </main>
             <Footer />
         </div>
