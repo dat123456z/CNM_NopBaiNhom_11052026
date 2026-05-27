@@ -35,6 +35,58 @@ const OrderDetailPage = () => {
     const [cancelReason, setCancelReason] = useState("");
     const [showCancelForm, setShowCancelForm] = useState(false);
 
+    // Review states
+    const [reviewProduct, setReviewProduct] = useState(null);
+    const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
+    const [reviewLoading, setReviewLoading] = useState(false);
+    const [rewardInfo, setRewardInfo] = useState(null);
+
+    const handleOpenReview = (item) => {
+        setReviewProduct(item);
+        setReviewForm({ rating: 5, comment: "" });
+        setRewardInfo(null);
+    };
+
+    const handleCloseReview = () => {
+        setReviewProduct(null);
+        setRewardInfo(null);
+    };
+
+    const handleSubmitReview = async () => {
+        if (!reviewForm.comment.trim()) {
+            alert("Vui lòng nhập nội dung đánh giá.");
+            return;
+        }
+        setReviewLoading(true);
+        try {
+            const token = localStorage.getItem("accessToken");
+            const res = await fetch(`${API_URL}/api/reviews/product`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    productId: reviewProduct.productId,
+                    orderId: order.id,
+                    rating: reviewForm.rating,
+                    comment: reviewForm.comment
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Đánh giá thất bại.");
+
+            setRewardInfo({
+                points: data.rewardPoints || 10,
+                couponCode: data.rewardCouponCode
+            });
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            setReviewLoading(false);
+        }
+    };
+
     useEffect(() => {
         const fetchOrder = async () => {
             const token = localStorage.getItem("accessToken");
@@ -219,16 +271,28 @@ const OrderDetailPage = () => {
                                         ? (item.productImage.startsWith("http") ? item.productImage : `${API_URL}${item.productImage}`)
                                         : null;
                                     return (
-                                        <div key={item.id} className="flex items-center gap-4 p-3 rounded-xl border border-gray-50 hover:bg-gray-50 transition-colors">
-                                            <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
-                                                {imgSrc ? <img src={imgSrc} alt={item.productTitle} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300" />}
+                                        <div key={item.id} className="p-3 rounded-xl border border-gray-150 hover:bg-gray-50 transition-colors space-y-3">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
+                                                    {imgSrc ? <img src={imgSrc} alt={item.productTitle} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300" />}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-semibold text-gray-900 text-sm">{item.productTitle}</p>
+                                                    {item.color && <p className="text-xs text-gray-400 mt-0.5">Màu: {item.color}</p>}
+                                                    <p className="text-xs text-gray-500 mt-1">x{item.quantity} · {fmt(item.price)} / sản phẩm</p>
+                                                </div>
+                                                <p className="font-bold text-gray-900 text-sm flex-shrink-0">{fmt(Number(item.price) * item.quantity)}</p>
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-semibold text-gray-900 text-sm">{item.productTitle}</p>
-                                                {item.color && <p className="text-xs text-gray-400 mt-0.5">Màu: {item.color}</p>}
-                                                <p className="text-xs text-gray-500 mt-1">x{item.quantity} · {fmt(item.price)} / sản phẩm</p>
-                                            </div>
-                                            <p className="font-bold text-gray-900 text-sm flex-shrink-0">{fmt(Number(item.price) * item.quantity)}</p>
+                                            {order.status === "delivered" && (
+                                                <div className="flex justify-end pt-2 border-t border-gray-100">
+                                                    <button 
+                                                        onClick={() => handleOpenReview(item)}
+                                                        className="px-4 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 font-bold text-xs rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                                                    >
+                                                        <span>★</span> Viết đánh giá nhận quà
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })}
@@ -320,7 +384,13 @@ const OrderDetailPage = () => {
                                 {Number(order.discount) > 0 && (
                                     <div className="flex justify-between text-green-600"><span>Giảm giá</span><span>-{fmt(order.discount)}</span></div>
                                 )}
+                                {Number(order.pointsDiscount) > 0 && (
+                                    <div className="flex justify-between text-green-600"><span>Dùng xu tích lũy</span><span>-{fmt(order.pointsDiscount)}</span></div>
+                                )}
                                 <div className="flex justify-between text-gray-600"><span>Phí vận chuyển</span><span className="text-green-600 font-medium">{Number(order.shippingFee) === 0 ? "Miễn phí" : fmt(order.shippingFee)}</span></div>
+                                {Number(order.tax) > 0 && (
+                                    <div className="flex justify-between text-gray-600"><span>Thuế VAT (8%)</span><span>{fmt(order.tax)}</span></div>
+                                )}
                                 <div className="border-t border-gray-100 pt-2.5 flex justify-between font-bold text-gray-900">
                                     <span>Tổng cộng</span><span className="text-lg">{fmt(order.total)}</span>
                                 </div>
@@ -330,6 +400,149 @@ const OrderDetailPage = () => {
                 </div>
             </main>
             <Footer />
+
+            {/* Review Modal */}
+            {reviewProduct && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+                    <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-gray-100">
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-[#00b14f] to-[#009943] px-6 py-4 text-white flex items-center justify-between">
+                            <h3 className="font-bold text-base flex items-center gap-1.5">
+                                <span>✍️</span> Đánh giá sản phẩm
+                            </h3>
+                            <button onClick={handleCloseReview} className="text-white hover:text-gray-200 transition-colors text-lg font-semibold cursor-pointer">✕</button>
+                        </div>
+
+                        <div className="p-6 space-y-5">
+                            {/* Product Info */}
+                            <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl">
+                                <div className="w-12 h-12 bg-gray-100 border border-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                                    {reviewProduct.productImage ? (
+                                        <img 
+                                            src={reviewProduct.productImage.startsWith("http") ? reviewProduct.productImage : `${API_URL}${reviewProduct.productImage}`} 
+                                            alt={reviewProduct.productTitle} 
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-gray-200" />
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="font-semibold text-gray-800 text-sm truncate">{reviewProduct.productTitle}</h4>
+                                    {reviewProduct.color && <p className="text-[10px] text-gray-400 mt-0.5">Màu: {reviewProduct.color}</p>}
+                                </div>
+                            </div>
+
+                            {/* Reward Notice */}
+                            {!rewardInfo && (
+                                <div className="bg-green-50 text-green-800 border border-green-100 rounded-xl px-4 py-3 text-xs flex items-start gap-2.5">
+                                    <span className="text-sm">🎁</span>
+                                    <div>
+                                        <p className="font-bold">Đánh giá để nhận ngay:</p>
+                                        <ul className="list-disc list-inside mt-1 space-y-0.5 text-[11px] text-green-700">
+                                            <li>Tặng <strong className="text-green-805 font-extrabold">+10 xu</strong> vào tài khoản</li>
+                                            <li>Tặng <strong className="text-green-805 font-extrabold">Voucher giảm 10%</strong> cho lần mua sau</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            )}
+
+                            {rewardInfo ? (
+                                /* Reward Success Popup Contents */
+                                <div className="text-center py-4 space-y-4">
+                                    <div className="w-16 h-16 bg-green-155 rounded-full flex items-center justify-center text-3xl mx-auto animate-bounce">
+                                        🎉
+                                    </div>
+                                    <div>
+                                        <h4 className="text-lg font-bold text-gray-900">Đánh giá thành công!</h4>
+                                        <p className="text-sm text-gray-500 mt-1">Cảm ơn bạn đã đóng góp đánh giá sản phẩm.</p>
+                                    </div>
+                                    <div className="bg-green-50/50 border border-green-100 rounded-xl p-4 space-y-3 text-left">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-gray-500 font-medium">Xu tích lũy nhận được:</span>
+                                            <span className="font-bold text-green-700">🪙 +{rewardInfo.points} xu</span>
+                                        </div>
+                                        {rewardInfo.couponCode && (
+                                            <div className="border-t border-green-100/50 pt-3 space-y-2">
+                                                <p className="text-xs text-gray-500 font-medium">Mã giảm giá 10% đã thêm vào ví của bạn:</p>
+                                                <div className="flex items-center justify-between bg-white border border-dashed border-green-300 rounded-lg p-2.5">
+                                                    <span className="font-mono font-bold text-sm text-gray-800 tracking-wider">
+                                                        {rewardInfo.couponCode}
+                                                    </span>
+                                                    <button 
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(rewardInfo.couponCode);
+                                                            alert("Đã sao chép mã giảm giá!");
+                                                        }}
+                                                        className="text-xs font-bold text-green-700 hover:text-green-900 bg-green-50 hover:bg-green-100 px-3 py-1 rounded-md transition-colors cursor-pointer"
+                                                    >
+                                                        Sao chép
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <button 
+                                        onClick={handleCloseReview}
+                                        className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all cursor-pointer"
+                                    >
+                                        Đóng
+                                    </button>
+                                </div>
+                            ) : (
+                                /* Form inputs */
+                                <div className="space-y-4 text-left">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Chọn số sao</label>
+                                        <div className="flex items-center gap-1">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <button
+                                                    key={star}
+                                                    type="button"
+                                                    onClick={() => setReviewForm(p => ({ ...p, rating: star }))}
+                                                    className="text-2xl transition-transform hover:scale-110 active:scale-95 cursor-pointer text-amber-400"
+                                                >
+                                                    {star <= reviewForm.rating ? "★" : "☆"}
+                                                </button>
+                                            ))}
+                                            <span className="text-xs font-bold text-gray-600 ml-2">
+                                                {reviewForm.rating === 5 ? "Tuyệt vời" : reviewForm.rating === 4 ? "Tốt" : reviewForm.rating === 3 ? "Bình thường" : reviewForm.rating === 2 ? "Tệ" : "Rất tệ"}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Nội dung đánh giá *</label>
+                                        <textarea
+                                            value={reviewForm.comment}
+                                            onChange={e => setReviewForm(p => ({ ...p, comment: e.target.value }))}
+                                            placeholder="Chia sẻ nhận xét của bạn về sản phẩm này nhé..."
+                                            rows={4}
+                                            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-100 resize-none"
+                                        />
+                                    </div>
+
+                                    <div className="flex gap-3 pt-1">
+                                        <button 
+                                            onClick={handleSubmitReview}
+                                            disabled={reviewLoading}
+                                            className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-60 cursor-pointer"
+                                        >
+                                            {reviewLoading ? "Đang gửi..." : "Gửi đánh giá"}
+                                        </button>
+                                        <button 
+                                            onClick={handleCloseReview}
+                                            className="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors cursor-pointer"
+                                        >
+                                            Hủy
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

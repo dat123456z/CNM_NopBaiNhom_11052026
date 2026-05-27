@@ -4,6 +4,7 @@ const Product = require('../models/Product');
 const CartItem = require('../models/CartItem');
 const Coupon = require('../models/Coupon');
 const Shop = require('../models/Shop');
+const User = require('../models/User');
 const WalletTransaction = require('../models/WalletTransaction');
 const { Op } = require('sequelize');
 
@@ -24,7 +25,7 @@ const scheduleAutoConfirm = (orderId) => {
 };
 
 // ── Tạo đơn hàng ──────────────────────────────────────────────────────────
-const createOrder = async (userId, { items, couponCode, shippingAddress, paymentMethod, note }) => {
+const createOrder = async (userId, { items, couponCode, usePoints, shippingAddress, paymentMethod, note }) => {
     if (!items || items.length === 0) throw Object.assign(new Error('Giỏ hàng trống.'), { status: 400 });
 
     const productIds = items.map((i) => i.productId);
@@ -45,6 +46,10 @@ const createOrder = async (userId, { items, couponCode, shippingAddress, payment
     const orders = [];
 
     try {
+        const user = await User.findByPk(userId, { transaction: t });
+        let userPoints = user ? user.points : 0;
+        let totalPointsUsed = 0;
+
         for (const [shopId, entries] of Object.entries(shopMap)) {
             let subtotal = 0;
             const orderItems = [];
@@ -69,8 +74,10 @@ const createOrder = async (userId, { items, couponCode, shippingAddress, payment
                         shopId,
                         code: couponCode,
                         isActive: true,
+                        [Op.or]: [{ userId: null }, { userId }],
                         [Op.or]: [{ expiresAt: null }, { expiresAt: { [Op.gte]: new Date() } }],
-                    }
+                    },
+                    transaction: t
                 });
                 if (coupon) {
                     if (!coupon.minOrderAmount || subtotal >= Number(coupon.minOrderAmount)) {
@@ -84,8 +91,22 @@ const createOrder = async (userId, { items, couponCode, shippingAddress, payment
                 }
             }
 
+            let pointsUsed = 0;
+            let pointsDiscount = 0;
+            if (usePoints && userPoints > 0) {
+                const maxPointsToUse = Math.floor((subtotal - discount) / 1000);
+                const pointsToUse = Math.min(userPoints, maxPointsToUse);
+                if (pointsToUse > 0) {
+                    pointsUsed = pointsToUse;
+                    pointsDiscount = pointsToUse * 1000;
+                    userPoints -= pointsToUse;
+                    totalPointsUsed += pointsToUse;
+                }
+            }
+
             const shippingFee = 0; // Miễn phí vận chuyển
-            const total = subtotal - discount + shippingFee;
+            const tax = Math.round(subtotal * 0.08);
+            const total = subtotal + tax - discount - pointsDiscount + shippingFee;
 
             const order = await Order.create({
                 userId,
@@ -93,13 +114,16 @@ const createOrder = async (userId, { items, couponCode, shippingAddress, payment
                 subtotal,
                 discount,
                 shippingFee,
+                tax,
                 total,
+                pointsUsed,
+                pointsDiscount,
                 couponCode: couponCode || null,
                 paymentMethod,
                 shippingAddress,
                 note,
                 status: 'pending',
-                paymentStatus: paymentMethod === 'cod' ? 'unpaid' : 'unpaid'
+                paymentStatus: 'unpaid'
             }, { transaction: t });
 
             await OrderItem.bulkCreate(
@@ -113,6 +137,10 @@ const createOrder = async (userId, { items, couponCode, shippingAddress, payment
             }
 
             orders.push(order);
+        }
+
+        if (totalPointsUsed > 0 && user) {
+            await user.decrement('points', { by: totalPointsUsed, transaction: t });
         }
 
         await CartItem.destroy({ where: { userId, productId: { [Op.in]: productIds } }, transaction: t });
@@ -287,4 +315,9 @@ const getShopOrders = async (shopId, { page = 1, limit = 20, status }) => {
     return { total: count, page: Number(page), limit: Number(limit), orders: rows };
 };
 
-module.exports = { createOrder, confirmOrder, getMyOrders, getOrderDetail, cancelOrder, updateOrderStatus, getShopOrders };
+const checkCoupon = async (userId, { items, couponCode }) => {
+    const couponService = require('./couponService');
+    return couponService.checkCoupon(userId, { items, couponCode });
+};
+
+module.exports = { createOrder, confirmOrder, getMyOrders, getOrderDetail, cancelOrder, updateOrderStatus, getShopOrders, checkCoupon };

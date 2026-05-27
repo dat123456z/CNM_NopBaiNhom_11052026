@@ -8,10 +8,12 @@ const {
     getOrderDetail,
     cancelOrder,
     updateOrderStatus,
-    getShopOrders
+    getShopOrders,
+    checkCoupon
 } = require('../controllers/orderController');
 
 router.post('/', authMiddleware, createOrder);
+router.post('/check-coupon', authMiddleware, checkCoupon);
 router.get('/me', authMiddleware, getMyOrders);
 router.get('/shop', authMiddleware, getShopOrders);
 router.get('/:id', authMiddleware, getOrderDetail);

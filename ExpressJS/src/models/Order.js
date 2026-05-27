@@ -22,7 +22,10 @@ const Order = sequelize.define('Order', {
     subtotal: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
     discount: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
     shippingFee: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
+    tax: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
     total: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
+    pointsUsed: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, defaultValue: 0 },
+    pointsDiscount: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
     couponCode: { type: DataTypes.STRING(50), allowNull: true },
     paymentMethod: { type: DataTypes.STRING(50), allowNull: true },
     paymentStatus: {

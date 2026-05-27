@@ -64,4 +64,13 @@ const getShopOrders = async (req, res) => {
     }
 };
 
-module.exports = { createOrder, confirmOrder, getMyOrders, getOrderDetail, cancelOrder, updateOrderStatus, getShopOrders };
+const checkCoupon = async (req, res) => {
+    try {
+        const result = await orderService.checkCoupon(req.user.id, req.body);
+        return res.json(result);
+    } catch (err) {
+        return res.status(err.status || 500).json({ message: err.message });
+    }
+};
+
+module.exports = { createOrder, confirmOrder, getMyOrders, getOrderDetail, cancelOrder, updateOrderStatus, getShopOrders, checkCoupon };

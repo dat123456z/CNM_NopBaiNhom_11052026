@@ -31,6 +31,49 @@ const CheckoutPage = () => {
     const [payConfirmed, setPayConfirmed] = useState(false); // VNPay/MoMo đã xác nhận
     const [countdown, setCountdown] = useState(600); // 10 phút
 
+    // Coupon & Points states
+    const [couponCode, setCouponCode] = useState("");
+    const [couponError, setCouponError] = useState("");
+    const [couponSuccess, setCouponSuccess] = useState("");
+    const [appliedCoupon, setAppliedCoupon] = useState(null);
+
+    const [usePoints, setUsePoints] = useState(false);
+    const [userPoints, setUserPoints] = useState(0);
+
+    const handleApplyCoupon = async () => {
+        if (!couponCode.trim()) return;
+        setCouponError("");
+        setCouponSuccess("");
+        const token = localStorage.getItem("accessToken");
+        try {
+            const res = await fetch(`${API_URL}/api/orders/check-coupon`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    couponCode: couponCode.trim(),
+                    items: items.map(i => ({ productId: i.productId, quantity: i.quantity }))
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Mã giảm giá không hợp lệ.");
+
+            setAppliedCoupon(data);
+            setCouponSuccess(`Áp dụng mã giảm giá thành công! Giảm ${fmt(data.discountAmount)}`);
+        } catch (err) {
+            setCouponError(err.message);
+        }
+    };
+
+    const handleRemoveCoupon = () => {
+        setAppliedCoupon(null);
+        setCouponCode("");
+        setCouponSuccess("");
+        setCouponError("");
+    };
+
     // Fetch và pre-fill address + profile từ user API để người dùng không phải nhập lại
     useEffect(() => {
         const token = localStorage.getItem("accessToken");
@@ -46,6 +89,7 @@ const CheckoutPage = () => {
                 if (!res.ok) return;
                 const data = await res.json();
                 const u = data.user || data; // API trả về { user: {...} }
+                setUserPoints(u.points || 0);
                 
                 // Tách họ và tên từ trường name
                 const nameParts = u.name ? u.name.trim().split(/\s+/) : [];
@@ -141,7 +185,13 @@ const CheckoutPage = () => {
             const res = await fetch(`${API_URL}/api/orders`, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-                body: JSON.stringify({ items: orderItems, shippingAddress, paymentMethod: payMethod })
+                body: JSON.stringify({ 
+                    items: orderItems, 
+                    shippingAddress, 
+                    paymentMethod: payMethod,
+                    couponCode: appliedCoupon ? appliedCoupon.code : undefined,
+                    usePoints: usePoints
+                })
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || "Đặt hàng thất bại.");
@@ -156,7 +206,9 @@ const CheckoutPage = () => {
 
     const subtotal = total;
     const tax = Math.round(subtotal * 0.08);
-    const finalTotal = subtotal + tax;
+    const couponDiscount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+    const pointsDiscount = usePoints ? Math.min(userPoints * 1000, subtotal - couponDiscount) : 0;
+    const finalTotal = Math.max(0, subtotal + tax - couponDiscount - pointsDiscount);
     const fmtCountdown = `${String(Math.floor(countdown / 60)).padStart(2, "0")}:${String(countdown % 60).padStart(2, "0")}`;
 
     return (
@@ -473,8 +525,77 @@ const CheckoutPage = () => {
                                     );
                                 })}
                             </div>
+                            {/* Promo & Loyalty Section */}
+                            <div className="border-t border-b border-gray-100 py-4 my-4 space-y-4 text-left">
+                                {/* Loyalty Points Toggle */}
+                                <div className="space-y-2">
+                                    <label className="flex items-center justify-between cursor-pointer select-none">
+                                        <div className="flex items-center gap-1.5 text-xs text-gray-700 font-bold">
+                                            <span>🪙</span>
+                                            <span>Dùng xu tích lũy ({userPoints} xu)</span>
+                                        </div>
+                                        <input 
+                                            type="checkbox" 
+                                            checked={usePoints} 
+                                            disabled={userPoints <= 0}
+                                            onChange={(e) => setUsePoints(e.target.checked)}
+                                            className="w-4 h-4 accent-[#00b14f] rounded disabled:opacity-50 cursor-pointer"
+                                        />
+                                    </label>
+                                    {usePoints && userPoints > 0 && (
+                                        <p className="text-[11px] text-green-700 font-medium">
+                                            Quy đổi giảm: -{fmt(pointsDiscount)}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Coupon Code Input */}
+                                <div className="space-y-2">
+                                    <label className="block text-xs text-gray-700 font-bold">Mã giảm giá (Voucher)</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={couponCode}
+                                            onChange={(e) => {
+                                                setCouponCode(e.target.value.toUpperCase());
+                                                setCouponError("");
+                                                setCouponSuccess("");
+                                            }}
+                                            placeholder="Nhập mã giảm giá..."
+                                            className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#00b14f] font-mono tracking-wider"
+                                            disabled={!!appliedCoupon}
+                                        />
+                                        {appliedCoupon ? (
+                                            <button
+                                                type="button"
+                                                onClick={handleRemoveCoupon}
+                                                className="px-3 py-1.5 bg-red-50 text-red-500 font-bold text-xs rounded-lg border border-red-200 hover:bg-red-100 transition-colors cursor-pointer"
+                                            >
+                                                Hủy
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={handleApplyCoupon}
+                                                className="px-3 py-1.5 bg-green-50 text-green-700 font-bold text-xs rounded-lg border border-green-200 hover:bg-green-100 transition-colors cursor-pointer"
+                                            >
+                                                Áp dụng
+                                            </button>
+                                        )}
+                                    </div>
+                                    {couponError && <p className="text-[10px] text-red-500 font-medium">{couponError}</p>}
+                                    {couponSuccess && <p className="text-[10px] text-green-700 font-medium">{couponSuccess}</p>}
+                                </div>
+                            </div>
+
                             <div className="border-t border-gray-100 pt-4 space-y-2 text-sm">
                                 <div className="flex justify-between text-gray-600"><span>Tạm tính</span><span>{fmt(subtotal)}</span></div>
+                                {couponDiscount > 0 && (
+                                    <div className="flex justify-between text-green-600"><span>Mã giảm giá</span><span>-{fmt(couponDiscount)}</span></div>
+                                )}
+                                {pointsDiscount > 0 && (
+                                    <div className="flex justify-between text-green-600"><span>Dùng xu tích lũy</span><span>-{fmt(pointsDiscount)}</span></div>
+                                )}
                                 <div className="flex justify-between text-gray-600"><span>Vận chuyển</span><span className="text-[#00b14f] font-semibold">Miễn phí</span></div>
                                 <div className="flex justify-between text-gray-600"><span>Thuế VAT (8%)</span><span>{fmt(tax)}</span></div>
                                 <div className="flex justify-between font-bold text-gray-900 text-base pt-2 border-t border-gray-100">
