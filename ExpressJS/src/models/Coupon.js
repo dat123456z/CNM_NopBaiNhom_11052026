@@ -4,6 +4,7 @@ const { sequelize } = require('../config/database');
 const Coupon = sequelize.define('Coupon', {
     id: { type: DataTypes.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true },
     shopId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+    userId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
     code: { type: DataTypes.STRING(50), allowNull: false, unique: true },
     type: {
         type: DataTypes.ENUM('percent', 'fixed'),

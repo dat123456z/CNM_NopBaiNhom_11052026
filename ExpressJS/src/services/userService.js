@@ -14,6 +14,7 @@ const formatUser = (user) => ({
     isActive: user.isActive,
     bannedAt: user.bannedAt,
     bannedReason: user.bannedReason,
+    points: user.points || 0,
     createdAt: user.createdAt
 });
 
@@ -138,8 +139,15 @@ const setUserRole = async (userId, role) => {
     return user;
 };
 
+const couponService = require('./couponService');
+
+const getUserCoupons = async (userId) => {
+    return couponService.getUserCoupons(userId);
+};
+
 module.exports = {
     getProfile, updateProfile,
     upsertAddress, removeAddress, setDefaultAddress,
-    listUsers, setUserStatus, setUserRole
+    listUsers, setUserStatus, setUserRole,
+    getUserCoupons
 };

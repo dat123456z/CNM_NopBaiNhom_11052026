@@ -7,6 +7,7 @@ const fs = require('fs');
 
 const { connection, sequelize } = require('./config/database');
 const { seedIfEmpty } = require('./seeders/productSeeder');
+const { seedCouponsIfEmpty } = require('./seeders/couponSeeder');
 
 const app = express();
 
@@ -48,8 +49,9 @@ const PORT = process.env.PORT || 3000;
 const start = async () => {
     try {
         await connection();
-        await sequelize.sync();
+        await sequelize.sync({ alter: true });
         await seedIfEmpty();
+        await seedCouponsIfEmpty();
 
         const server = app.listen(PORT, () => {
             console.log(` Server running on port ${PORT}`);

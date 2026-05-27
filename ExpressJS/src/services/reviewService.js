@@ -2,6 +2,7 @@ const { ProductReview, ShopReview, OrderReview } = require('../models/Review');
 const { Order, OrderItem } = require('../models/Order');
 const Product = require('../models/Product');
 const Shop = require('../models/Shop');
+const User = require('../models/User');
 const { sequelize } = require('../config/database');
 
 const verifyPurchased = async (userId, productId, orderId) => {
@@ -39,11 +40,29 @@ const createProductReview = async (userId, { productId, orderId, rating, comment
     const existing = await ProductReview.findOne({ where: { userId, productId, orderId } });
     if (existing) throw Object.assign(new Error('Bạn đã đánh giá sản phẩm này.'), { status: 409 });
 
+    const product = await Product.findByPk(productId);
+    if (!product) throw Object.assign(new Error('Sản phẩm không tồn tại.'), { status: 404 });
+
     const review = await ProductReview.create({
         userId, productId, orderId, rating, comment, images: images || []
     });
     await recalcProductRating(productId);
-    return review;
+
+    // Tặng điểm tích lũy (+10 điểm)
+    const user = await User.findByPk(userId);
+    if (user) {
+        await user.increment('points', { by: 10 });
+    }
+
+    // Tạo mã giảm giá 10% cho shop này, chỉ dùng 1 lần cho user này
+    const couponService = require('./couponService');
+    const couponCode = await couponService.createReviewRewardCoupon(userId, product.shopId);
+
+    const plainReview = review.get({ plain: true });
+    plainReview.rewardPoints = 10;
+    plainReview.rewardCouponCode = couponCode;
+
+    return plainReview;
 };
 
 const createShopReview = async (userId, { shopId, orderId, rating, comment }) => {
