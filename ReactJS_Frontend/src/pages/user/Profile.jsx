@@ -77,6 +77,9 @@ const Profile = () => {
     const [addrMsg, setAddrMsg] = useState(null);
     const [addrMsgType, setAddrMsgType] = useState("info");
 
+    const [coupons, setCoupons] = useState([]);
+    const [wishlist, setWishlist] = useState([]);
+
     useEffect(() => {
         const stored = localStorage.getItem("user");
         if (!stored) { navigate("/login"); return; }
@@ -106,6 +109,65 @@ const Profile = () => {
             if (parsed.avatar) {
                 setAvatarPreview(parsed.avatar.startsWith("http") ? parsed.avatar : `${API_URL}${parsed.avatar}`);
             }
+
+            // Fetch latest user profile from API to update points
+            const fetchLatestProfile = async () => {
+                try {
+                    const token = localStorage.getItem("accessToken");
+                    if (!token) return;
+                    const res = await fetch(`${API_URL}/api/users/profile`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.user) {
+                            const merged = { ...parsed, ...data.user };
+                            localStorage.setItem("user", JSON.stringify(merged));
+                            setUser(merged);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error fetching latest profile:", e);
+                }
+            };
+            fetchLatestProfile();
+
+            // Fetch user coupons
+            const fetchCoupons = async () => {
+                try {
+                    const token = localStorage.getItem("accessToken");
+                    if (!token) return;
+                    const res = await fetch(`${API_URL}/api/users/coupons`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        setCoupons(data || []);
+                    }
+                } catch (err) {
+                    console.error("Error fetching coupons:", err);
+                }
+            };
+            fetchCoupons();
+            
+            // Fetch user wishlist
+            const fetchWishlist = async () => {
+                try {
+                    const token = localStorage.getItem("accessToken");
+                    if (!token) return;
+                    const res = await fetch(`${API_URL}/api/wishlists`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        setWishlist(Array.isArray(data) ? data : []);
+                    }
+                } catch (err) {
+                    console.error("Error fetching wishlist:", err);
+                }
+            };
+            fetchWishlist();
+
         } catch {
             localStorage.removeItem("accessToken");
             localStorage.removeItem("user");
@@ -274,6 +336,22 @@ const Profile = () => {
         }
     };
 
+    const handleRemoveFavorite = async (productId) => {
+        const token = localStorage.getItem("accessToken");
+        if (!token) return;
+        try {
+            const res = await fetch(`${API_URL}/api/wishlists/${productId}`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setWishlist(prev => prev.filter(p => p.id !== productId));
+            }
+        } catch (err) {
+            console.error("Error toggling favorite:", err);
+        }
+    };
+
     if (!user) return null;
 
     return (
@@ -432,6 +510,144 @@ const Profile = () => {
 
                         {/* Right Column */}
                         <div className="lg:col-span-5 space-y-6">
+                            {/* Loyalty & Coupons */}
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                <div className="bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-4 flex items-center justify-between text-white">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xl">🪙</span>
+                                        <h3 className="font-semibold text-sm sm:text-base">Kho Điểm & Ví Voucher</h3>
+                                    </div>
+                                    <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-bold">
+                                        Active
+                                    </span>
+                                </div>
+                                <div className="p-6 space-y-6">
+                                    {/* Points Balance */}
+                                    <div className="flex items-center justify-between bg-green-50/50 p-4 rounded-xl border border-green-100">
+                                        <div>
+                                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Điểm tích lũy</p>
+                                            <p className="text-2xl font-bold text-green-750 mt-1 flex items-center gap-1.5">
+                                                <span>{user.points || 0}</span>
+                                                <span className="text-sm font-medium text-green-600">xu</span>
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] text-gray-400 font-medium">Giá trị quy đổi</p>
+                                            <p className="text-sm font-semibold text-gray-700 mt-1">
+                                                {((user.points || 0) * 1000).toLocaleString('vi-VN')} đ
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Vouchers/Coupons List */}
+                                    <div>
+                                        <p className="text-[10px] uppercase font-bold text-gray-400 mb-3 tracking-wider flex items-center justify-between">
+                                            <span>MÃ GIẢM GIÁ CỦA BẠN</span>
+                                            <span className="text-gray-500 font-medium normal-case">({coupons.length} voucher)</span>
+                                        </p>
+                                        
+                                        {coupons.length === 0 ? (
+                                            <div className="text-center py-6 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                                                <p className="text-xs text-gray-400">Bạn chưa có mã giảm giá nào.</p>
+                                                <p className="text-[10px] text-gray-400 mt-1">Đánh giá sản phẩm đã mua để nhận voucher 10%!</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3 max-h-[250px] overflow-y-auto pr-1">
+                                                {coupons.map((coupon) => (
+                                                    <div key={coupon.id} className="relative flex items-center justify-between p-3 border border-dashed border-green-200 rounded-xl bg-green-50/10 hover:bg-green-50/20 transition-colors">
+                                                        <div className="flex-1 min-w-0 pr-3">
+                                                            <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                                                                <span className="bg-green-100 text-green-800 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase">
+                                                                    {coupon.type === 'percent' ? `-${Math.round(coupon.value)}%` : `-${Number(coupon.value).toLocaleString('vi-VN')}đ`}
+                                                                </span>
+                                                                <span className="text-xs font-mono font-bold text-gray-800 tracking-wider">
+                                                                    {coupon.code}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-[11px] text-gray-500 truncate">
+                                                                Cửa hàng: <span className="font-semibold">{coupon.shop?.name || `Shop #${coupon.shopId}`}</span>
+                                                            </p>
+                                                            <p className="text-[10px] text-gray-400 mt-0.5">
+                                                                Hạn dùng: {new Date(coupon.expiresAt).toLocaleDateString('vi-VN')}
+                                                            </p>
+                                                        </div>
+                                                        <button 
+                                                            onClick={() => {
+                                                                navigator.clipboard.writeText(coupon.code);
+                                                                alert("Đã sao chép mã giảm giá!");
+                                                            }}
+                                                            className="text-[11px] font-semibold text-green-700 hover:text-green-900 border border-green-250 hover:border-green-300 bg-white px-2 py-1 rounded-lg shadow-2xs hover:shadow-xs transition-all active:scale-95 cursor-pointer"
+                                                        >
+                                                            Sao chép
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Favorite Products */}
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                <div className="bg-[#f0f4f8] px-6 py-4 flex items-center gap-2 border-b border-gray-100">
+                                    <svg className="w-5 h-5 text-red-500 fill-current" viewBox="0 0 24 24">
+                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                    </svg>
+                                    <h3 className="font-semibold text-gray-800">Sản phẩm yêu thích</h3>
+                                    <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold ml-auto">
+                                        {wishlist.length} món
+                                    </span>
+                                </div>
+                                <div className="p-6">
+                                    {wishlist.length === 0 ? (
+                                        <div className="text-center py-8 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                                            <p className="text-sm text-gray-400">Chưa có sản phẩm yêu thích.</p>
+                                            <button 
+                                                onClick={() => navigate('/products')} 
+                                                className="text-xs text-blue-600 font-bold hover:underline mt-2 cursor-pointer"
+                                            >
+                                                Khám phá ngay
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
+                                            {wishlist.map((item) => {
+                                                const imgUrl = Array.isArray(item.images) && item.images.length > 0
+                                                    ? (item.images[0].startsWith('http') ? item.images[0] : `${API_URL}${item.images[0]}`)
+                                                    : (item.image ? (item.image.startsWith('http') ? item.image : `${API_URL}${item.image}`) : "/placeholder.png");
+
+                                                return (
+                                                    <div key={item.id} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100">
+                                                        <div 
+                                                            className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" 
+                                                            onClick={() => navigate(`/product/${item.id}`)}
+                                                        >
+                                                            <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-150 flex-shrink-0 bg-gray-50">
+                                                                <img src={imgUrl} alt={item.title} className="w-full h-full object-cover" />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <h4 className="text-xs font-bold text-gray-800 truncate hover:text-[#008f3f] transition-colors">{item.title}</h4>
+                                                                <p className="text-xs font-semibold text-gray-900 mt-1">{Number(item.price).toLocaleString('vi-VN')}đ</p>
+                                                            </div>
+                                                        </div>
+                                                        <button 
+                                                            onClick={() => handleRemoveFavorite(item.id)}
+                                                            className="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                                                            title="Bỏ thích"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
                             {/* Security */}
                             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                                 <div className="bg-[#f0f4f8] px-6 py-4 flex items-center gap-2 border-b border-gray-100">

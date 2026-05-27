@@ -14,7 +14,8 @@ const {
     setDefaultAddress,
     listUsers,
     setUserStatus,
-    setUserRole
+    setUserRole,
+    getUserCoupons
 } = require('../controllers/userController');
 
 const storage = multer.diskStorage({
@@ -60,6 +61,7 @@ router.patch(
     setDefaultAddress
 );
 
+router.get('/coupons', authMiddleware, getUserCoupons);
 router.get('/', authMiddleware, listUsers);
 
 router.patch('/:id/status', authMiddleware, setUserStatus);

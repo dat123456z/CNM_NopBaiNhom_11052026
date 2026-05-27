@@ -1,5 +1,6 @@
 const Wishlist = require('../models/Wishlist');
 const Product = require('../models/Product');
+const { normalizeProduct } = require('./productService');
 
 const getWishlist = async (userId) => {
     const items = await Wishlist.findAll({ where: { userId } });
@@ -7,7 +8,7 @@ const getWishlist = async (userId) => {
     if (productIds.length === 0) return [];
 
     const products = await Product.findAll({ where: { id: productIds } });
-    return products;
+    return products.map(normalizeProduct);
 };
 
 const toggleWishlist = async (userId, productId) => {

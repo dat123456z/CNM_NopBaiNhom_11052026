@@ -16,7 +16,8 @@ const User = sequelize.define('User', {
     },
     isActive: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     bannedAt: { type: DataTypes.DATE, allowNull: true },
-    bannedReason: { type: DataTypes.STRING, allowNull: true }
+    bannedReason: { type: DataTypes.STRING, allowNull: true },
+    points: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, defaultValue: 0 }
 }, { tableName: 'users', timestamps: true });
 
 module.exports = User;

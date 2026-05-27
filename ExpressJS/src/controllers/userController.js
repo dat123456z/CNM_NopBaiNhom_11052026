@@ -75,4 +75,13 @@ const setUserRole = async (req, res) => {
     }
 };
 
-module.exports = { getProfile, updateProfile, upsertAddress, removeAddress, setDefaultAddress, listUsers, setUserStatus, setUserRole };
+const getUserCoupons = async (req, res) => {
+    try {
+        const coupons = await userService.getUserCoupons(req.user.id);
+        return res.json(coupons);
+    } catch (err) {
+        return res.status(err.status || 500).json({ message: err.message });
+    }
+};
+
+module.exports = { getProfile, updateProfile, upsertAddress, removeAddress, setDefaultAddress, listUsers, setUserStatus, setUserRole, getUserCoupons };

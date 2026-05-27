@@ -79,7 +79,7 @@ const verifyRegister = async ({ email, otp }) => {
     });
     await pending.destroy();
 
-    const payload = { id: user.id, email: user.email, name: user.name, role: user.role, phone: user.phone, avatar: user.avatar, addresses: user.addresses };
+    const payload = { id: user.id, email: user.email, name: user.name, role: user.role, phone: user.phone, avatar: user.avatar, addresses: user.addresses, points: user.points || 0 };
     return { token: signToken(payload), user: payload };
 };
 
@@ -92,7 +92,7 @@ const login = async ({ email, password }) => {
     if (!match) throw Object.assign(new Error('Email hoặc mật khẩu không đúng.'), { status: 401 });
 
     // FIX: thêm phone, avatar và addresses vào payload để client có đầy đủ thông tin
-    const payload = { id: user.id, email: user.email, name: user.name, role: user.role, phone: user.phone, avatar: user.avatar, addresses: user.addresses };
+    const payload = { id: user.id, email: user.email, name: user.name, role: user.role, phone: user.phone, avatar: user.avatar, addresses: user.addresses, points: user.points || 0 };
     return { token: signToken(payload), user: payload };
 };
 
