@@ -63,4 +63,22 @@ const getSimilarProducts = async (req, res) => {
     }
 };
 
-module.exports = { getProducts, getProductById, createProduct, updateProduct, deleteProduct, setProductStatus, getSimilarProducts };
+const getManagerProducts = async (req, res) => {
+    try {
+        const result = await productService.getManagerProducts(req.query);
+        return res.json(result);
+    } catch (err) {
+        return res.status(err.status || 500).json({ message: err.message });
+    }
+};
+
+module.exports = {
+    getProducts,
+    getProductById,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+    setProductStatus,
+    getSimilarProducts,
+    getManagerProducts
+};

@@ -16,7 +16,7 @@ const Product = sequelize.define('Product', {
     similarIds: { type: DataTypes.JSON, allowNull: false, defaultValue: [] },
     colors: { type: DataTypes.JSON, allowNull: true, defaultValue: [] },
     status: {
-        type: DataTypes.ENUM('active', 'draft', 'hidden', 'deleted'),
+        type: DataTypes.ENUM('active', 'draft', 'hidden', 'deleted', 'pending', 'rejected'),
         allowNull: false,
         defaultValue: 'active'
     },

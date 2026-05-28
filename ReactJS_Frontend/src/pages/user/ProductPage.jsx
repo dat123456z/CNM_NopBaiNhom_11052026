@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import ProductCard from "../../components/ProductCard";
 import Header from "../../components/user/Header";
 import Footer from "../../components/user/Footer";
@@ -52,6 +52,7 @@ const FilterChip = ({ label, active, onClick }) => (
 
 const ProductPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -67,10 +68,26 @@ const ProductPage = () => {
     const [sortBy, setSortBy] = useState("newest");
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
+    const [filterShopId, setFilterShopId] = useState(null);
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [search, selectedCategory, priceRange, customMin, customMax, stockFilter, onlyDiscount, sortBy]);
+    }, [search, selectedCategory, priceRange, customMin, customMax, stockFilter, onlyDiscount, sortBy, filterShopId]);
+
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const shopIdParam = queryParams.get("shopId");
+        if (shopIdParam) {
+            setFilterShopId(Number(shopIdParam));
+        } else {
+            setFilterShopId(null);
+        }
+        const qParam = queryParams.get("q");
+        if (qParam) {
+            setSearch(qParam);
+            setSearchInput(qParam);
+        }
+    }, [location.search]);
 
     useEffect(() => {
         const token = localStorage.getItem("accessToken");
@@ -83,7 +100,7 @@ const ProductPage = () => {
 
         try {
             const user = JSON.parse(userRaw);
-            if (user?.role !== "user") {
+            if (user?.role !== "user" && user?.role !== "vendor") {
                 navigate("/login", { replace: true });
             }
         } catch {
@@ -139,6 +156,10 @@ const ProductPage = () => {
     const filtered = useMemo(() => {
         let list = [...products];
 
+        if (filterShopId) {
+            list = list.filter((p) => Number(p.shopId) === filterShopId);
+        }
+
         if (search) {
             const q = search.toLowerCase();
             list = list.filter(
@@ -184,7 +205,7 @@ const ProductPage = () => {
         }
 
         return list;
-    }, [products, search, selectedCategory, priceRange, customMin, customMax, stockFilter, onlyDiscount, sortBy]);
+    }, [products, search, selectedCategory, priceRange, customMin, customMax, stockFilter, onlyDiscount, sortBy, filterShopId]);
 
     const activeFilterCount = [
         selectedCategory !== "all",

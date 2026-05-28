@@ -2,6 +2,7 @@ const { Op } = require('sequelize');
 const Product = require('../models/Product');
 const { Order, OrderItem } = require('../models/Order');
 const { ProductReview } = require('../models/Review');
+const Shop = require('../models/Shop');
 
 const slugify = (text) =>
     text
@@ -28,27 +29,32 @@ const normalizeProduct = (product) => {
         images: Array.isArray(p.images) ? p.images : [],
         image: Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null,
         category: p.category,
-        stock: p.stock,
-        sold: p.sold,
+        stock: Number(p.stock),
+        colors: Array.isArray(p.colors) ? p.colors : [],
         status: p.status,
-        rating: Number(p.rating),
-        reviewCount: p.reviewCount,
-        views: Number(p.views || 0),
-        similar: Array.isArray(p.similarIds) ? p.similarIds.map(String) : [],
-        colors: Array.isArray(p.colors) ? p.colors : []
+        rating: p.rating != null ? Number(p.rating) : null,
+        reviewCount: p.reviewCount != null ? Number(p.reviewCount) : 0,
+        sold: p.sold != null ? Number(p.sold) : 0,
+        views: p.views != null ? Number(p.views) : 0,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+        shop: p.Shop || p.shop || null
     };
 };
 
-const getProducts = async ({ ids, category, search, shopId, minPrice, maxPrice, sort = 'newest', page = 1, limit = 20 }) => {
-    const where = { status: 'active' };
-
+const getProducts = async ({ ids, category, search, shopId, minPrice, maxPrice, sort = 'newest', page = 1, limit = 20, allStatus }) => {
+    const where = {};
+    if (!shopId && allStatus !== 'true') {
+        where.status = 'active';
+    } else if (shopId && allStatus !== 'true') {
+        where.shopId = shopId;
+    }
     if (ids) {
         const parsedIds = ids.split(',').map((v) => parseInt(v.trim(), 10)).filter((n) => !isNaN(n));
         if (parsedIds.length === 0) return { total: 0, page: Number(page), limit: Number(limit), products: [] };
         where.id = { [Op.in]: parsedIds };
     }
-    if (category) where.category = category;
-    if (shopId) where.shopId = shopId;
+    if (category && category !== 'all') where.category = category;
     if (search) where.title = { [Op.like]: `%${search}%` };
     if (minPrice || maxPrice) {
         where.price = {};
@@ -73,7 +79,14 @@ const getProducts = async ({ ids, category, search, shopId, minPrice, maxPrice, 
 };
 
 const getProductById = async (id) => {
-    const product = await Product.findOne({ where: { id, status: 'active' } });
+    const product = await Product.findOne({
+        where: { id, status: 'active' },
+        include: [{
+            model: Shop,
+            as: 'shop',
+            attributes: ['id', 'name', 'logo', 'rating', 'reviewCount', 'description', 'address', 'createdAt']
+        }]
+    });
     if (!product) throw Object.assign(new Error('Sản phẩm không tồn tại.'), { status: 404 });
 
     // Increment views count
@@ -168,6 +181,25 @@ const getSimilarProducts = async (id) => {
     return similar.map(normalizeProduct);
 };
 
+const getManagerProducts = async ({ status, page = 1, limit = 20 }) => {
+    const where = {};
+    if (status) where.status = status;
+    const offset = (page - 1) * limit;
+    const { count, rows } = await Product.findAndCountAll({
+        where,
+        include: [{ model: Shop, as: 'shop', attributes: ['id', 'name', 'logo'] }],
+        order: [['createdAt', 'DESC']],
+        limit: Number(limit),
+        offset
+    });
+    return {
+        total: count,
+        page: Number(page),
+        limit: Number(limit),
+        products: rows.map(normalizeProduct)
+    };
+};
+
 module.exports = {
     normalizeProduct,
     getProducts,
@@ -176,5 +208,6 @@ module.exports = {
     updateProduct,
     deleteProduct,
     setProductStatus,
-    getSimilarProducts
+    getSimilarProducts,
+    getManagerProducts
 };
