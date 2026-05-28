@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const Shop = require('../models/Shop');
 
 const authMiddleware = (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -20,4 +21,17 @@ const requireRole = (...roles) => (req, res, next) => {
     next();
 };
 
-module.exports = { authMiddleware, requireRole };
+const vendorMiddleware = async (req, res, next) => {
+    try {
+        const shop = await Shop.findOne({ where: { userId: req.user.id } });
+        if (!shop) {
+            return res.status(403).json({ message: 'Bạn không có cửa hàng.' });
+        }
+        req.shop = shop;
+        next();
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+};
+
+module.exports = { authMiddleware, requireRole, vendorMiddleware };

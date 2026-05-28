@@ -8,6 +8,7 @@ const fs = require('fs');
 const { connection, sequelize } = require('./config/database');
 const { seedIfEmpty } = require('./seeders/productSeeder');
 const { seedCouponsIfEmpty } = require('./seeders/couponSeeder');
+const { seedMarketplaceIfEmpty } = require('./seeders/marketplaceSeeder');
 
 const app = express();
 
@@ -43,15 +44,24 @@ app.use('/api/reviews', require('./routes/review'));
 app.use('/api/shops', require('./routes/shop'));
 app.use('/api/wishlists', require('./routes/wishlist'));
 app.use('/api/revenues', require('./routes/revenue'));
+app.use('/api/coupons', require('./routes/coupon'));
 
 const PORT = process.env.PORT || 3000;
 
 const start = async () => {
     try {
         await connection();
-        await sequelize.sync({ alter: true });
+        await sequelize.sync();
+        
+        try {
+            await sequelize.query("ALTER TABLE products MODIFY COLUMN status ENUM('active', 'draft', 'hidden', 'deleted', 'pending', 'rejected') NOT NULL DEFAULT 'active';");
+        } catch (e) {
+            console.error(">>> Error altering products status ENUM:", e.message);
+        }
+
         await seedIfEmpty();
         await seedCouponsIfEmpty();
+        await seedMarketplaceIfEmpty();
 
         const server = app.listen(PORT, () => {
             console.log(` Server running on port ${PORT}`);
