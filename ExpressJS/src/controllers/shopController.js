@@ -54,4 +54,13 @@ const setShopStatus = async (req, res) => {
     }
 };
 
-module.exports = { registerShop, getMyShop, updateShop, getShopById, listShops, setShopStatus };
+const getManagerStats = async (req, res) => {
+    try {
+        const stats = await shopService.getManagerStats();
+        return res.json(stats);
+    } catch (err) {
+        return res.status(err.status || 500).json({ message: err.message });
+    }
+};
+
+module.exports = { registerShop, getMyShop, updateShop, getShopById, listShops, setShopStatus, getManagerStats };

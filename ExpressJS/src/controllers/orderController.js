@@ -11,8 +11,7 @@ const createOrder = async (req, res) => {
 
 const confirmOrder = async (req, res) => {
     try {
-        // Lấy shopId từ shop của user (qua middleware hoặc query DB)
-        const order = await orderService.confirmOrder(req.params.id, req.body.shopId || req.user.shopId);
+        const order = await orderService.confirmOrder(req.params.id, req.shop.id);
         return res.json(order);
     } catch (err) {
         return res.status(err.status || 500).json({ message: err.message });
@@ -48,7 +47,7 @@ const cancelOrder = async (req, res) => {
 
 const updateOrderStatus = async (req, res) => {
     try {
-        const order = await orderService.updateOrderStatus(req.params.id, req.body.shopId, req.body.status);
+        const order = await orderService.updateOrderStatus(req.params.id, req.shop.id, req.body.status);
         return res.json(order);
     } catch (err) {
         return res.status(err.status || 500).json({ message: err.message });
@@ -57,7 +56,7 @@ const updateOrderStatus = async (req, res) => {
 
 const getShopOrders = async (req, res) => {
     try {
-        const result = await orderService.getShopOrders(req.body.shopId, req.query);
+        const result = await orderService.getShopOrders(req.shop.id, req.query);
         return res.json(result);
     } catch (err) {
         return res.status(err.status || 500).json({ message: err.message });

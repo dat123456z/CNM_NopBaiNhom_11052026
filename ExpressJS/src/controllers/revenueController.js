@@ -27,4 +27,17 @@ const getPlatformRevenue = async (req, res) => {
     }
 };
 
-module.exports = { getShopRevenue, getWalletHistory, getPlatformRevenue };
+const requestWithdraw = async (req, res) => {
+    try {
+        const { amount } = req.body;
+        if (!amount || Number(amount) <= 0) {
+            return res.status(400).json({ message: 'Số tiền rút không hợp lệ.' });
+        }
+        const result = await revenueService.requestWithdrawal(req.shop.id, Number(amount));
+        return res.json(result);
+    } catch (err) {
+        return res.status(err.status || 500).json({ message: err.message });
+    }
+};
+
+module.exports = { getShopRevenue, getWalletHistory, getPlatformRevenue, requestWithdraw };

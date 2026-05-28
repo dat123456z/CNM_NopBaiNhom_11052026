@@ -92,4 +92,37 @@ const getPlatformRevenue = async ({ from, to }) => {
     return { platform: result, topShops };
 };
 
-module.exports = { getShopRevenue, getWalletHistory, getPlatformRevenue };
+const requestWithdrawal = async (shopId, amount) => {
+    const shop = await Shop.findByPk(shopId);
+    if (!shop) throw Object.assign(new Error('Shop không tồn tại.'), { status: 404 });
+
+    if (Number(shop.balance) < amount) {
+        throw Object.assign(new Error('Số dư ví không đủ để thực hiện giao dịch này.'), { status: 400 });
+    }
+
+    const t = await sequelize.transaction();
+    try {
+        const newBalance = Number(shop.balance) - amount;
+        await shop.update({ balance: newBalance }, { transaction: t });
+
+        const tx = await WalletTransaction.create({
+            shopId,
+            type: 'withdrawal',
+            amount: -amount,
+            balanceAfter: newBalance,
+            note: `Rút tiền từ ví về tài khoản ngân hàng`
+        }, { transaction: t });
+
+        await t.commit();
+        return {
+            message: 'Rút tiền thành công.',
+            balance: newBalance,
+            transaction: tx
+        };
+    } catch (err) {
+        await t.rollback();
+        throw err;
+    }
+};
+
+module.exports = { getShopRevenue, getWalletHistory, getPlatformRevenue, requestWithdrawal };

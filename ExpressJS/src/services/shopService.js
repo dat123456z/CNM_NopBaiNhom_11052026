@@ -11,7 +11,7 @@ const registerShop = async (userId, { name, description, address, phone }) => {
     const t = await sequelize.transaction();
     try {
         const shop = await Shop.create(
-            { userId, name, slug: slugify(name), description, address, phone, status: 'pending' },
+            { userId, name, slug: slugify(name), description, address, phone, status: 'active' },
             { transaction: t }
         );
         await User.update({ role: 'vendor' }, { where: { id: userId }, transaction: t });
@@ -48,7 +48,13 @@ const listShops = async ({ page = 1, limit = 20, status, search }) => {
     if (status) where.status = status;
     if (search) where.name = { [Op.like]: `%${search}%` };
     const offset = (page - 1) * limit;
-    const { count, rows } = await Shop.findAndCountAll({ where, order: [['createdAt', 'DESC']], limit: Number(limit), offset });
+    const { count, rows } = await Shop.findAndCountAll({
+        where,
+        include: [{ model: User, as: 'owner', attributes: ['id', 'name', 'email', 'phone'] }],
+        order: [['createdAt', 'DESC']],
+        limit: Number(limit),
+        offset
+    });
     return { total: count, page: Number(page), limit: Number(limit), shops: rows };
 };
 
@@ -61,4 +67,83 @@ const setShopStatus = async (shopId, status) => {
     return shop;
 };
 
-module.exports = { registerShop, getMyShop, updateShop, getShopById, listShops, setShopStatus };
+const getManagerStats = async () => {
+    const { Order } = require('../models/Order');
+    const Product = require('../models/Product');
+    
+    const totalVendors = await Shop.count();
+    const activeVendors = await Shop.count({ where: { status: 'active' } });
+    const verifiedPercentage = totalVendors > 0 ? Number(((activeVendors / totalVendors) * 100).toFixed(1)) : 0;
+
+    const totalRevenueResult = await Order.sum('total', { where: { status: 'delivered' } });
+    const totalRevenue = totalRevenueResult ? Number(totalRevenueResult) : 0;
+
+    const avgRatingResult = await Shop.avg('rating');
+    const avgRating = avgRatingResult ? Number(Number(avgRatingResult).toFixed(1)) : 0;
+
+    // Category distribution from products
+    const categories = await Product.findAll({
+        attributes: [
+            'category',
+            [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+        ],
+        group: ['category']
+    });
+
+    const categoryDistribution = categories.map(c => ({
+        category: c.category || 'Khác',
+        count: Number(c.getDataValue('count'))
+    }));
+
+    // Recent alerts: e.g. newly registered shops (pending) or recent reviews with low rating
+    const recentShops = await Shop.findAll({
+        order: [['createdAt', 'DESC']],
+        limit: 5,
+        include: [{ model: User, as: 'owner', attributes: ['name', 'email'] }]
+    });
+
+    const alerts = [];
+    recentShops.forEach(s => {
+        if (s.status === 'pending') {
+            alerts.push({
+                id: `shop-${s.id}`,
+                type: 'warning',
+                message: `Yêu cầu xác minh gian hàng mới: "${s.name}" từ ${s.owner?.name || 'Khách'}`
+            });
+        }
+    });
+
+    // Check for pending products
+    const pendingProducts = await Product.findAll({
+        where: { status: 'pending' },
+        limit: 5,
+        include: [{ model: Shop, as: 'shop', attributes: ['name'] }]
+    });
+
+    pendingProducts.forEach(p => {
+        alerts.push({
+            id: `prod-${p.id}`,
+            type: 'info',
+            message: `Sản phẩm chờ duyệt: "${p.title}" của shop "${p.shop?.name || 'Unknown'}"`
+        });
+    });
+
+    if (alerts.length === 0) {
+        alerts.push({
+            id: 'system-ok',
+            type: 'success',
+            message: 'Hệ thống hoạt động bình thường. Không có yêu cầu chờ xử lý.'
+        });
+    }
+
+    return {
+        totalVendors,
+        verifiedPercentage,
+        totalRevenue,
+        avgRating,
+        categoryDistribution,
+        alerts
+    };
+};
+
+module.exports = { registerShop, getMyShop, updateShop, getShopById, listShops, setShopStatus, getManagerStats };
