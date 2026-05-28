@@ -91,6 +91,34 @@ const getProductReviews = async (productId, { page = 1, limit = 10 }) => {
     const offset = (page - 1) * limit;
     const { count, rows } = await ProductReview.findAndCountAll({
         where: { productId, isHidden: false },
+        include: [{
+            model: User,
+            as: 'user',
+            attributes: ['id', 'name', 'avatar']
+        }],
+        order: [['createdAt', 'DESC']],
+        limit: Number(limit),
+        offset
+    });
+    return { total: count, page: Number(page), limit: Number(limit), reviews: rows };
+};
+
+const getShopProductReviews = async (shopId, { page = 1, limit = 20 }) => {
+    const offset = (page - 1) * limit;
+    const { count, rows } = await ProductReview.findAndCountAll({
+        include: [
+            {
+                model: Product,
+                as: 'product',
+                where: { shopId },
+                attributes: ['id', 'title', 'images']
+            },
+            {
+                model: User,
+                as: 'user',
+                attributes: ['id', 'name', 'avatar']
+            }
+        ],
         order: [['createdAt', 'DESC']],
         limit: Number(limit),
         offset
@@ -127,5 +155,5 @@ const setReviewVisibility = async (type, reviewId, isHidden) => {
 
 module.exports = {
     createProductReview, createShopReview, createOrderReview,
-    getProductReviews, vendorReplyReview, setReviewVisibility
+    getProductReviews, getShopProductReviews, vendorReplyReview, setReviewVisibility
 };

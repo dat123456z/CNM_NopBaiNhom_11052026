@@ -36,6 +36,15 @@ const getProductReviews = async (req, res) => {
     }
 };
 
+const getShopReviews = async (req, res) => {
+    try {
+        const result = await reviewService.getShopProductReviews(req.shop.id, req.query);
+        return res.json(result);
+    } catch (err) {
+        return res.status(err.status || 500).json({ message: err.message });
+    }
+};
+
 const vendorReplyReview = async (req, res) => {
     try {
         const review = await reviewService.vendorReplyReview(req.user.id, req.params.id, req.body.reply);
@@ -54,4 +63,4 @@ const setReviewVisibility = async (req, res) => {
     }
 };
 
-module.exports = { createProductReview, createShopReview, createOrderReview, getProductReviews, vendorReplyReview, setReviewVisibility };
+module.exports = { createProductReview, createShopReview, createOrderReview, getProductReviews, getShopReviews, vendorReplyReview, setReviewVisibility };
