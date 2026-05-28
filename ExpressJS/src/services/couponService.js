@@ -108,8 +108,64 @@ const createReviewRewardCoupon = async (userId, shopId) => {
     return couponCode;
 };
 
+const getShopCoupons = async (shopId) => {
+    return await Coupon.findAll({
+        where: { shopId },
+        order: [['createdAt', 'DESC']]
+    });
+};
+
+const createCoupon = async (shopId, data) => {
+    const { code, type, value, minOrderAmount, maxDiscount, usageLimit, startsAt, expiresAt } = data;
+    const existing = await Coupon.findOne({ where: { code } });
+    if (existing) throw Object.assign(new Error('Mã giảm giá đã tồn tại.'), { status: 400 });
+
+    return await Coupon.create({
+        shopId,
+        code: code.trim().toUpperCase(),
+        type,
+        value,
+        minOrderAmount: minOrderAmount || 0,
+        maxDiscount: maxDiscount || null,
+        usageLimit: usageLimit || null,
+        startsAt: startsAt || new Date(),
+        expiresAt: expiresAt || null,
+        isActive: true
+    });
+};
+
+const updateCoupon = async (shopId, couponId, data) => {
+    const coupon = await Coupon.findOne({ where: { id: couponId, shopId } });
+    if (!coupon) throw Object.assign(new Error('Mã giảm giá không tồn tại.'), { status: 404 });
+
+    const { type, value, minOrderAmount, maxDiscount, usageLimit, startsAt, expiresAt, isActive } = data;
+    await coupon.update({
+        type,
+        value,
+        minOrderAmount,
+        maxDiscount,
+        usageLimit,
+        startsAt,
+        expiresAt,
+        isActive: isActive !== undefined ? isActive : coupon.isActive
+    });
+    return coupon;
+};
+
+const deleteCoupon = async (shopId, couponId) => {
+    const coupon = await Coupon.findOne({ where: { id: couponId, shopId } });
+    if (!coupon) throw Object.assign(new Error('Mã giảm giá không tồn tại.'), { status: 404 });
+
+    await coupon.destroy();
+    return { message: 'Đã xóa mã giảm giá.' };
+};
+
 module.exports = {
     getUserCoupons,
     checkCoupon,
-    createReviewRewardCoupon
+    createReviewRewardCoupon,
+    getShopCoupons,
+    createCoupon,
+    updateCoupon,
+    deleteCoupon
 };
