@@ -437,7 +437,7 @@ const ProductDetail = () => {
                         {/* Colors */}
                         <div className="mt-8">
                             <div className="text-sm font-semibold mb-3 text-gray-800">
-                                Màu sắc: <span className="font-bold text-blue-600">{selectedColor || "Mặc định"}</span>
+                                Màu sắc:
                             </div>
                             <div className="flex gap-3">
                                 {product.colors && product.colors.length > 0 ? (
