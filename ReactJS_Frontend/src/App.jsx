@@ -10,6 +10,10 @@ import CartPage from "./pages/user/CartPage";
 import CheckoutPage from "./pages/user/CheckoutPage";
 import OrdersPage from "./pages/user/OrdersPage";
 import OrderDetailPage from "./pages/user/OrderDetailPage";
+import WishlistPage from "./pages/user/WishlistPage";
+import VendorOnboarding from "./pages/vendor/VendorOnboarding";
+import VendorDashboard from "./pages/vendor/VendorDashboard";
+import ManagerDashboard from "./pages/manager/ManagerDashboard";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import { CartProvider } from "./context/CartContext";
 
@@ -30,6 +34,10 @@ function App() {
                     <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
                     <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
                     <Route path="/orders/:id" element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
+                    <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
+                    <Route path="/vendor/setup" element={<ProtectedRoute><VendorOnboarding /></ProtectedRoute>} />
+                    <Route path="/vendor/dashboard" element={<ProtectedRoute><VendorDashboard /></ProtectedRoute>} />
+                    <Route path="/manager/dashboard" element={<ProtectedRoute><ManagerDashboard /></ProtectedRoute>} />
                 </Routes>
             </CartProvider>
         </BrowserRouter>

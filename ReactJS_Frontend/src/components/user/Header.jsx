@@ -22,6 +22,7 @@ const Header = () => {
     };
 
     const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
 
     return (
         <header className="bg-[#f8f9fb] w-full pt-6 pb-4">
@@ -50,11 +51,20 @@ const Header = () => {
                         <Link to="/products" className={`hover:text-gray-900 ${isActive('/products') ? 'text-gray-900 border-b-2 border-gray-900 pb-0.5' : ''}`}>Product</Link>
                         <Link to="/orders" className={`hover:text-gray-900 ${isActive('/orders') ? 'text-gray-900 border-b-2 border-gray-900 pb-0.5' : ''}`}>Orders</Link>
                         <Link to="/profile" className={`hover:text-gray-900 ${isActive('/profile') ? 'text-gray-900 border-b-2 border-gray-900 pb-0.5' : ''}`}>Profile</Link>
+                        {(user?.role === 'manager' || user?.role === 'admin') && (
+                            <Link to="/manager/dashboard" className={`hover:text-gray-900 text-emerald-600 ${isActive('/manager/dashboard') ? 'text-emerald-700 border-b-2 border-emerald-600 pb-0.5' : ''}`}>Kênh Quản Lý</Link>
+                        )}
                     </nav>
 
-                    <button onClick={handleLogout} className="bg-[#008a3d] hover:bg-[#007031] text-white px-5 py-1.5 rounded-md text-sm font-semibold transition-colors">
-                        Logout
-                    </button>
+                    {localStorage.getItem('accessToken') ? (
+                        <button onClick={handleLogout} className="bg-[#008a3d] hover:bg-[#007031] text-white px-5 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer">
+                            Logout
+                        </button>
+                    ) : (
+                        <Link to="/login" className="bg-[#00b14f] hover:bg-[#008a3d] text-white px-5 py-1.5 rounded-md text-sm font-semibold transition-colors">
+                            Login
+                        </Link>
+                    )}
 
                     <div className="flex items-center gap-4 text-gray-600 border-l pl-4 border-gray-300">
                         {/* Cart Icon with Badge */}

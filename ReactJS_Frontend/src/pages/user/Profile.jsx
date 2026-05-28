@@ -407,272 +407,289 @@ const Profile = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div className="space-y-6">
 
-                        {/* Left Column */}
-                        <div className="lg:col-span-7 space-y-6">
+                        {/* ROW 1: Personal Info & Loyalty/Coupons */}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                             {/* Personal Information */}
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                                <div className="bg-[#f0f4f8] px-6 py-4 flex items-center gap-2 border-b border-gray-100">
-                                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                                    <h3 className="font-semibold text-gray-800">Personal Information</h3>
-                                </div>
-                                <div className="p-6 space-y-5">
-                                    <div className="grid grid-cols-2 gap-5">
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-500 mb-1.5">First Name</label>
-                                            <input type="text" value={form.firstName} onChange={(e) => setForm(p => ({ ...p, firstName: e.target.value }))}
-                                                className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f] ${errors.firstName ? 'border-red-500' : 'border-gray-200'}`} />
+                            <div className="lg:col-span-7">
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                    <div className="bg-[#f0f4f8] px-6 py-4 flex items-center gap-2 border-b border-gray-100">
+                                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                        <h3 className="font-semibold text-gray-800">Personal Information</h3>
+                                    </div>
+                                    <div className="p-6 space-y-5">
+                                        <div className="grid grid-cols-2 gap-5">
+                                            <div>
+                                                <label className="block text-xs font-medium text-gray-500 mb-1.5">First Name</label>
+                                                <input type="text" value={form.firstName} onChange={(e) => setForm(p => ({ ...p, firstName: e.target.value }))}
+                                                    className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f] ${errors.firstName ? 'border-red-500' : 'border-gray-200'}`} />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-gray-500 mb-1.5">Last Name</label>
+                                                <input type="text" value={form.lastName} onChange={(e) => setForm(p => ({ ...p, lastName: e.target.value }))}
+                                                    className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f] ${errors.lastName ? 'border-red-500' : 'border-gray-200'}`} />
+                                            </div>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-medium text-gray-500 mb-1.5">Last Name</label>
-                                            <input type="text" value={form.lastName} onChange={(e) => setForm(p => ({ ...p, lastName: e.target.value }))}
-                                                className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f] ${errors.lastName ? 'border-red-500' : 'border-gray-200'}`} />
+                                            <label className="block text-xs font-medium text-gray-500 mb-1.5">Email Address</label>
+                                            <input type="email" value={form.email} disabled
+                                                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed" />
                                         </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-500 mb-1.5">Email Address</label>
-                                        <input type="email" value={form.email} disabled
-                                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-500 mb-1.5">Phone Number</label>
-                                        <input type="text" value={form.phone} onChange={(e) => setForm(p => ({ ...p, phone: e.target.value }))}
-                                            className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f] ${errors.phone ? 'border-red-500' : 'border-gray-200'}`} />
-                                        {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 mb-1.5">Phone Number</label>
+                                            <input type="text" value={form.phone} onChange={(e) => setForm(p => ({ ...p, phone: e.target.value }))}
+                                                className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f] ${errors.phone ? 'border-red-500' : 'border-gray-200'}`} />
+                                            {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Addresses Management */}
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                                <div className="bg-[#f0f4f8] px-6 py-4 flex items-center justify-between border-b border-gray-100">
-                                    <div className="flex items-center gap-2">
-                                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                        <h3 className="font-semibold text-gray-800">Addresses</h3>
+                            {/* Loyalty & Coupons */}
+                            <div className="lg:col-span-5">
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                    <div className="bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-4 flex items-center justify-between text-white">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xl">🪙</span>
+                                            <h3 className="font-semibold text-sm sm:text-base">Kho Điểm & Ví Voucher</h3>
+                                        </div>
+                                        <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-bold">
+                                            Active
+                                        </span>
                                     </div>
-                                    {!showAddressForm && (
-                                        <button onClick={() => { setShowAddressForm(true); setEditingAddress(null); }} className="text-xs font-semibold text-[#008f3f] hover:underline">
-                                            + Add New
-                                        </button>
-                                    )}
-                                </div>
-                                <div className="p-6">
-                                    {addrMsg && (
-                                        <div className={`mb-4 px-3 py-2 rounded text-xs font-medium ${addrMsgType === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-600 border border-red-200"}`}>
-                                            {addrMsg}
+                                    <div className="p-6 space-y-6">
+                                        {/* Points Balance */}
+                                        <div className="flex items-center justify-between bg-green-50/50 p-4 rounded-xl border border-green-100">
+                                            <div>
+                                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Điểm tích lũy</p>
+                                                <p className="text-2xl font-bold text-green-750 mt-1 flex items-center gap-1.5">
+                                                    <span>{user.points || 0}</span>
+                                                    <span className="text-sm font-medium text-green-600">xu</span>
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[10px] text-gray-400 font-medium">Giá trị quy đổi</p>
+                                                <p className="text-sm font-semibold text-gray-700 mt-1">
+                                                    {((user.points || 0) * 1000).toLocaleString('vi-VN')} đ
+                                                </p>
+                                            </div>
                                         </div>
-                                    )}
 
-                                    {showAddressForm && editingAddress === null && (
-                                        <div className="mb-6">
-                                            <AddressForm initial={null} onSave={handleSaveAddress} onCancel={() => setShowAddressForm(false)} loading={addrLoading} />
-                                        </div>
-                                    )}
-
-                                    {addresses.length === 0 && !showAddressForm ? (
-                                        <p className="text-sm text-gray-500 text-center py-4">No addresses saved.</p>
-                                    ) : (
-                                        <div className="space-y-4">
-                                            {addresses.map((addr) => (
-                                                <div key={addr.id}>
-                                                    {editingAddress === addr.id ? (
-                                                        <AddressForm initial={addr} onSave={handleSaveAddress} onCancel={() => setEditingAddress(null)} loading={addrLoading} />
-                                                    ) : (
-                                                        <div className={`p-4 rounded-xl border ${addr.isDefault ? "border-[#008f3f] bg-green-50/20" : "border-gray-200"}`}>
-                                                            <div className="flex items-start justify-between">
-                                                                <div>
-                                                                    {addr.isDefault && <span className="text-[10px] uppercase font-bold text-[#008f3f] mb-1 block tracking-wider">Default</span>}
-                                                                    <p className="text-sm text-gray-800 font-medium">{addr.street}</p>
-                                                                    {(addr.ward || addr.district || addr.city) && (
-                                                                        <p className="text-xs text-gray-500 mt-1">
-                                                                            {[addr.ward, addr.district, addr.city].filter(Boolean).join(", ")}
-                                                                        </p>
-                                                                    )}
-                                                                </div>
-                                                                <div className="flex gap-2 ml-4">
-                                                                    <button onClick={() => setEditingAddress(addr.id)} className="text-gray-400 hover:text-blue-600"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
-                                                                    {!addr.isDefault && <button onClick={() => handleRemoveAddress(addr.id)} className="text-gray-400 hover:text-red-600"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>}
-                                                                </div>
-                                                            </div>
-                                                            {!addr.isDefault && (
-                                                                <button onClick={() => handleSetDefault(addr.id)} className="text-xs text-[#008f3f] mt-3 font-semibold hover:underline">Set as default</button>
-                                                            )}
-                                                        </div>
-                                                    )}
+                                        {/* Vouchers/Coupons List */}
+                                        <div>
+                                            <p className="text-[10px] uppercase font-bold text-gray-400 mb-3 tracking-wider flex items-center justify-between">
+                                                <span>MÃ GIẢM GIÁ CỦA BẠN</span>
+                                                <span className="text-gray-500 font-medium normal-case">({coupons.length} voucher)</span>
+                                            </p>
+                                            
+                                            {coupons.length === 0 ? (
+                                                <div className="text-center py-6 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                                                    <p className="text-xs text-gray-400">Bạn chưa có mã giảm giá nào.</p>
+                                                    <p className="text-[10px] text-gray-400 mt-1">Đánh giá sản phẩm đã mua để nhận voucher 10%!</p>
                                                 </div>
-                                            ))}
+                                            ) : (
+                                                <div className="space-y-3 max-h-[250px] overflow-y-auto pr-1">
+                                                    {coupons.map((coupon) => (
+                                                        <div key={coupon.id} className="relative flex items-center justify-between p-3 border border-dashed border-green-200 rounded-xl bg-green-50/10 hover:bg-green-50/20 transition-colors">
+                                                            <div className="flex-1 min-w-0 pr-3">
+                                                                <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                                                                    <span className="bg-green-100 text-green-800 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase">
+                                                                        {coupon.type === 'percent' ? `-${Math.round(coupon.value)}%` : `-${Number(coupon.value).toLocaleString('vi-VN')}đ`}
+                                                                    </span>
+                                                                    <span className="text-xs font-mono font-bold text-gray-800 tracking-wider">
+                                                                        {coupon.code}
+                                                                    </span>
+                                                                </div>
+                                                                <p className="text-[11px] text-gray-500 truncate">
+                                                                    Cửa hàng: <span className="font-semibold">{coupon.shop?.name || `Shop #${coupon.shopId}`}</span>
+                                                                </p>
+                                                                <p className="text-[10px] text-gray-400 mt-0.5">
+                                                                    Hạn dùng: {new Date(coupon.expiresAt).toLocaleDateString('vi-VN')}
+                                                                </p>
+                                                            </div>
+                                                            <button 
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(coupon.code);
+                                                                    alert("Đã sao chép mã giảm giá!");
+                                                                }}
+                                                                className="text-[11px] font-semibold text-green-700 hover:text-green-900 border border-green-250 hover:border-green-300 bg-white px-2 py-1 rounded-lg shadow-2xs hover:shadow-xs transition-all active:scale-95 cursor-pointer"
+                                                            >
+                                                                Sao chép
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Right Column */}
-                        <div className="lg:col-span-5 space-y-6">
-                            {/* Loyalty & Coupons */}
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                                <div className="bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-4 flex items-center justify-between text-white">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xl">🪙</span>
-                                        <h3 className="font-semibold text-sm sm:text-base">Kho Điểm & Ví Voucher</h3>
-                                    </div>
-                                    <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-bold">
-                                        Active
-                                    </span>
-                                </div>
-                                <div className="p-6 space-y-6">
-                                    {/* Points Balance */}
-                                    <div className="flex items-center justify-between bg-green-50/50 p-4 rounded-xl border border-green-100">
-                                        <div>
-                                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Điểm tích lũy</p>
-                                            <p className="text-2xl font-bold text-green-750 mt-1 flex items-center gap-1.5">
-                                                <span>{user.points || 0}</span>
-                                                <span className="text-sm font-medium text-green-600">xu</span>
-                                            </p>
+                        {/* ROW 2: Addresses & Favorite Products */}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                            {/* Addresses Management */}
+                            <div className="lg:col-span-7 flex flex-col">
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex-1 flex flex-col">
+                                    <div className="bg-[#f0f4f8] px-6 py-4 flex items-center justify-between border-b border-gray-100">
+                                        <div className="flex items-center gap-2">
+                                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                            <h3 className="font-semibold text-gray-800">Addresses</h3>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-[10px] text-gray-400 font-medium">Giá trị quy đổi</p>
-                                            <p className="text-sm font-semibold text-gray-700 mt-1">
-                                                {((user.points || 0) * 1000).toLocaleString('vi-VN')} đ
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {/* Vouchers/Coupons List */}
-                                    <div>
-                                        <p className="text-[10px] uppercase font-bold text-gray-400 mb-3 tracking-wider flex items-center justify-between">
-                                            <span>MÃ GIẢM GIÁ CỦA BẠN</span>
-                                            <span className="text-gray-500 font-medium normal-case">({coupons.length} voucher)</span>
-                                        </p>
-                                        
-                                        {coupons.length === 0 ? (
-                                            <div className="text-center py-6 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
-                                                <p className="text-xs text-gray-400">Bạn chưa có mã giảm giá nào.</p>
-                                                <p className="text-[10px] text-gray-400 mt-1">Đánh giá sản phẩm đã mua để nhận voucher 10%!</p>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-3 max-h-[250px] overflow-y-auto pr-1">
-                                                {coupons.map((coupon) => (
-                                                    <div key={coupon.id} className="relative flex items-center justify-between p-3 border border-dashed border-green-200 rounded-xl bg-green-50/10 hover:bg-green-50/20 transition-colors">
-                                                        <div className="flex-1 min-w-0 pr-3">
-                                                            <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                                                                <span className="bg-green-100 text-green-800 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase">
-                                                                    {coupon.type === 'percent' ? `-${Math.round(coupon.value)}%` : `-${Number(coupon.value).toLocaleString('vi-VN')}đ`}
-                                                                </span>
-                                                                <span className="text-xs font-mono font-bold text-gray-800 tracking-wider">
-                                                                    {coupon.code}
-                                                                </span>
-                                                            </div>
-                                                            <p className="text-[11px] text-gray-500 truncate">
-                                                                Cửa hàng: <span className="font-semibold">{coupon.shop?.name || `Shop #${coupon.shopId}`}</span>
-                                                            </p>
-                                                            <p className="text-[10px] text-gray-400 mt-0.5">
-                                                                Hạn dùng: {new Date(coupon.expiresAt).toLocaleDateString('vi-VN')}
-                                                            </p>
-                                                        </div>
-                                                        <button 
-                                                            onClick={() => {
-                                                                navigator.clipboard.writeText(coupon.code);
-                                                                alert("Đã sao chép mã giảm giá!");
-                                                            }}
-                                                            className="text-[11px] font-semibold text-green-700 hover:text-green-900 border border-green-250 hover:border-green-300 bg-white px-2 py-1 rounded-lg shadow-2xs hover:shadow-xs transition-all active:scale-95 cursor-pointer"
-                                                        >
-                                                            Sao chép
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
+                                        {!showAddressForm && (
+                                            <button onClick={() => { setShowAddressForm(true); setEditingAddress(null); }} className="text-xs font-semibold text-[#008f3f] hover:underline">
+                                                + Add New
+                                            </button>
                                         )}
+                                    </div>
+                                    <div className="p-6 flex-1 flex flex-col justify-between">
+                                        <div>
+                                            {addrMsg && (
+                                                <div className={`mb-4 px-3 py-2 rounded text-xs font-medium ${addrMsgType === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-600 border border-red-200"}`}>
+                                                    {addrMsg}
+                                                </div>
+                                            )}
+
+                                            {showAddressForm && editingAddress === null && (
+                                                <div className="mb-6">
+                                                    <AddressForm initial={null} onSave={handleSaveAddress} onCancel={() => setShowAddressForm(false)} loading={addrLoading} />
+                                                </div>
+                                            )}
+
+                                            {addresses.length === 0 && !showAddressForm ? (
+                                                <p className="text-sm text-gray-500 text-center py-4">No addresses saved.</p>
+                                            ) : (
+                                                <div className="space-y-4">
+                                                    {addresses.map((addr) => (
+                                                        <div key={addr.id}>
+                                                            {editingAddress === addr.id ? (
+                                                                <AddressForm initial={addr} onSave={handleSaveAddress} onCancel={() => setEditingAddress(null)} loading={addrLoading} />
+                                                            ) : (
+                                                                <div className={`p-4 rounded-xl border ${addr.isDefault ? "border-[#008f3f] bg-green-50/20" : "border-gray-200"}`}>
+                                                                    <div className="flex items-start justify-between">
+                                                                        <div>
+                                                                            {addr.isDefault && <span className="text-[10px] uppercase font-bold text-[#008f3f] mb-1 block tracking-wider">Default</span>}
+                                                                            <p className="text-sm text-gray-800 font-medium">{addr.street}</p>
+                                                                            {(addr.ward || addr.district || addr.city) && (
+                                                                                <p className="text-xs text-gray-500 mt-1">
+                                                                                    {[addr.ward, addr.district, addr.city].filter(Boolean).join(", ")}
+                                                                                </p>
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="flex gap-2 ml-4">
+                                                                            <button onClick={() => setEditingAddress(addr.id)} className="text-gray-400 hover:text-blue-600"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                                                                            {!addr.isDefault && <button onClick={() => handleRemoveAddress(addr.id)} className="text-gray-400 hover:text-red-600"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>}
+                                                                        </div>
+                                                                    </div>
+                                                                    {!addr.isDefault && (
+                                                                        <button onClick={() => handleSetDefault(addr.id)} className="text-xs text-[#008f3f] mt-3 font-semibold hover:underline">Set as default</button>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Favorite Products */}
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                                <div className="bg-[#f0f4f8] px-6 py-4 flex items-center gap-2 border-b border-gray-100">
-                                    <svg className="w-5 h-5 text-red-500 fill-current" viewBox="0 0 24 24">
-                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                                    </svg>
-                                    <h3 className="font-semibold text-gray-800">Sản phẩm yêu thích</h3>
-                                    <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold ml-auto">
-                                        {wishlist.length} món
-                                    </span>
-                                </div>
-                                <div className="p-6">
-                                    {wishlist.length === 0 ? (
-                                        <div className="text-center py-8 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
-                                            <p className="text-sm text-gray-400">Chưa có sản phẩm yêu thích.</p>
-                                            <button 
-                                                onClick={() => navigate('/products')} 
-                                                className="text-xs text-blue-600 font-bold hover:underline mt-2 cursor-pointer"
-                                            >
-                                                Khám phá ngay
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
-                                            {wishlist.map((item) => {
-                                                const imgUrl = Array.isArray(item.images) && item.images.length > 0
-                                                    ? (item.images[0].startsWith('http') ? item.images[0] : `${API_URL}${item.images[0]}`)
-                                                    : (item.image ? (item.image.startsWith('http') ? item.image : `${API_URL}${item.image}`) : "/placeholder.png");
+                            <div className="lg:col-span-5 flex flex-col">
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex-1 flex flex-col">
+                                    <div className="bg-[#f0f4f8] px-6 py-4 flex items-center gap-2 border-b border-gray-100">
+                                        <svg className="w-5 h-5 text-red-500 fill-current" viewBox="0 0 24 24">
+                                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                        </svg>
+                                        <h3 className="font-semibold text-gray-800">Sản phẩm yêu thích</h3>
+                                        <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold ml-auto">
+                                            {wishlist.length} món
+                                        </span>
+                                    </div>
+                                    <div className="p-6 flex-1 flex flex-col justify-between">
+                                        {wishlist.length === 0 ? (
+                                            <div className="text-center py-8 border border-dashed border-gray-200 rounded-xl bg-gray-50/50 flex-1 flex flex-col justify-center">
+                                                <p className="text-sm text-gray-400">Chưa có sản phẩm yêu thích.</p>
+                                                <button 
+                                                    onClick={() => navigate('/products')} 
+                                                    className="text-xs text-blue-600 font-bold hover:underline mt-2 cursor-pointer"
+                                                >
+                                                    Khám phá ngay
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3 max-h-[148px] overflow-y-auto pr-1 flex-1">
+                                                {wishlist.map((item) => {
+                                                    const imgUrl = Array.isArray(item.images) && item.images.length > 0
+                                                        ? (item.images[0].startsWith('http') ? item.images[0] : `${API_URL}${item.images[0]}`)
+                                                        : (item.image ? (item.image.startsWith('http') ? item.image : `${API_URL}${item.image}`) : "/placeholder.png");
 
-                                                return (
-                                                    <div key={item.id} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100">
-                                                        <div 
-                                                            className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" 
-                                                            onClick={() => navigate(`/product/${item.id}`)}
-                                                        >
-                                                            <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-150 flex-shrink-0 bg-gray-50">
-                                                                <img src={imgUrl} alt={item.title} className="w-full h-full object-cover" />
+                                                    return (
+                                                        <div key={item.id} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100">
+                                                            <div 
+                                                                className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" 
+                                                                onClick={() => navigate(`/product/${item.id}`)}
+                                                            >
+                                                                <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-150 flex-shrink-0 bg-gray-50">
+                                                                    <img src={imgUrl} alt={item.title} className="w-full h-full object-cover" />
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <h4 className="text-xs font-bold text-gray-800 truncate hover:text-[#008f3f] transition-colors">{item.title}</h4>
+                                                                    <p className="text-xs font-semibold text-gray-900 mt-1">{Number(item.price).toLocaleString('vi-VN')}đ</p>
+                                                                </div>
                                                             </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <h4 className="text-xs font-bold text-gray-800 truncate hover:text-[#008f3f] transition-colors">{item.title}</h4>
-                                                                <p className="text-xs font-semibold text-gray-900 mt-1">{Number(item.price).toLocaleString('vi-VN')}đ</p>
-                                                            </div>
+                                                            <button 
+                                                                onClick={() => handleRemoveFavorite(item.id)}
+                                                                className="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                                                                title="Bỏ thích"
+                                                            >
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                </svg>
+                                                            </button>
                                                         </div>
-                                                        <button 
-                                                            onClick={() => handleRemoveFavorite(item.id)}
-                                                            className="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
-                                                            title="Bỏ thích"
-                                                        >
-                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                            </svg>
-                                                        </button>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
+                        </div>
 
+                        {/* ROW 3: Security & Spacer */}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                            {/* Empty spacer to align with left columns */}
+                            <div className="lg:col-span-7 hidden lg:block"></div>
                             {/* Security */}
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                                <div className="bg-[#f0f4f8] px-6 py-4 flex items-center gap-2 border-b border-gray-100">
-                                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                                    <h3 className="font-semibold text-gray-800">Security</h3>
-                                </div>
-                                <div className="p-6 space-y-5">
-                                    <div>
-                                        <p className="text-[10px] uppercase font-bold text-gray-400 mb-3 tracking-wider">CHANGE PASSWORD</p>
-                                        <div className="space-y-3">
-                                            <input type="password" placeholder="Current Password" value={securityForm.currentPassword} onChange={e => setSecurityForm(p => ({ ...p, currentPassword: e.target.value }))} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f]" />
-                                            <input type="password" placeholder="New Password" value={securityForm.newPassword} onChange={e => setSecurityForm(p => ({ ...p, newPassword: e.target.value }))} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f]" />
-                                            <input type="password" placeholder="Confirm New Password" value={securityForm.confirmPassword} onChange={e => setSecurityForm(p => ({ ...p, confirmPassword: e.target.value }))} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f]" />
-                                        </div>
+                            <div className="lg:col-span-5">
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                    <div className="bg-[#f0f4f8] px-6 py-4 flex items-center gap-2 border-b border-gray-100">
+                                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                                        <h3 className="font-semibold text-gray-800">Security</h3>
                                     </div>
-
-                                    <hr className="border-gray-100" />
-
-                                    <div className="flex items-center justify-between">
+                                    <div className="p-6 space-y-5">
                                         <div>
-                                            <p className="text-sm font-semibold text-gray-800">Two-Factor Auth</p>
-                                            <p className="text-[10px] font-bold text-[#008f3f] uppercase mt-0.5 tracking-wider">Currently Active</p>
+                                            <p className="text-[10px] uppercase font-bold text-gray-400 mb-3 tracking-wider">CHANGE PASSWORD</p>
+                                            <div className="space-y-3">
+                                                <input type="password" placeholder="Current Password" value={securityForm.currentPassword} onChange={e => setSecurityForm(p => ({ ...p, currentPassword: e.target.value }))} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f]" />
+                                                <input type="password" placeholder="New Password" value={securityForm.newPassword} onChange={e => setSecurityForm(p => ({ ...p, newPassword: e.target.value }))} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f]" />
+                                                <input type="password" placeholder="Confirm New Password" value={securityForm.confirmPassword} onChange={e => setSecurityForm(p => ({ ...p, confirmPassword: e.target.value }))} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f]" />
+                                            </div>
                                         </div>
-                                        <div className="w-10 h-5 bg-[#008f3f] rounded-full relative cursor-pointer">
-                                            <div className="w-4 h-4 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div>
+
+                                        <hr className="border-gray-100" />
+
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-sm font-semibold text-gray-800">Two-Factor Auth</p>
+                                                <p className="text-[10px] font-bold text-[#008f3f] uppercase mt-0.5 tracking-wider">Currently Active</p>
+                                            </div>
+                                            <div className="w-10 h-5 bg-[#008f3f] rounded-full relative cursor-pointer">
+                                                <div className="w-4 h-4 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button, InputField, Message, Card, PageWrapper } from "../components";
 
@@ -10,6 +10,23 @@ const Login = () => {
     const [msgType, setMsgType] = useState("info");
 
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
+    useEffect(() => {
+        const token = localStorage.getItem("accessToken");
+        const userRaw = localStorage.getItem("user");
+        if (token && userRaw) {
+            try {
+                const user = JSON.parse(userRaw);
+                if (user?.role === "manager" || user?.role === "admin") {
+                    navigate("/manager/dashboard", { replace: true });
+                    return;
+                }
+            } catch (e) {}
+            const params = new URLSearchParams(window.location.search);
+            const redirectUrl = params.get("redirect") || "/";
+            navigate(redirectUrl, { replace: true });
+        }
+    }, [navigate]);
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -44,12 +61,14 @@ const Login = () => {
             if (!res.ok) {
                 setMsg(data.message || "Lỗi đăng nhập");
                 setMsgType("error");
+                setLoading(false);
                 return;
             }
 
             if (!data.token) {
                 setMsg("Server không trả token");
                 setMsgType("error");
+                setLoading(false);
                 return;
             }
 
@@ -59,13 +78,22 @@ const Login = () => {
             setMsg("Đăng nhập thành công!");
             setMsgType("success");
 
+            const params = new URLSearchParams(window.location.search);
+            let redirectUrl = params.get("redirect") || "/";
+            if (data.user.role === "manager" || data.user.role === "admin") {
+                redirectUrl = "/manager/dashboard";
+            } else if (data.user.role === "vendor" && (redirectUrl === "/vendor/setup" || redirectUrl === "/")) {
+                redirectUrl = "/vendor/dashboard";
+            }
+
             setTimeout(() => {
-                window.location.href = "/";
+                window.location.href = redirectUrl;
             }, 500);
 
         } catch (err) {
             setMsg(err.message || "Lỗi đăng nhập");
             setMsgType("error");
+            setLoading(false);
         }
     };
 
@@ -89,10 +117,14 @@ const Login = () => {
                     <Message text={msg} type={msgType} />
                 </form>
 
-                <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+                <div className="mt-8 pt-6 border-t border-gray-100 text-center space-y-3">
                     <p className="text-gray-600">
                         Chưa có tài khoản?{" "}
-                        <Link to="/register" className="text-primary font-semibold hover:underline">Đăng ký tại đây</Link>
+                        <Link to={`/register${window.location.search}`} className="text-primary font-semibold hover:underline">Đăng ký tại đây</Link>
+                    </p>
+                    <p className="text-sm text-gray-500">
+                        Bạn muốn mở gian hàng?{" "}
+                        <Link to="/login?redirect=%2Fvendor%2Fsetup" className="text-[#00b14f] font-semibold hover:underline">Đăng ký trang bán hàng</Link>
                     </p>
                 </div>
             </Card>

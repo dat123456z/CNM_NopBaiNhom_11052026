@@ -253,7 +253,7 @@ const Register = () => {
             setMsgType("success");
 
             setTimeout(() => {
-                navigate("/login");
+                navigate("/login" + window.location.search);
             }, 1500);
         } catch (err) {
             setMsg(
@@ -479,7 +479,7 @@ const Register = () => {
                     <p className="text-gray-600">
                         Đã có tài khoản?{" "}
                         <Link
-                            to="/login"
+                            to={`/login${window.location.search}`}
                             className="text-primary font-semibold hover:underline"
                         >
                             Đăng nhập ngay
