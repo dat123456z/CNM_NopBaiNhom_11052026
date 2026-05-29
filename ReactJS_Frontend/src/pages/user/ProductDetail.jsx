@@ -169,6 +169,15 @@ const ProductDetail = () => {
         return product.image ? [product.image] : [];
     }, [product]);
 
+    // When selectedColor changes, show the image at the same index (assumes images array ordered by color)
+    useEffect(() => {
+        if (!product || !product.colors || !selectedColor) return;
+        const idx = product.colors.findIndex(c => c.label === selectedColor);
+        if (idx >= 0 && images[idx]) {
+            setActiveImage(idx);
+        }
+    }, [selectedColor, product, images]);
+
     // Check wishlist status on mount/product change
     useEffect(() => {
         if (!product) return;
@@ -370,14 +379,21 @@ const ProductDetail = () => {
                     <div className="w-1/2">
                         {images.length ? (
                             <div className="flex flex-col gap-4">
-                                <div className="w-full aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
+                                <div className="w-full aspect-[4/4] bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
                                     <img src={images[activeImage]} className="w-full h-full object-cover" alt={product.title} />
                                 </div>
                                 <div className="flex gap-3 overflow-x-auto pb-2">
                                     {images.map((img, idx) => (
                                         <div
                                             key={idx}
-                                            onClick={() => setActiveImage(idx)}
+                                            onClick={() => {
+                                                setActiveImage(idx);
+                                                // Only update selected color when images and colors arrays match in length
+                                                if (product && Array.isArray(product.colors) && product.colors.length === images.length) {
+                                                    const colorLabel = product.colors[idx]?.label;
+                                                    if (colorLabel) setSelectedColor(colorLabel);
+                                                }
+                                            }}
                                             className={`w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden cursor-pointer border-2 transition-colors ${activeImage === idx ? 'border-blue-600' : 'border-transparent hover:border-gray-300'}`}
                                         >
                                             <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
@@ -386,7 +402,7 @@ const ProductDetail = () => {
                                 </div>
                             </div>
                         ) : (
-                            <div className="w-full aspect-[4/3] bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">Không có hình ảnh</div>
+                            <div className="w-full aspect-[4/4] bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">Không có hình ảnh</div>
                         )}
                     </div>
 
@@ -445,7 +461,10 @@ const ProductDetail = () => {
                                         <button
                                             key={i}
                                             title={c.label}
-                                            onClick={() => setSelectedColor(c.label)}
+                                            onClick={() => {
+                                                setSelectedColor(c.label);
+                                                setActiveImage(i);
+                                            }}
                                             className={`w-8 h-8 rounded-full border border-gray-300 transition-all ${selectedColor === c.label ? 'ring-2 ring-offset-2 ring-blue-600 scale-110' : 'hover:scale-105'}`}
                                             style={{ backgroundColor: c.value }}
                                         ></button>
