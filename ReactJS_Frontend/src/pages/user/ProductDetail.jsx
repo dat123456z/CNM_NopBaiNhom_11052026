@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import ProductCard from "../../components/ProductCard";
 import Header from "../../components/user/Header";
 import Footer from "../../components/user/Footer";
+import Breadcrumb from "../../components/Breadcrumb";
 import { useCart } from "../../context/CartContext";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
@@ -373,6 +374,11 @@ const ProductDetail = () => {
         <div className="min-h-screen bg-[#f8f9fb]">
             <Header />
 
+            <Breadcrumb align="viewport" items={[
+                { label: 'Homepage', to: '/' },
+                { label: 'Product', to: '/products' },
+                { label: product.title }
+            ]}/>
             <main className="max-w-6xl mx-auto p-4 pt-10">
                 <div className="flex gap-10">
                     {/* Left: Images */}
