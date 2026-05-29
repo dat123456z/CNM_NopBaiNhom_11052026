@@ -1,17 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import ProductCard from "../../components/ProductCard";
 import Header from "../../components/user/Header";
 import Footer from "../../components/user/Footer";
+import { fetchAllProducts } from "../../utils/productApi";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
-
-const normalizeArray = (data) => {
-    if (Array.isArray(data)) return data;
-    if (Array.isArray(data?.products)) return data.products;
-    if (Array.isArray(data?.data)) return data.data;
-    return [];
-};
 
 const HorizontalProductSlider = ({ title, products, navigate }) => {
     const sliderId = useMemo(() => `slider-${Math.random().toString(36).substr(2, 9)}`, []);
@@ -100,27 +94,22 @@ const HomePage = () => {
                 setError("");
 
                 const token = localStorage.getItem("accessToken");
-
-                const res = await fetch(`${API_BASE}/api/products`, {
+                const data = await fetchAllProducts({
+                    apiBase: API_BASE,
                     signal: controller.signal,
                     headers: {
                         "Content-Type": "application/json",
                         ...(token ? { Authorization: `Bearer ${token}` } : {})
                     }
                 });
+                setProducts(data);
 
-                if (res.status === 401) {
+            } catch (err) {
+                if (err.status === 401) {
                     localStorage.clear();
                     navigate("/login");
                     return;
                 }
-
-                if (!res.ok) throw new Error("Load products failed");
-
-                const data = await res.json();
-                setProducts(normalizeArray(data));
-
-            } catch (err) {
                 if (err.name !== "AbortError") {
                     setError(err.message || "Error");
                 }
