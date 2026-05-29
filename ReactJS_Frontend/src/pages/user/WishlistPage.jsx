@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/user/Header";
 import Footer from "../../components/user/Footer";
+import Breadcrumb from "../../components/Breadcrumb";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
@@ -59,6 +60,7 @@ const WishlistPage = () => {
     return (
         <div className="min-h-screen bg-[#f8f9fb] flex flex-col font-sans">
             <Header />
+            <Breadcrumb align="viewport"/>
             <main className="flex-1 max-w-6xl mx-auto px-6 py-10 w-full">
                 <div className="mb-8">
                     <h1 className="text-3xl font-extrabold text-gray-900">Sản phẩm yêu thích</h1>
