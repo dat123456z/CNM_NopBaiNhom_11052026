@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import ProductCard from "../../components/ProductCard";
 import Header from "../../components/user/Header";
 import Footer from "../../components/user/Footer";
+import { fetchAllProducts } from "../../utils/productApi";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
 
@@ -114,15 +115,11 @@ const ProductPage = () => {
             try {
                 setLoading(true);
                 setError("");
-                const res = await fetch(`${API_BASE}/api/products`, { signal: controller.signal });
-                if (!res.ok) throw new Error("Không tải được danh sách sản phẩm");
-                const data = await res.json();
-
-                setProducts(
-                    Array.isArray(data)
-                        ? data
-                        : data?.products || data?.data || []
-                );
+                const allProducts = await fetchAllProducts({
+                    apiBase: API_BASE,
+                    signal: controller.signal
+                });
+                setProducts(allProducts);
             } catch (err) {
                 if (err.name !== "AbortError") setError(err.message || "Có lỗi xảy ra");
             } finally {
