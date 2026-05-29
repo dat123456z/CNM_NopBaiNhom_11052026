@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import ProductCard from "../../components/ProductCard";
 import Header from "../../components/user/Header";
 import Footer from "../../components/user/Footer";
+import Breadcrumb from "../../components/Breadcrumb";
 import { fetchAllProducts } from "../../utils/productApi";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
@@ -250,6 +251,7 @@ const ProductPage = () => {
             `}</style>
 
             <Header />
+            <Breadcrumb align="viewport"/>
 
             <main className="max-w-7xl mx-auto px-6 py-10 flex gap-8">
                 {/* Sidebar */}
