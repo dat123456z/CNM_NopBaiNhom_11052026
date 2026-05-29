@@ -56,7 +56,7 @@ const HorizontalProductSlider = ({ title, products, navigate }) => {
                 {products.map((p) => (
                     <div
                         key={p.id}
-                        className="w-[280px] md:w-[300px] flex-shrink-0 snap-start cursor-pointer transition-transform duration-300"
+                        className="w-[280px] md:w-[290px] flex-shrink-0 snap-start cursor-pointer transition-transform duration-300"
                         onClick={() => navigate(`/product/${p.id}`)}
                     >
                         <ProductCard product={p} />
