@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/user/Header";
 import Footer from "../../components/user/Footer";
+import Breadcrumb from "../../components/Breadcrumb";
 import { useCart } from "../../context/CartContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -214,6 +215,7 @@ const CheckoutPage = () => {
     return (
         <div className="min-h-screen bg-[#f8f9fb] flex flex-col">
             <Header />
+            <Breadcrumb align="viewport"/>
             <main className="flex-1 max-w-6xl mx-auto px-6 py-10 w-full">
                 {/* Step Indicator */}
                 <div className="flex items-center justify-center mb-10">
