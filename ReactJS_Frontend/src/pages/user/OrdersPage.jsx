@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../../components/user/Header";
 import Footer from "../../components/user/Footer";
+import Breadcrumb from "../../components/Breadcrumb";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const fmt = (n) => Number(n).toLocaleString("vi-VN") + "đ";
@@ -113,6 +114,7 @@ const OrdersPage = () => {
     return (
         <div className="min-h-screen bg-[#f8f9fb] flex flex-col">
             <Header />
+            <Breadcrumb align="viewport"/>
             <main className="flex-1 max-w-7xl mx-auto px-6 py-10 w-full">
                 {/* Success Banner */}
                 {successBanner && (
