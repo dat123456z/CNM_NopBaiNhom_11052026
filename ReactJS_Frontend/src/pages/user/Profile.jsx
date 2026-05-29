@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Message, PageWrapper } from "../../components";
 import Header from "../../components/user/Header";
 import Footer from "../../components/user/Footer";
+import Breadcrumb from "../../components/Breadcrumb";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
@@ -357,6 +358,7 @@ const Profile = () => {
     return (
         <div className="min-h-screen bg-[#f4f6fa] flex flex-col font-sans">
             <Header />
+            <Breadcrumb align="viewport"/>
             <main className="flex-1 py-10">
                 <div className="max-w-5xl w-full mx-auto px-4">
 
