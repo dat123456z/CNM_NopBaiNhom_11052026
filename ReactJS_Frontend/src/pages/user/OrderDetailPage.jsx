@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../../components/user/Header";
 import Footer from "../../components/user/Footer";
+import Breadcrumb from "../../components/Breadcrumb";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const fmt = (n) => Number(n).toLocaleString("vi-VN") + "đ";
@@ -57,9 +58,12 @@ const OrderDetailPage = () => {
             alert("Vui lòng nhập nội dung đánh giá.");
             return;
         }
+
         setReviewLoading(true);
         try {
             const token = localStorage.getItem("accessToken");
+            if (!token) { alert("Vui lòng đăng nhập để đánh giá."); return; }
+
             const res = await fetch(`${API_URL}/api/reviews/product`, {
                 method: "POST",
                 headers: {
@@ -73,15 +77,18 @@ const OrderDetailPage = () => {
                     comment: reviewForm.comment
                 })
             });
-            const data = await res.json();
+
+            const data = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(data.message || "Đánh giá thất bại.");
 
             setRewardInfo({
                 points: data.rewardPoints || 10,
                 couponCode: data.rewardCouponCode
             });
+            // close review modal
+            setReviewProduct(null);
         } catch (err) {
-            alert(err.message);
+            alert(err.message || "Đánh giá thất bại.");
         } finally {
             setReviewLoading(false);
         }
