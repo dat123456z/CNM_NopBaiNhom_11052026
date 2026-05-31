@@ -187,7 +187,14 @@ const getMyOrders = async (userId, { page = 1, limit = 10, status }) => {
 const getOrderDetail = async (orderId, userId, role) => {
     const where = { id: orderId };
     if (!['admin', 'manager'].includes(role)) where.userId = userId;
-    const order = await Order.findOne({ where, include: [{ model: OrderItem, as: 'items' }] });
+    const Shipper = require('../models/Shipper');
+    const order = await Order.findOne({
+        where,
+        include: [
+            { model: OrderItem, as: 'items' },
+            { model: Shipper, as: 'shipper' }
+        ]
+    });
     if (!order) throw Object.assign(new Error('Đơn hàng không tồn tại.'), { status: 404 });
     return order;
 };
@@ -305,12 +312,16 @@ const getShopOrders = async (shopId, { page = 1, limit = 20, status }) => {
     const where = { shopId };
     if (status) where.status = status;
     const offset = (page - 1) * limit;
+    const Shipper = require('../models/Shipper');
     const { count, rows } = await Order.findAndCountAll({
         where,
         order: [['createdAt', 'DESC']],
         limit: Number(limit),
         offset,
-        include: [{ model: OrderItem, as: 'items' }]
+        include: [
+            { model: OrderItem, as: 'items' },
+            { model: Shipper, as: 'shipper' }
+        ]
     });
     return { total: count, page: Number(page), limit: Number(limit), orders: rows };
 };
@@ -320,4 +331,44 @@ const checkCoupon = async (userId, { items, couponCode }) => {
     return couponService.checkCoupon(userId, { items, couponCode });
 };
 
-module.exports = { createOrder, confirmOrder, getMyOrders, getOrderDetail, cancelOrder, updateOrderStatus, getShopOrders, checkCoupon };
+const assignShipper = async (orderId, shopId, shipperId) => {
+    const order = await Order.findOne({ where: { id: orderId, shopId } });
+    if (!order) throw Object.assign(new Error('Đơn hàng không tồn tại.'), { status: 404 });
+    
+    if (order.status === 'pending') {
+        throw Object.assign(new Error('Vui lòng xác nhận đơn hàng trước khi chọn shipper.'), { status: 400 });
+    }
+    if (['cancelled', 'delivered', 'refunded'].includes(order.status)) {
+        throw Object.assign(new Error('Không thể gán shipper cho đơn hàng ở trạng thái này.'), { status: 400 });
+    }
+
+    if (shipperId) {
+        const Shipper = require('../models/Shipper');
+        const shipper = await Shipper.findOne({ where: { id: shipperId, shopId } });
+        if (!shipper) throw Object.assign(new Error('Shipper không tồn tại hoặc không thuộc shop của bạn.'), { status: 404 });
+    }
+
+    order.shipperId = shipperId || null;
+    await order.save();
+
+    const ShipperModel = require('../models/Shipper');
+    return await Order.findOne({
+        where: { id: orderId },
+        include: [
+            { model: OrderItem, as: 'items' },
+            { model: ShipperModel, as: 'shipper' }
+        ]
+    });
+};
+
+module.exports = {
+    createOrder,
+    confirmOrder,
+    getMyOrders,
+    getOrderDetail,
+    cancelOrder,
+    updateOrderStatus,
+    getShopOrders,
+    checkCoupon,
+    assignShipper
+};

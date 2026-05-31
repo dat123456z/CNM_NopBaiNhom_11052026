@@ -9,7 +9,8 @@ const {
     cancelOrder,
     updateOrderStatus,
     getShopOrders,
-    checkCoupon
+    checkCoupon,
+    assignShipper
 } = require('../controllers/orderController');
 
 router.post('/', authMiddleware, createOrder);
@@ -20,5 +21,6 @@ router.get('/:id', authMiddleware, getOrderDetail);
 router.post('/:id/confirm', authMiddleware, vendorMiddleware, confirmOrder);
 router.patch('/:id/cancel', authMiddleware, cancelOrder);
 router.patch('/:id/status', authMiddleware, vendorMiddleware, updateOrderStatus);
+router.patch('/:id/shipper', authMiddleware, vendorMiddleware, assignShipper);
 
 module.exports = router;

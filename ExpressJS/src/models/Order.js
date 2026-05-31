@@ -5,6 +5,7 @@ const Order = sequelize.define('Order', {
     id: { type: DataTypes.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true },
     userId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
     shopId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+    shipperId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
     status: {
         type: DataTypes.ENUM(
             'pending',          // 1. Đơn hàng mới

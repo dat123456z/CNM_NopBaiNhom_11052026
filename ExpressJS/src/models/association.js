@@ -8,6 +8,7 @@ const { ProductReview, ShopReview, OrderReview } = require('./Review');
 const WalletTransaction = require('./WalletTransaction');
 const Wishlist = require('./Wishlist');
 const Verification = require('./Verification');
+const Shipper = require('./Shipper');
 
 User.hasOne(Shop, { foreignKey: 'userId', as: 'shop' });
 Shop.belongsTo(User, { foreignKey: 'userId', as: 'owner' });
@@ -65,10 +66,17 @@ Shop.hasMany(WalletTransaction, { foreignKey: 'shopId', as: 'transactions' });
 WalletTransaction.belongsTo(Shop, { foreignKey: 'shopId', as: 'shop' });
 Order.hasMany(WalletTransaction, { foreignKey: 'orderId', as: 'walletTransactions' });
 
+Shop.hasMany(Shipper, { foreignKey: 'shopId', as: 'shippers' });
+Shipper.belongsTo(Shop, { foreignKey: 'shopId', as: 'shop' });
+
+Order.belongsTo(Shipper, { foreignKey: 'shipperId', as: 'shipper' });
+Shipper.hasMany(Order, { foreignKey: 'shipperId', as: 'orders' });
+
 module.exports = {
     User, Shop, Product,
     Order, OrderItem,
     CartItem, Coupon,
     ProductReview, ShopReview, OrderReview,
-    WalletTransaction, Wishlist, Verification
+    WalletTransaction, Wishlist, Verification,
+    Shipper
 };

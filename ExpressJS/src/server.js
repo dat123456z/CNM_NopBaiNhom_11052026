@@ -33,6 +33,7 @@ require('./models/Review');
 require('./models/Wishlist');
 require('./models/Coupon');
 require('./models/WalletTransaction');
+require('./models/Shipper');
 require('./models/association');
 
 app.use('/api/auth', require('./routes/auth'));
@@ -45,6 +46,18 @@ app.use('/api/shops', require('./routes/shop'));
 app.use('/api/wishlists', require('./routes/wishlist'));
 app.use('/api/revenues', require('./routes/revenue'));
 app.use('/api/coupons', require('./routes/coupon'));
+app.use('/api/shippers', require('./routes/shipper'));
+
+app.use((err, req, res, next) => {
+    const multer = require('multer');
+    if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ message: 'Kích thước file quá lớn. Giới hạn tối đa là 2MB.' });
+        }
+        return res.status(400).json({ message: `Lỗi tải lên: ${err.message}` });
+    }
+    return res.status(err.status || 500).json({ message: err.message || 'Lỗi hệ thống.' });
+});
 
 const PORT = process.env.PORT || 3000;
 
