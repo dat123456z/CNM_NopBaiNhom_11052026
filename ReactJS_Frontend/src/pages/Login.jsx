@@ -82,7 +82,7 @@ const Login = () => {
             let redirectUrl = params.get("redirect") || "/";
             if (data.user.role === "manager" || data.user.role === "admin") {
                 redirectUrl = "/manager/dashboard";
-            } else if (data.user.role === "vendor" && (redirectUrl === "/vendor/setup" || redirectUrl === "/")) {
+            } else if (data.user.role === "vendor") {
                 redirectUrl = "/vendor/dashboard";
             }
 
@@ -117,14 +117,10 @@ const Login = () => {
                     <Message text={msg} type={msgType} />
                 </form>
 
-                <div className="mt-8 pt-6 border-t border-gray-100 text-center space-y-3">
+                <div className="mt-8 pt-6 border-t border-gray-100 text-center">
                     <p className="text-gray-600">
                         Chưa có tài khoản?{" "}
                         <Link to={`/register${window.location.search}`} className="text-primary font-semibold hover:underline">Đăng ký tại đây</Link>
-                    </p>
-                    <p className="text-sm text-gray-500">
-                        Bạn muốn mở gian hàng?{" "}
-                        <Link to="/login?redirect=%2Fvendor%2Fsetup" className="text-[#00b14f] font-semibold hover:underline">Đăng ký trang bán hàng</Link>
                     </p>
                 </div>
             </Card>

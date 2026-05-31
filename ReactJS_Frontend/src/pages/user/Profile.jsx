@@ -150,7 +150,7 @@ const Profile = () => {
                 }
             };
             fetchCoupons();
-            
+
             // Fetch user wishlist
             const fetchWishlist = async () => {
                 try {
@@ -358,7 +358,7 @@ const Profile = () => {
     return (
         <div className="min-h-screen bg-[#f4f6fa] flex flex-col font-sans">
             <Header />
-            <Breadcrumb align="viewport"/>
+            <Breadcrumb align="viewport" />
             <main className="flex-1 py-10">
                 <div className="max-w-5xl w-full mx-auto px-4">
 
@@ -410,7 +410,29 @@ const Profile = () => {
                     </div>
 
                     <div className="space-y-6">
-
+                        {/* Vendor Onboarding CTA – only for regular users */}
+                        {user.role !== "vendor" && user.role !== "manager" && user.role !== "admin" && (
+                            <div className="bg-gradient-to-r from-[#00b14f] to-[#009943] rounded-xl shadow-lg border border-green-600/20 overflow-hidden relative">
+                                {/* Background decorations */}
+                                <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+                                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+                                <div className="p-6 md:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">
+                                    <div className="flex items-center gap-4 flex-1">
+                                        <div>
+                                            <h3 className="text-lg font-extrabold text-white mb-1">Bắt đầu kinh doanh trên UTEShop</h3>
+                                            <p className="text-sm text-white/80">Tạo trang bán hàng của riêng bạn, đăng tải sản phẩm và quản lý đơn hàng ngay hôm nay.</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => navigate("/vendor/setup")}
+                                        className="px-6 py-3 bg-white text-[#00b14f] text-sm font-bold rounded-xl shadow-md hover:shadow-lg hover:bg-green-50 transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer active:scale-95"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+                                        Tạo trang bán hàng
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                         {/* ROW 1: Personal Info & Loyalty/Coupons */}
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                             {/* Personal Information */}
@@ -484,7 +506,7 @@ const Profile = () => {
                                                 <span>MÃ GIẢM GIÁ CỦA BẠN</span>
                                                 <span className="text-gray-500 font-medium normal-case">({coupons.length} voucher)</span>
                                             </p>
-                                            
+
                                             {coupons.length === 0 ? (
                                                 <div className="text-center py-6 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
                                                     <p className="text-xs text-gray-400">Bạn chưa có mã giảm giá nào.</p>
@@ -510,7 +532,7 @@ const Profile = () => {
                                                                     Hạn dùng: {new Date(coupon.expiresAt).toLocaleDateString('vi-VN')}
                                                                 </p>
                                                             </div>
-                                                            <button 
+                                                            <button
                                                                 onClick={() => {
                                                                     navigator.clipboard.writeText(coupon.code);
                                                                     alert("Đã sao chép mã giảm giá!");
@@ -603,7 +625,7 @@ const Profile = () => {
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex-1 flex flex-col">
                                     <div className="bg-[#f0f4f8] px-6 py-4 flex items-center gap-2 border-b border-gray-100">
                                         <svg className="w-5 h-5 text-red-500 fill-current" viewBox="0 0 24 24">
-                                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                                         </svg>
                                         <h3 className="font-semibold text-gray-800">Sản phẩm yêu thích</h3>
                                         <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold ml-auto">
@@ -614,8 +636,8 @@ const Profile = () => {
                                         {wishlist.length === 0 ? (
                                             <div className="text-center py-8 border border-dashed border-gray-200 rounded-xl bg-gray-50/50 flex-1 flex flex-col justify-center">
                                                 <p className="text-sm text-gray-400">Chưa có sản phẩm yêu thích.</p>
-                                                <button 
-                                                    onClick={() => navigate('/products')} 
+                                                <button
+                                                    onClick={() => navigate('/products')}
                                                     className="text-xs text-blue-600 font-bold hover:underline mt-2 cursor-pointer"
                                                 >
                                                     Khám phá ngay
@@ -630,8 +652,8 @@ const Profile = () => {
 
                                                     return (
                                                         <div key={item.id} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100">
-                                                            <div 
-                                                                className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" 
+                                                            <div
+                                                                className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
                                                                 onClick={() => navigate(`/product/${item.id}`)}
                                                             >
                                                                 <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-150 flex-shrink-0 bg-gray-50">
@@ -642,7 +664,7 @@ const Profile = () => {
                                                                     <p className="text-xs font-semibold text-gray-900 mt-1">{Number(item.price).toLocaleString('vi-VN')}đ</p>
                                                                 </div>
                                                             </div>
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleRemoveFavorite(item.id)}
                                                                 className="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
                                                                 title="Bỏ thích"
@@ -660,6 +682,8 @@ const Profile = () => {
                                 </div>
                             </div>
                         </div>
+
+
 
                         {/* ROW 3: Security & Spacer */}
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
