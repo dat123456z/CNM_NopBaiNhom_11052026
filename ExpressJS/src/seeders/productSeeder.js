@@ -1232,12 +1232,124 @@ const PRODUCT_DATA = [
     }
 ];
 
-console.log(`>>> Chuẩn bị seed ${PRODUCT_DATA.length} sản phẩm vào shop ID=${SHOP_ID}...`);
+console.log(`>>> Chuẩn bị seed ${PRODUCT_DATA.length} sản phẩm...`);
 
 const seedIfEmpty = async () => {
     try {
-        const count = await Product.count();
+        const User = require("../models/User");
+        const Shop = require("../models/Shop");
+        const bcrypt = require("bcrypt");
 
+        const hashedPassword = await bcrypt.hash("123456", 10);
+
+        // 1. Seed users
+        let adminUser = await User.findOne({ where: { email: "admin@gmail.com" } });
+        if (!adminUser) {
+            adminUser = await User.create({
+                name: "Admin",
+                email: "admin@gmail.com",
+                password: hashedPassword,
+                role: "admin",
+                isActive: true
+            });
+            console.log(">>> Seeded Admin User.");
+        }
+
+        let managerUser = await User.findOne({ where: { email: "manager@gmail.com" } });
+        if (!managerUser) {
+            managerUser = await User.create({
+                name: "Manager",
+                email: "manager@gmail.com",
+                password: hashedPassword,
+                role: "manager",
+                isActive: true
+            });
+            console.log(">>> Seeded Manager User.");
+        }
+
+        let vendor1User = await User.findOne({ where: { email: "vendor1@gmail.com" } });
+        if (!vendor1User) {
+            vendor1User = await User.create({
+                name: "Vendor 1",
+                email: "vendor1@gmail.com",
+                password: hashedPassword,
+                role: "vendor",
+                isActive: true,
+                points: 500
+            });
+            console.log(">>> Seeded Vendor 1 User.");
+        }
+
+        let vendor2User = await User.findOne({ where: { email: "vendor2@gmail.com" } });
+        if (!vendor2User) {
+            vendor2User = await User.create({
+                name: "Vendor 2",
+                email: "vendor2@gmail.com",
+                password: hashedPassword,
+                role: "vendor",
+                isActive: true,
+                points: 500
+            });
+            console.log(">>> Seeded Vendor 2 User.");
+        }
+
+        let regularUser = await User.findOne({ where: { email: "user@gmail.com" } });
+        if (!regularUser) {
+            regularUser = await User.create({
+                name: "User",
+                email: "user@gmail.com",
+                password: hashedPassword,
+                role: "user",
+                isActive: true,
+                points: 100,
+                addresses: [{ id: 1, text: "789 Duong 3/2, Quan 10, TP. HCM", name: "User", phone: "0911223344" }]
+            });
+            console.log(">>> Seeded Regular User.");
+        }
+
+        // 2. Seed shops
+        let uteShop = await Shop.findOne({ where: { userId: vendor1User.id } });
+        if (!uteShop) {
+            uteShop = await Shop.create({
+                userId: vendor1User.id,
+                name: "UTEShop",
+                slug: "uteshop",
+                description: "Cửa hàng thời trang và phong cách sống hàng đầu.",
+                logo: "https://images.unsplash.com/photo-1472851294608-062f824d296e?w=100",
+                phone: "0909123456",
+                email: "vendor1@gmail.com",
+                address: "1 Vo Van Ngan, Thu Duc, TP. HCM",
+                balance: 10000000.00,
+                rating: 4.8,
+                reviewCount: 0,
+                status: "active",
+                isVerified: true
+            });
+            console.log(">>> Seeded Shop UTEShop.");
+        }
+
+        let techStore = await Shop.findOne({ where: { userId: vendor2User.id } });
+        if (!techStore) {
+            techStore = await Shop.create({
+                userId: vendor2User.id,
+                name: "TechStore",
+                slug: "techstore",
+                description: "Siêu thị công nghệ, điện thoại, laptop, phụ kiện chính hãng.",
+                logo: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=100",
+                phone: "0909654321",
+                email: "vendor2@gmail.com",
+                address: "2 Vo Van Ngan, Thu Duc, TP. HCM",
+                balance: 15000000.00,
+                rating: 4.9,
+                reviewCount: 0,
+                status: "active",
+                isVerified: true
+            });
+            console.log(">>> Seeded Shop TechStore.");
+        }
+
+        // 3. Seed products dynamically assigned to the two shops
+        const count = await Product.count();
         if (count >= PRODUCT_DATA.length) {
             console.log(`>>> Products đã tồn tại (${count}), bỏ qua seeding.`);
             return;
@@ -1245,47 +1357,27 @@ const seedIfEmpty = async () => {
             console.log(`>>> Products hiện có ${count}/${PRODUCT_DATA.length}, sẽ bổ sung sản phẩm thiếu.`);
         }
 
-        // Kiểm tra shop ID=1 có tồn tại không trước khi seed
-        const Shop = require("../models/Shop");
-        const User = require("../models/User");
-        const bcrypt = require("bcrypt");
+        const slugify = (text) =>
+            text
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/gi, 'd')
+                .toLowerCase()
+                .trim()
+                .replace(/\s+/g, '-')
+                .replace(/[^\w-]/g, '')
+                .replace(/-+/g, '-');
 
-        let shop = await Shop.findByPk(SHOP_ID);
-        if (!shop) {
-            console.log(
-                `>>> Shop ID=${SHOP_ID} chưa tồn tại. Đang tạo shop mặc định...`,
-            );
-            // Tạo user cho shop
-            const passwordHash = await bcrypt.hash("Admin@123", 10);
-            const user = await User.create({
-                name: "Admin UTEShop",
-                email: "admin@uteshop.com",
-                password: passwordHash,
-                role: "admin",
-                isActive: true,
-            });
-
-            // Tạo shop
-            shop = await Shop.create({
-                id: SHOP_ID,
-                userId: user.id,
-                name: "UTEShop Official",
-                slug: "uteshop-official",
-                description: "Cửa hàng chính thức của UTEShop",
-                status: "active",
-                isVerified: true,
-            });
-            console.log(`>>> Tạo shop mặc định thành công!`);
-        }
-
-        // Use idempotent upsert/findOrCreate per item so partial failures
-        // don't leave the DB in a half-seeded state. This will insert
-        // any missing products and skip existing ones.
         let inserted = 0;
         for (const p of PRODUCT_DATA) {
+            const targetShopId = p.category === "Đồ điện tử & Công nghệ" ? techStore.id : uteShop.id;
             const [prod, created] = await Product.findOrCreate({
-                where: { shopId: p.shopId, title: p.title },
-                defaults: p
+                where: { title: p.title },
+                defaults: {
+                    ...p,
+                    shopId: targetShopId,
+                    slug: p.slug || `${slugify(p.title)}-${Date.now()}`
+                }
             });
             if (created) inserted += 1;
         }
@@ -1296,3 +1388,4 @@ const seedIfEmpty = async () => {
 };
 
 module.exports = { seedIfEmpty };
+
