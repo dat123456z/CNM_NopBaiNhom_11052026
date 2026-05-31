@@ -44,10 +44,11 @@ const normalizeProduct = (product) => {
 
 const getProducts = async ({ ids, category, search, shopId, minPrice, maxPrice, sort = 'newest', page = 1, limit = 20, allStatus }) => {
     const where = {};
-    if (!shopId && allStatus !== 'true') {
-        where.status = 'active';
-    } else if (shopId && allStatus !== 'true') {
+    if (shopId) {
         where.shopId = shopId;
+    }
+    if (allStatus !== 'true') {
+        where.status = 'active';
     }
     if (ids) {
         const parsedIds = ids.split(',').map((v) => parseInt(v.trim(), 10)).filter((n) => !isNaN(n));

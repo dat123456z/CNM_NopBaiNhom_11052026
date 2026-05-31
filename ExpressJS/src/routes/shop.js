@@ -1,4 +1,6 @@
 const express = require('express');
+const multer = require('multer');
+const path = require('path');
 
 const router = express.Router();
 
@@ -14,7 +16,26 @@ const {
     getManagerStats
 } = require('../controllers/shopController');
 
-router.post('/', authMiddleware, registerShop);
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, path.join(__dirname, '../uploads')),
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        cb(null, `shop_${req.user.id}_${Date.now()}${ext}`);
+    }
+});
+
+const upload = multer({
+    storage,
+    limits: { fileSize: 2 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+            return cb(new Error('Chỉ chấp nhận file ảnh.'));
+        }
+        cb(null, true);
+    }
+});
+
+router.post('/', authMiddleware, upload.single('logo'), registerShop);
 
 router.get('/manager/stats', authMiddleware, requireRole('manager', 'admin'), getManagerStats);
 
@@ -22,7 +43,7 @@ router.get('/', listShops);
 
 router.get('/me', authMiddleware, getMyShop);
 
-router.put('/me', authMiddleware, updateShop);
+router.put('/me', authMiddleware, upload.single('logo'), updateShop);
 
 router.get('/:id', getShopById);
 

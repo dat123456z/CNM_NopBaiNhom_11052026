@@ -19,7 +19,7 @@ const {
 } = require('../controllers/userController');
 
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'uploads/'),
+    destination: (req, file, cb) => cb(null, path.join(__dirname, '../uploads')),
     filename: (req, file, cb) => {
         const ext = path.extname(file.originalname);
         cb(null, `avatar_${req.user.id}_${Date.now()}${ext}`);

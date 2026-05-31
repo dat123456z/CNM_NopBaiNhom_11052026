@@ -16,9 +16,10 @@ const VendorOnboarding = () => {
         name: "",
         description: "",
         address: "",
-        phone: "",
-        logo: ""
+        phone: ""
     });
+    const [logoFile, setLogoFile] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState("");
 
     useEffect(() => {
         const userRaw = localStorage.getItem("user");
@@ -35,6 +36,20 @@ const VendorOnboarding = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setForm(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleLogoChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                setError("Ảnh logo không được vượt quá 2MB.");
+                e.target.value = "";
+                return;
+            }
+            setError(null);
+            setLogoFile(file);
+            setPreviewUrl(URL.createObjectURL(file));
+        }
     };
 
     const handleNext = () => {
@@ -64,19 +79,21 @@ const VendorOnboarding = () => {
         setError(null);
         try {
             const token = localStorage.getItem("accessToken");
+            const formData = new FormData();
+            formData.append("name", form.name.trim());
+            formData.append("description", form.description.trim());
+            formData.append("address", form.address.trim());
+            formData.append("phone", form.phone.trim());
+            if (logoFile) {
+                formData.append("logo", logoFile);
+            }
+
             const res = await fetch(`${API_URL}/api/shops`, {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`
                 },
-                body: JSON.stringify({
-                    name: form.name.trim(),
-                    description: form.description.trim(),
-                    address: form.address.trim(),
-                    phone: form.phone.trim(),
-                    logo: form.logo.trim() || null
-                })
+                body: formData
             });
 
             const data = await res.json();
@@ -90,7 +107,8 @@ const VendorOnboarding = () => {
                 localStorage.setItem("user", JSON.stringify(user));
             }
 
-            setStep(3);
+            // Navigate to vendor dashboard
+            window.location.href = "/vendor/dashboard";
         } catch (err) {
             setError(err.message);
         } finally {
@@ -156,15 +174,22 @@ const VendorOnboarding = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Link Logo Cửa Hàng (Tùy chọn)</label>
-                                    <input
-                                        type="text"
-                                        name="logo"
-                                        value={form.logo}
-                                        onChange={handleChange}
-                                        placeholder="Nhập đường dẫn logo ảnh (URL)"
-                                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00b14f] focus:ring-1 focus:ring-green-100"
-                                    />
+                                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Logo Cửa Hàng (Tùy chọn)</label>
+                                    <div className="flex items-center gap-4 mt-1.5">
+                                        <div className="w-16 h-16 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
+                                            {previewUrl ? (
+                                                <img src={previewUrl} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="text-gray-400 text-xs">No Logo</span>
+                                            )}
+                                        </div>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleLogoChange}
+                                            className="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 

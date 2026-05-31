@@ -4,14 +4,14 @@ const { sequelize } = require('../config/database');
 
 const slugify = (name) => name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '') + '-' + Date.now();
 
-const registerShop = async (userId, { name, description, address, phone }) => {
+const registerShop = async (userId, { name, description, address, phone, logo }) => {
     const existing = await Shop.findOne({ where: { userId } });
     if (existing) throw Object.assign(new Error('Bạn đã có shop.'), { status: 409 });
 
     const t = await sequelize.transaction();
     try {
         const shop = await Shop.create(
-            { userId, name, slug: slugify(name), description, address, phone, status: 'active' },
+            { userId, name, slug: slugify(name), description, address, phone, logo, status: 'active' },
             { transaction: t }
         );
         await User.update({ role: 'vendor' }, { where: { id: userId }, transaction: t });

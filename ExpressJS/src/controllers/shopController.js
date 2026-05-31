@@ -2,7 +2,11 @@ const shopService = require('../services/shopService');
 
 const registerShop = async (req, res) => {
     try {
-        const shop = await shopService.registerShop(req.user.id, req.body);
+        const data = { ...req.body };
+        if (req.file) {
+            data.logo = `/uploads/${req.file.filename}`;
+        }
+        const shop = await shopService.registerShop(req.user.id, data);
         return res.status(201).json(shop);
     } catch (err) {
         return res.status(err.status || 500).json({ message: err.message });
@@ -20,7 +24,11 @@ const getMyShop = async (req, res) => {
 
 const updateShop = async (req, res) => {
     try {
-        const shop = await shopService.updateShop(req.user.id, req.body);
+        const data = { ...req.body };
+        if (req.file) {
+            data.logo = `/uploads/${req.file.filename}`;
+        }
+        const shop = await shopService.updateShop(req.user.id, data);
         return res.json(shop);
     } catch (err) {
         return res.status(err.status || 500).json({ message: err.message });

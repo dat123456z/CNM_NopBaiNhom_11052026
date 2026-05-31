@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useCart } from "../context/CartContext";
 
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
+
 const ProductCard = ({ product }) => {
     const { addToCart } = useCart();
     const [adding, setAdding] = useState(false);
@@ -16,6 +18,8 @@ const ProductCard = ({ product }) => {
     else if (typeof product.images === 'string') {
         try { image = JSON.parse(product.images)[0]; } catch(e){}
     }
+
+    const imageSrc = image ? (image.startsWith("http") ? image : `${API_BASE}${image}`) : "";
 
     const handleAddToCart = async (e) => {
         e.stopPropagation();
@@ -40,7 +44,7 @@ const ProductCard = ({ product }) => {
     return (
         <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 relative flex flex-col h-full hover:shadow-lg transition-shadow">
             <div className="h-80 w-full bg-gray-100 flex items-center justify-center overflow-hidden relative">
-                <img src={image} alt={product.title} className="object-cover w-full h-full" />
+                <img src={imageSrc} alt={product.title} className="object-cover w-full h-full" />
             </div>
             <div className="p-4 flex flex-col flex-1">
                 <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">{product.category || 'Category'}</div>

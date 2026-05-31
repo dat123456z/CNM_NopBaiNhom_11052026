@@ -163,11 +163,15 @@ const ProductDetail = () => {
 
     const images = useMemo(() => {
         if (!product) return [];
-        if (Array.isArray(product.images)) return product.images;
-        if (typeof product.images === "string") {
-            try { return JSON.parse(product.images); } catch { return []; }
+        let list = [];
+        if (Array.isArray(product.images)) {
+            list = product.images;
+        } else if (typeof product.images === "string") {
+            try { list = JSON.parse(product.images); } catch { list = []; }
+        } else if (product.image) {
+            list = [product.image];
         }
-        return product.image ? [product.image] : [];
+        return list.map(img => img.startsWith("http") ? img : `${API_BASE}${img}`);
     }, [product]);
 
     // When selectedColor changes, show the image at the same index (assumes images array ordered by color)
