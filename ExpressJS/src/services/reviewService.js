@@ -25,7 +25,17 @@ const recalcProductRating = async (productId) => {
 
 const recalcShopRating = async (shopId) => {
     const [result] = await sequelize.query(
-        'SELECT AVG(rating) as avg, COUNT(*) as cnt FROM shop_reviews WHERE shopId = :shopId AND isHidden = 0',
+        `SELECT AVG(rating) as avg, COUNT(*) as cnt
+         FROM (
+            SELECT pr.rating
+            FROM product_reviews pr
+            INNER JOIN products p ON p.id = pr.productId
+            WHERE p.shopId = :shopId AND pr.isHidden = 0
+            UNION ALL
+            SELECT sr.rating
+            FROM shop_reviews sr
+            WHERE sr.shopId = :shopId AND sr.isHidden = 0
+         ) ratings`,
         { replacements: { shopId }, type: sequelize.QueryTypes.SELECT }
     );
     await Shop.update(
@@ -47,6 +57,7 @@ const createProductReview = async (userId, { productId, orderId, rating, comment
         userId, productId, orderId, rating, comment, images: images || []
     });
     await recalcProductRating(productId);
+    await recalcShopRating(product.shopId);
 
     // Tặng điểm tích lũy (+10 điểm)
     const user = await User.findByPk(userId);
@@ -148,6 +159,10 @@ const setReviewVisibility = async (type, reviewId, isHidden) => {
     await review.update({ isHidden });
 
     if (type === 'product') await recalcProductRating(review.productId);
+    if (type === 'product') {
+        const product = await Product.findByPk(review.productId, { attributes: ['shopId'] });
+        if (product) await recalcShopRating(product.shopId);
+    }
     if (type === 'shop') await recalcShopRating(review.shopId);
 
     return review;

@@ -80,14 +80,18 @@ const ProductDetail = () => {
             const res = await fetch(`${API_BASE}/api/orders`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            const orders = await res.json();
+            const data = await res.json();
+            const orders = Array.isArray(data) ? data : (data.orders || []);
             if (res.ok && Array.isArray(orders)) {
                 const eligible = orders.find(o =>
                     o.status === 'delivered' &&
-                    o.items?.some(item => Number(item.productId) === Number(id))
+                    o.items?.some(item => Number(item.productId) === Number(id)) &&
+                    !o.productReviews?.some(review => Number(review.productId) === Number(id))
                 );
                 if (eligible) {
                     setEligibleOrder(eligible);
+                } else {
+                    setEligibleOrder(null);
                 }
             }
         } catch (e) {
@@ -335,6 +339,11 @@ const ProductDetail = () => {
             setImagesInput("");
             setEligibleOrder(null);
             fetchProductReviews();
+            const productRes = await fetch(`${API_BASE}/api/products/${id}`);
+            if (productRes.ok) {
+                const refreshedProduct = await productRes.json();
+                setProduct(refreshedProduct);
+            }
         } catch (err) {
             setReviewMessage(`❌ Lỗi: ${err.message}`);
         } finally {
@@ -441,7 +450,7 @@ const ProductDetail = () => {
                             </span>
                             <span className="text-gray-300">|</span>
                             <span className="flex items-center gap-1 text-gray-600 font-medium">
-                                👥 <strong>{product.buyersCount || 0}</strong> khách mua
+                                👥 <strong>{product.buyersCount ?? product.sold ?? 0}</strong> đã mua
                             </span>
                             <span className="text-gray-300">|</span>
                             <span className="flex items-center gap-1 text-gray-600 font-medium">

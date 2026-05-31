@@ -6,6 +6,7 @@ const Coupon = require('../models/Coupon');
 const Shop = require('../models/Shop');
 const User = require('../models/User');
 const WalletTransaction = require('../models/WalletTransaction');
+const { ProductReview } = require('../models/Review');
 const { Op } = require('sequelize');
 
 // ── Auto-confirm sau 30 phút nếu đơn vẫn pending ──────────────────────────
@@ -178,7 +179,14 @@ const getMyOrders = async (userId, { page = 1, limit = 10, status }) => {
         order: [['createdAt', 'DESC']],
         limit: Number(limit),
         offset,
-        include: [{ model: OrderItem, as: 'items' }]
+        include: [
+            { model: OrderItem, as: 'items' },
+            {
+                model: ProductReview,
+                as: 'productReviews',
+                attributes: ['id', 'productId', 'rating', 'comment', 'createdAt']
+            }
+        ]
     });
     return { total: count, page: Number(page), limit: Number(limit), orders: rows };
 };
@@ -192,6 +200,11 @@ const getOrderDetail = async (orderId, userId, role) => {
         where,
         include: [
             { model: OrderItem, as: 'items' },
+            {
+                model: ProductReview,
+                as: 'productReviews',
+                attributes: ['id', 'productId', 'rating', 'comment', 'createdAt']
+            },
             { model: Shipper, as: 'shipper' }
         ]
     });

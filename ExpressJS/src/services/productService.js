@@ -1,8 +1,8 @@
 const { Op } = require('sequelize');
 const Product = require('../models/Product');
-const { Order, OrderItem } = require('../models/Order');
 const { ProductReview } = require('../models/Review');
 const Shop = require('../models/Shop');
+const { sequelize } = require('../config/database');
 
 const slugify = (text) =>
     text
@@ -93,23 +93,26 @@ const getProductById = async (id) => {
     // Increment views count
     await product.increment('views');
 
-    const buyersCount = await Order.count({
-        include: [{
-            model: OrderItem,
-            as: 'items',
-            where: { productId: id }
-        }],
-        where: {
-            status: { [Op.ne]: 'cancelled' }
-        }
-    });
+    const [soldResult] = await sequelize.query(
+        `SELECT COALESCE(SUM(oi.quantity), 0) as sold
+         FROM order_items oi
+         INNER JOIN orders o ON o.id = oi.orderId
+         WHERE oi.productId = :productId
+           AND o.status NOT IN ('cancelled', 'refunded', 'cancel_requested')`,
+        { replacements: { productId: id }, type: sequelize.QueryTypes.SELECT }
+    );
+    const soldCount = Number(soldResult.sold || 0);
 
     const commentersCount = await ProductReview.count({
         where: { productId: id, isHidden: 0 }
     });
 
     const normalized = normalizeProduct(product);
-    normalized.buyersCount = buyersCount;
+    if (normalized.sold !== soldCount) {
+        await Product.update({ sold: soldCount }, { where: { id } });
+        normalized.sold = soldCount;
+    }
+    normalized.buyersCount = soldCount;
     normalized.commentersCount = commentersCount;
     return normalized;
 };

@@ -85,8 +85,19 @@ const OrderDetailPage = () => {
                 points: data.rewardPoints || 10,
                 couponCode: data.rewardCouponCode
             });
-            // close review modal
-            setReviewProduct(null);
+            setOrder(prev => prev ? {
+                ...prev,
+                productReviews: [
+                    ...(prev.productReviews || []),
+                    {
+                        id: data.id,
+                        productId: reviewProduct.productId,
+                        rating: data.rating,
+                        comment: data.comment,
+                        createdAt: data.createdAt
+                    }
+                ]
+            } : prev);
         } catch (err) {
             alert(err.message || "Đánh giá thất bại.");
         } finally {
@@ -172,6 +183,7 @@ const OrderDetailPage = () => {
 
     const sc = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
     const activeStep = getActiveStep(order.status);
+    const reviewedProductIds = new Set((order.productReviews || []).map((review) => Number(review.productId)));
 
     return (
         <div className="min-h-screen bg-[#f8f9fb] flex flex-col">
@@ -292,11 +304,16 @@ const OrderDetailPage = () => {
                                             </div>
                                             {order.status === "delivered" && (
                                                 <div className="flex justify-end pt-2 border-t border-gray-100">
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleOpenReview(item)}
-                                                        className="px-4 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 font-bold text-xs rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                                                        disabled={reviewedProductIds.has(Number(item.productId))}
+                                                        className={`px-4 py-1.5 font-bold text-xs rounded-lg transition-colors flex items-center gap-1.5 ${
+                                                            reviewedProductIds.has(Number(item.productId))
+                                                                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                                                : "bg-green-50 hover:bg-green-100 text-green-700 cursor-pointer"
+                                                        }`}
                                                     >
-                                                        <span>★</span> Viết đánh giá nhận quà
+                                                        <span>★</span> {reviewedProductIds.has(Number(item.productId)) ? "Đã đánh giá" : "Viết đánh giá nhận quà"}
                                                     </button>
                                                 </div>
                                             )}
