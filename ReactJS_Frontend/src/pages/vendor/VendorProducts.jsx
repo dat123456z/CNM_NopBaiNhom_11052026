@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
+import LineIcon from "../../components/LineIcon";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const fmt = (n) => Number(n || 0).toLocaleString("vi-VN") + "đ";
+const PRODUCTS_PER_PAGE = 5;
 
 const VendorProducts = ({ shop }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
     const [productModal, setProductModal] = useState({ open: false, editing: null });
     const [productForm, setProductForm] = useState({
         title: "",
@@ -26,6 +29,11 @@ const VendorProducts = ({ shop }) => {
         if (!shop) return;
         fetchProducts();
     }, [shop]);
+
+    useEffect(() => {
+        const totalPages = Math.max(1, Math.ceil(products.length / PRODUCTS_PER_PAGE));
+        setCurrentPage((page) => Math.min(page, totalPages));
+    }, [products.length]);
 
     const fetchProducts = async () => {
         try {
@@ -71,7 +79,7 @@ const VendorProducts = ({ shop }) => {
         const files = Array.from(e.target.files || []);
         const validFiles = [];
         const newPreviews = [];
-        
+
         for (const file of files) {
             if (file.size > 2 * 1024 * 1024) {
                 alert(`File "${file.name}" vượt quá 2MB. Vui lòng chọn ảnh có kích thước nhỏ hơn.`);
@@ -83,7 +91,7 @@ const VendorProducts = ({ shop }) => {
 
         setNewImageFiles(prev => [...prev, ...validFiles]);
         setNewImagePreviews(prev => [...prev, ...newPreviews]);
-        
+
         // Reset target value so selection of same file is caught
         e.target.value = "";
     };
@@ -120,7 +128,7 @@ const VendorProducts = ({ shop }) => {
         formData.append("originalPrice", productForm.originalPrice ? String(Number(productForm.originalPrice)) : "");
         formData.append("category", productForm.category.trim());
         formData.append("stock", String(Number(productForm.stock)));
-        
+
         const colorsArray = productForm.colors.split(",")
             .map(c => c.trim())
             .filter(Boolean)
@@ -197,6 +205,10 @@ const VendorProducts = ({ shop }) => {
         }
     };
 
+    const totalPages = Math.max(1, Math.ceil(products.length / PRODUCTS_PER_PAGE));
+    const pageStart = (currentPage - 1) * PRODUCTS_PER_PAGE;
+    const paginatedProducts = products.slice(pageStart, pageStart + PRODUCTS_PER_PAGE);
+
     return (
         <>
             <div className="space-y-6">
@@ -230,14 +242,18 @@ const VendorProducts = ({ shop }) => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50 text-sm">
-                                    {products.map(p => {
+                                    {paginatedProducts.map(p => {
                                         const img = p.images && p.images.length > 0 ? p.images[0] : "";
                                         const imgSrc = img.startsWith("http") ? img : `${API_URL}${img}`;
                                         return (
                                             <tr key={p.id} className="hover:bg-gray-50/50 transition-colors">
                                                 <td className="p-4">
                                                     <div className="w-12 h-12 bg-gray-50 rounded-lg overflow-hidden border border-gray-100">
-                                                        {img ? <img src={imgSrc} className="w-full h-full object-cover" /> : "📦"}
+                                                        {img ? <img src={imgSrc} className="w-full h-full object-cover" /> : (
+                                                            <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                                                <LineIcon name="box" size={22} />
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </td>
                                                 <td className="p-4 font-bold text-gray-900 truncate max-w-[200px]" title={p.title}>{p.title}</td>
@@ -268,6 +284,42 @@ const VendorProducts = ({ shop }) => {
                                 </tbody>
                             </table>
                         </div>
+                        {totalPages > 1 && (
+                            <div className="flex items-center justify-center gap-4 px-4 py-3 border-t border-gray-100 bg-gray-50/40">
+
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                                        disabled={currentPage === 1}
+                                        className="w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-gray-900 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center"
+                                    >
+                                        &lt;
+                                    </button>
+                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                        <button
+                                            key={page}
+                                            type="button"
+                                            onClick={() => setCurrentPage(page)}
+                                            className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors ${currentPage === page
+                                                ? "bg-[#00b14f] text-white"
+                                                : "bg-white border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                                                }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    ))}
+                                    <button
+                                        type="button"
+                                        onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                                        disabled={currentPage === totalPages}
+                                        className="w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-gray-900 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center"
+                                    >
+                                        &gt;
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
