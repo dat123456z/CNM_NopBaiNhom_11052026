@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -15,17 +15,8 @@ import VendorOnboarding from "./pages/vendor/VendorOnboarding";
 import VendorDashboard from "./pages/vendor/VendorDashboard";
 import ManagerDashboard from "./pages/manager/ManagerDashboard";
 import ProtectedRoute from "./routes/ProtectedRoute";
-import Navbar from "./components/Navbar";
+import Layout from "./components/Layout";
 import { CartProvider } from "./context/CartContext";
-
-const Layout = () => (
-    <div className="min-h-screen bg-[#f8f9fb] flex flex-col font-sans text-gray-800">
-        <Navbar />
-        <div className="flex-1 flex flex-col">
-            <Outlet />
-        </div>
-    </div>
-);
 
 function App() {
     return (

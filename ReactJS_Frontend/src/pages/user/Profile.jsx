@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Message, PageWrapper } from "../../components";
 import Breadcrumb from "../../components/Breadcrumb";
+import LineIcon from "../../components/LineIcon";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
@@ -472,7 +473,7 @@ const Profile = () => {
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                                     <div className="bg-linear-to-r from-emerald-500 to-green-600 px-6 py-4 flex items-center justify-between text-white">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-xl">🪙</span>
+                                            <LineIcon name="coin" size={22} />
                                             <h3 className="font-semibold text-sm sm:text-base">Kho Điểm & Ví Voucher</h3>
                                         </div>
                                         <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-bold">

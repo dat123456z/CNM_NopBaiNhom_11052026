@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import LineIcon from "../../components/LineIcon";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const fmt = (n) => Number(n || 0).toLocaleString("vi-VN") + "đ";
@@ -54,7 +55,10 @@ const VendorOverview = ({ shop }) => {
                         </div>
                         <div className="bg-white p-6 rounded-2xl border border-gray-50 shadow-sm flex flex-col justify-between">
                             <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Đánh giá trung bình</span>
-                            <span className="text-2xl font-black text-amber-500 mt-2">⭐ {Number(revenueData?.summary?.rating || shop?.rating || 0).toFixed(1)} / 5</span>
+                            <span className="text-2xl font-black text-amber-500 mt-2 inline-flex items-center gap-2">
+                                <LineIcon name="star" size={22} />
+                                {Number(revenueData?.summary?.rating || shop?.rating || 0).toFixed(1)} / 5
+                            </span>
                         </div>
                     </div>
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Breadcrumb from "../../components/Breadcrumb";
+import LineIcon from "../../components/LineIcon";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
@@ -62,7 +63,7 @@ const WishlistPage = () => {
                     <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-200 text-center text-sm font-semibold">{error}</div>
                 ) : wishlist.length === 0 ? (
                     <div className="text-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                        <div className="text-5xl mb-4">❤️</div>
+                        <LineIcon name="heart" size={48} className="mx-auto mb-4 text-gray-300" />
                         <p className="font-bold text-lg text-gray-800 mb-2">Danh sách yêu thích trống</p>
                         <p className="text-sm text-gray-500 mb-6">Hãy thêm những sản phẩm bạn thích để theo dõi tại đây nhé!</p>
                         <button onClick={() => navigate("/products")} className="px-6 py-2.5 bg-[#00b14f] hover:bg-[#009943] text-white font-bold text-sm rounded-xl transition-all shadow-md">
@@ -81,7 +82,9 @@ const WishlistPage = () => {
                                         ) : (
                                             <div className="w-full h-full bg-linear-to-br from-gray-200 to-gray-300" />
                                         )}
-                                        <button onClick={(e) => handleRemove(item.id, e)} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/95 backdrop-blur-xs flex items-center justify-center text-red-500 hover:scale-110 active:scale-95 shadow-md transition-all duration-200 cursor-pointer" title="Xóa khỏi yêu thích">❤️</button>
+                                        <button onClick={(e) => handleRemove(item.id, e)} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/95 backdrop-blur-xs flex items-center justify-center text-gray-600 hover:text-red-500 hover:scale-110 active:scale-95 shadow-md transition-all duration-200 cursor-pointer" title="Xóa khỏi yêu thích">
+                                            <LineIcon name="heart" size={17} />
+                                        </button>
                                     </div>
                                     <div className="p-4 flex-1 flex flex-col justify-between">
                                         <div>

@@ -1,20 +1,21 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSocket } from '../hooks/useSocket';
+import LineIcon from './LineIcon';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const TYPE_ICON = {
-    order_new:              '🛒',
-    order_confirmed:        '✅',
-    order_preparing:        '📦',
-    order_shipping:         '🚚',
-    order_delivered:        '🎉',
-    order_cancelled:        '❌',
-    order_cancel_requested: '⚠️',
-    review_new:             '⭐',
-    review_reply:           '💬',
-    system:                 '🔔'
+    order_new:              'cart',
+    order_confirmed:        'check',
+    order_preparing:        'box',
+    order_shipping:         'truck',
+    order_delivered:        'packageCheck',
+    order_cancelled:        'x',
+    order_cancel_requested: 'alert',
+    review_new:             'star',
+    review_reply:           'edit',
+    system:                 'bell'
 };
 
 const NotificationBell = () => {
@@ -175,7 +176,7 @@ const NotificationBell = () => {
                             </div>
                         ) : notifications.length === 0 ? (
                             <div className="py-10 text-center text-sm text-gray-400">
-                                <div className="text-3xl mb-2">🔔</div>
+                                <LineIcon name="bell" size={32} className="mx-auto mb-2 text-gray-300" />
                                 Chưa có thông báo nào
                             </div>
                         ) : (
@@ -185,7 +186,9 @@ const NotificationBell = () => {
                                     onClick={() => handleNotificationClick(n)}
                                     className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex gap-3 ${!n.isRead ? 'bg-green-50/40' : ''}`}
                                 >
-                                    <span className="text-xl shrink-0 mt-0.5">{TYPE_ICON[n.type] || '🔔'}</span>
+                                    <span className="w-8 h-8 rounded-full border border-gray-200 bg-white text-gray-500 shrink-0 mt-0.5 flex items-center justify-center">
+                                        <LineIcon name={TYPE_ICON[n.type] || 'bell'} size={16} />
+                                    </span>
                                     <div className="flex-1 min-w-0">
                                         <p className={`text-xs font-semibold text-gray-900 line-clamp-1 ${!n.isRead ? 'font-bold' : ''}`}>
                                             {n.title}

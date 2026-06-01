@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import LineIcon from "../../components/LineIcon";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
@@ -76,7 +77,10 @@ const VendorReviews = ({ shop }) => {
                                 <div>
                                     <span className="font-extrabold text-gray-900 text-sm">{r.user?.name || "Khách hàng ẩn danh"}</span>
                                     <span className="text-[10px] text-gray-400 ml-3 font-semibold">{new Date(r.createdAt).toLocaleDateString()}</span>
-                                    <div className="text-amber-500 font-bold text-xs mt-1">{"⭐".repeat(r.rating)}</div>
+                                    <div className="text-amber-500 font-bold text-xs mt-1 inline-flex items-center gap-1">
+                                        <LineIcon name="star" size={13} />
+                                        {Number(r.rating || 0).toFixed(1)}
+                                    </div>
                                 </div>
                                 <span className="text-[10px] font-bold text-gray-400 bg-gray-50 border border-gray-100 px-3 py-1 rounded-full">Sản phẩm: {r.product?.title}</span>
                             </div>

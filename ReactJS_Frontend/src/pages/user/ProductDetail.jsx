@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ProductCard from "../../components/ProductCard";
 import Breadcrumb from "../../components/Breadcrumb";
+import LineIcon from "../../components/LineIcon";
 import { useCart } from "../../context/CartContext";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
@@ -332,7 +333,7 @@ const ProductDetail = () => {
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || "Đánh giá thất bại.");
 
-            setReviewMessage(`🎉 Đánh giá thành công! Bạn nhận được +${data.rewardPoints || 10} điểm tích lũy và mã giảm giá ${data.rewardCouponCode || ""}`);
+            setReviewMessage(`Đánh giá thành công! Bạn nhận được +${data.rewardPoints || 10} điểm tích lũy và mã giảm giá ${data.rewardCouponCode || ""}`);
             setCommentInput("");
             setImagesInput("");
             setEligibleOrder(null);
@@ -343,7 +344,7 @@ const ProductDetail = () => {
                 setProduct(refreshedProduct);
             }
         } catch (err) {
-            setReviewMessage(`❌ Lỗi: ${err.message}`);
+            setReviewMessage(`Lỗi: ${err.message}`);
         } finally {
             setSubmittingReview(false);
         }
@@ -442,16 +443,16 @@ const ProductDetail = () => {
 
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-3 text-xs text-gray-500 border-b border-gray-200 pb-4">
                             <span className="flex items-center gap-1 text-orange-400 text-sm">
-                                {'★'.repeat(Math.round(product.rating || 5)) + '☆'.repeat(5 - Math.round(product.rating || 5))}
+                                <LineIcon name="star" size={15} />
                                 <span className="text-gray-500 ml-1 text-xs font-semibold">{product.rating ? Number(product.rating).toFixed(1) : '5.0'}</span>
                             </span>
                             <span className="text-gray-300">|</span>
                             <span className="flex items-center gap-1 text-gray-600 font-medium">
-                                👥 <strong>{product.buyersCount ?? product.sold ?? 0}</strong> đã mua
+                                <LineIcon name="users" size={15} /> <strong>{product.buyersCount ?? product.sold ?? 0}</strong> đã mua
                             </span>
                             <span className="text-gray-300">|</span>
                             <span className="flex items-center gap-1 text-gray-600 font-medium">
-                                💬 <strong>{product.commentersCount || 0}</strong> lượt bình luận
+                                <LineIcon name="edit" size={15} /> <strong>{product.commentersCount || 0}</strong> lượt bình luận
                             </span>
                         </div>
 
@@ -567,15 +568,15 @@ const ProductDetail = () => {
                             <div className="w-16 h-16 rounded-full bg-green-50 text-[#00b14f] flex items-center justify-center font-bold text-2xl border border-green-100 overflow-hidden shrink-0">
                                 {product.shop.logo ? (
                                     <img src={product.shop.logo.startsWith("http") ? product.shop.logo : `${API_BASE}${product.shop.logo}`} className="w-full h-full object-cover" />
-                                ) : "🏪"}
+                                ) : <LineIcon name="shop" size={28} />}
                             </div>
                             <div>
                                 <h3 className="font-extrabold text-gray-900 text-base">{product.shop.name}</h3>
                                 <p className="text-xs text-gray-500 mt-1">{product.shop.description || "Chưa có mô tả cửa hàng."}</p>
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2.5 text-xs text-gray-400 font-semibold">
-                                    <span className="text-amber-500">⭐ {Number(product.shop.rating || 0).toFixed(1)} / 5 ({product.shop.reviewCount || 0} đánh giá)</span>
-                                    <span>📍 {product.shop.address}</span>
-                                    <span>📞 {product.shop.phone}</span>
+                                    <span className="text-amber-500 inline-flex items-center gap-1"><LineIcon name="star" size={14} /> {Number(product.shop.rating || 0).toFixed(1)} / 5 ({product.shop.reviewCount || 0} đánh giá)</span>
+                                    <span className="inline-flex items-center gap-1"><LineIcon name="mapPin" size={14} /> {product.shop.address}</span>
+                                    <span className="inline-flex items-center gap-1"><LineIcon name="phone" size={14} /> {product.shop.phone}</span>
                                 </div>
                             </div>
                         </div>
@@ -628,7 +629,7 @@ const ProductDetail = () => {
                         <span>Đánh giá sản phẩm ({reviews.length})</span>
                         {product?.rating && (
                             <span className="text-sm font-semibold text-amber-500">
-                                Trung bình: ⭐ {Number(product.rating).toFixed(1)} / 5
+                                <span className="inline-flex items-center gap-1"><LineIcon name="star" size={14} /> Trung bình: {Number(product.rating).toFixed(1)} / 5</span>
                             </span>
                         )}
                     </h2>
@@ -656,7 +657,7 @@ const ProductDetail = () => {
                                                 onClick={() => setRatingInput(star)}
                                                 className={`transition-transform active:scale-95 cursor-pointer ${star <= ratingInput ? "text-amber-400" : "text-gray-200"}`}
                                             >
-                                                ★
+                                                <LineIcon name="star" size={20} />
                                             </button>
                                         ))}
                                     </div>
@@ -709,7 +710,10 @@ const ProductDetail = () => {
                                     <div className="flex justify-between items-start gap-4 text-left">
                                         <div>
                                             <span className="font-extrabold text-sm text-gray-900">{rev.user?.name || "Người mua ẩn danh"}</span>
-                                            <div className="text-amber-400 text-xs mt-0.5">{"★".repeat(rev.rating)}</div>
+                                            <div className="text-amber-400 text-xs mt-0.5 inline-flex items-center gap-1">
+                                                <LineIcon name="star" size={13} />
+                                                {Number(rev.rating || 0).toFixed(1)}
+                                            </div>
                                         </div>
                                         <span className="text-[10px] text-gray-400 font-semibold">{new Date(rev.createdAt).toLocaleDateString()}</span>
                                     </div>

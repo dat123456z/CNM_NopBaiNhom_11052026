@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Breadcrumb from "../../components/Breadcrumb";
+import LineIcon from "../../components/LineIcon";
 import { useCart } from "../../context/CartContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -495,7 +496,12 @@ const CheckoutPage = () => {
                                     >
                                         {loading ? (
                                             <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />Đang xử lý...</>
-                                        ) : "🛍 Đặt hàng ngay"}
+                                        ) : (
+                                            <>
+                                                <LineIcon name="cart" size={16} />
+                                                Đặt hàng ngay
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             </div>
@@ -532,7 +538,7 @@ const CheckoutPage = () => {
                                 <div className="space-y-2">
                                     <label className="flex items-center justify-between cursor-pointer select-none">
                                         <div className="flex items-center gap-1.5 text-xs text-gray-700 font-bold">
-                                            <span>🪙</span>
+                                            <LineIcon name="coin" size={15} />
                                             <span>Dùng xu tích lũy ({userPoints} xu)</span>
                                         </div>
                                         <input 

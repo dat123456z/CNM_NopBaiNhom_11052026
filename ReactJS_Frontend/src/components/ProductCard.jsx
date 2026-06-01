@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useCart } from "../context/CartContext";
+import LineIcon from "./LineIcon";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
 
@@ -58,7 +59,7 @@ const ProductCard = ({ product }) => {
                         )}
                     </div>
                     <div className="flex items-center text-xs font-semibold text-gray-600 gap-1">
-                        <span className="text-orange-400 text-sm">★</span> {product.rating ? Number(product.rating).toFixed(1) : '5.0'}
+                        <LineIcon name="star" size={14} className="text-orange-400" /> {product.rating ? Number(product.rating).toFixed(1) : '5.0'}
                     </div>
                 </div>
 

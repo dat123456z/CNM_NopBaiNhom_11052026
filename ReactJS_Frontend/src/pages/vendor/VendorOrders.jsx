@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import LineIcon from "../../components/LineIcon";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const fmt = (n) => Number(n || 0).toLocaleString("vi-VN") + "đ";
@@ -186,7 +187,7 @@ const VendorOrders = ({ shop }) => {
                                                     <option value="">-- Chọn Shipper --</option>
                                                     {shippers.filter(s => s.status === "active").map(s => (
                                                         <option key={s.id} value={s.id}>
-                                                            🚚 {s.name} ({s.phone})
+                                                            {s.name} ({s.phone})
                                                         </option>
                                                     ))}
                                                 </select>
@@ -194,7 +195,7 @@ const VendorOrders = ({ shop }) => {
                                                 <div className="text-xs text-gray-500 font-medium">
                                                     {o.shipper ? (
                                                         <span className="flex items-center gap-1">
-                                                            <span>🚚</span>
+                                                            <LineIcon name="truck" size={14} />
                                                             <strong className="text-gray-800">{o.shipper.name}</strong>
                                                         </span>
                                                     ) : (

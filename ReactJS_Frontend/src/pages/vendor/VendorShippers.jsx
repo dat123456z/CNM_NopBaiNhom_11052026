@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import LineIcon from "../../components/LineIcon";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
@@ -191,7 +192,7 @@ const VendorShippers = ({ shop }) => {
                 </div>
             ) : shippers.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-gray-150 p-12 text-center text-gray-500">
-                    <div className="text-4xl mb-3">🚚</div>
+                    <LineIcon name="truck" size={40} className="mx-auto mb-3 text-gray-300" />
                     <p className="font-semibold text-gray-700">Chưa có shipper nào</p>
                     <p className="text-xs text-gray-400 mt-1">Vui lòng thêm shipper để giao các đơn hàng đã xác nhận.</p>
                 </div>
@@ -357,7 +358,7 @@ const VendorShippers = ({ shop }) => {
                         {/* Header */}
                         <div className="bg-linear-to-r from-blue-600 to-indigo-600 px-6 py-4 text-white flex items-center justify-between shrink-0">
                             <h3 className="font-extrabold text-base flex items-center gap-2">
-                                <span>📦</span>
+                                <LineIcon name="box" size={18} />
                                 Đơn hàng do shipper: {selectedShipper?.name} phụ trách
                             </h3>
                             <button
@@ -376,7 +377,7 @@ const VendorShippers = ({ shop }) => {
                                 </div>
                             ) : shipperOrders.length === 0 ? (
                                 <div className="text-center py-12 text-gray-500 bg-white rounded-xl border border-gray-100">
-                                    <div className="text-3xl mb-2">📦</div>
+                                    <LineIcon name="box" size={32} className="mx-auto mb-2 text-gray-300" />
                                     <p className="font-bold text-gray-700">Chưa phụ trách đơn hàng nào</p>
                                     <p className="text-xs text-gray-400 mt-0.5">Shipper này hiện tại chưa có đơn hàng nào được gán giao.</p>
                                 </div>

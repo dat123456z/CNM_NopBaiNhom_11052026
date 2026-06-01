@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import LineIcon from "../../components/LineIcon";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
@@ -111,7 +112,7 @@ const VendorOnboarding = () => {
 
                 {error && (
                     <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 text-xs font-semibold flex items-center gap-2">
-                        <span>⚠️</span><span>{error}</span>
+                        <LineIcon name="alert" size={16} /><span>{error}</span>
                     </div>
                 )}
 
@@ -180,7 +181,9 @@ const VendorOnboarding = () => {
 
                 {step === 3 && (
                     <div className="text-center py-8 space-y-6">
-                        <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center text-4xl mx-auto border border-green-100 animate-bounce">🎉</div>
+                        <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto border border-green-100 text-green-700">
+                            <LineIcon name="check" size={38} />
+                        </div>
                         <div>
                             <h1 className="text-3xl font-extrabold text-gray-900">Chúc mừng bạn!</h1>
                             <p className="text-sm text-gray-500 mt-2">Cửa hàng <strong>{form.name}</strong> đã được khởi tạo thành công.</p>

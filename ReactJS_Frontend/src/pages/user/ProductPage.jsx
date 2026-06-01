@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ProductCard from "../../components/ProductCard";
 import Breadcrumb from "../../components/Breadcrumb";
-import { fetchAllProducts } from "../../utils/productApi";
+import { fetchAllProducts } from "../../api/productApi";
+import LineIcon from "../../components/LineIcon";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
 
@@ -226,7 +227,7 @@ const ProductPage = () => {
         return (
             <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f9fafb" }}>
                 <div style={{ background: "#fff", padding: 32, borderRadius: 16, textAlign: "center", boxShadow: "0 4px 24px #0001" }}>
-                    <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
+                    <LineIcon name="alert" size={40} className="mx-auto mb-3 text-red-400" />
                     <p style={{ color: "#dc2626", fontWeight: 600, fontFamily: "'Be Vietnam Pro', sans-serif" }}>{error}</p>
                 </div>
             </div>
@@ -360,7 +361,7 @@ const ProductPage = () => {
 
                     {filtered.length === 0 ? (
                         <div className="text-center py-20 text-gray-500">
-                            <div className="text-5xl mb-4">🛍️</div>
+                            <LineIcon name="cart" size={48} className="mx-auto mb-4 text-gray-300" />
                             <p className="font-bold text-lg text-gray-800 mb-2">Không tìm thấy sản phẩm</p>
                             <button onClick={clearFilters} className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-md font-semibold text-sm">Xóa bộ lọc</button>
                         </div>

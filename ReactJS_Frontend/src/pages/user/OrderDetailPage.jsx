@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Breadcrumb from "../../components/Breadcrumb";
+import LineIcon from "../../components/LineIcon";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const fmt = (n) => Number(n).toLocaleString("vi-VN") + "đ";
 
 const STATUS_STEPS = [
-    { key: "pending", label: "Đơn hàng mới", icon: "📋", desc: "Đơn hàng của bạn đã được tiếp nhận" },
-    { key: "confirmed", label: "Đã xác nhận", icon: "✅", desc: "Shop đã xác nhận đơn hàng" },
-    { key: "preparing", label: "Đang chuẩn bị", icon: "📦", desc: "Shop đang đóng gói sản phẩm" },
-    { key: "shipping", label: "Đang giao hàng", icon: "🚚", desc: "Đơn hàng đang trên đường giao" },
-    { key: "delivered", label: "Đã giao thành công", icon: "🎉", desc: "Bạn đã nhận được hàng" },
+    { key: "pending", label: "Đơn hàng mới", icon: "clipboard", desc: "Đơn hàng của bạn đã được tiếp nhận" },
+    { key: "confirmed", label: "Đã xác nhận", icon: "check", desc: "Shop đã xác nhận đơn hàng" },
+    { key: "preparing", label: "Đang chuẩn bị", icon: "box", desc: "Shop đang đóng gói sản phẩm" },
+    { key: "shipping", label: "Đang giao hàng", icon: "truck", desc: "Đơn hàng đang trên đường giao" },
+    { key: "delivered", label: "Đã giao thành công", icon: "packageCheck", desc: "Bạn đã nhận được hàng" },
 ];
 
 const STATUS_CONFIG = {
@@ -201,7 +202,7 @@ const OrderDetailPage = () => {
                 {/* Cancel Message */}
                 {cancelMsg && (
                     <div className={`mb-6 p-4 rounded-xl flex items-start gap-3 text-sm font-medium ${cancelMsg.includes("thành công") || cancelMsg.includes("gửi") ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-600 border border-red-200"}`}>
-                        <span>{cancelMsg.includes("thành công") || cancelMsg.includes("gửi") ? "✅" : "⚠️"}</span>
+                        <LineIcon name={cancelMsg.includes("thành công") || cancelMsg.includes("gửi") ? "check" : "alert"} size={16} />
                         <span>{cancelMsg}</span>
                     </div>
                 )}
@@ -231,7 +232,7 @@ const OrderDetailPage = () => {
                                                         ? "border-[#00b14f] bg-[#00b14f] text-white"
                                                         : "border-gray-200 bg-white text-gray-300"
                                                 }`}>
-                                                    {isCompleted ? (idx === activeStep ? step.icon : "✓") : <span className="text-gray-300">{idx + 1}</span>}
+                                                    {isCompleted ? (idx === activeStep ? <LineIcon name={step.icon} size={17} /> : <LineIcon name="check" size={17} />) : <span className="text-gray-300">{idx + 1}</span>}
                                                 </div>
                                                 {/* Content */}
                                                 <div className={`flex-1 pt-1.5 ${!isCompleted && !isActive ? "opacity-40" : ""}`}>
@@ -255,7 +256,7 @@ const OrderDetailPage = () => {
                             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                                 <div className="flex items-center gap-4">
                                     <div className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl shrink-0 ${order.status === "cancelled" ? "bg-red-50" : "bg-amber-50"}`}>
-                                        {order.status === "cancelled" ? "❌" : "⏳"}
+                                        <LineIcon name={order.status === "cancelled" ? "x" : "receipt"} size={28} />
                                     </div>
                                     <div>
                                         <p className={`font-bold text-lg ${order.status === "cancelled" ? "text-red-600" : "text-amber-600"}`}>
@@ -304,7 +305,7 @@ const OrderDetailPage = () => {
                                                                 : "bg-green-50 hover:bg-green-100 text-green-700 cursor-pointer"
                                                         }`}
                                                     >
-                                                        <span>★</span> {reviewedProductIds.has(Number(item.productId)) ? "Đã đánh giá" : "Viết đánh giá nhận quà"}
+                                                        <LineIcon name="star" size={14} /> {reviewedProductIds.has(Number(item.productId)) ? "Đã đánh giá" : "Viết đánh giá nhận quà"}
                                                     </button>
                                                 </div>
                                             )}
@@ -322,7 +323,8 @@ const OrderDetailPage = () => {
                                 </h2>
                                 {order.status === "preparing" && (
                                     <p className="text-sm text-amber-600 bg-amber-50 px-4 py-3 rounded-lg mb-4">
-                                        ⚠️ Shop đang chuẩn bị hàng. Yêu cầu hủy sẽ được gửi cho shop để xem xét.
+                                        <span className="inline-flex align-middle mr-1"><LineIcon name="alert" size={14} /></span>
+                                        Shop đang chuẩn bị hàng. Yêu cầu hủy sẽ được gửi cho shop để xem xét.
                                     </p>
                                 )}
                                 {!showCancelForm ? (
@@ -422,7 +424,7 @@ const OrderDetailPage = () => {
                         {/* Header */}
                         <div className="bg-linear-to-r from-[#00b14f] to-[#009943] px-6 py-4 text-white flex items-center justify-between">
                             <h3 className="font-bold text-base flex items-center gap-1.5">
-                                <span>✍️</span> Đánh giá sản phẩm
+                                <LineIcon name="edit" size={16} /> Đánh giá sản phẩm
                             </h3>
                             <button onClick={handleCloseReview} className="text-white hover:text-gray-200 transition-colors text-lg font-semibold cursor-pointer">✕</button>
                         </div>
@@ -450,7 +452,7 @@ const OrderDetailPage = () => {
                             {/* Reward Notice */}
                             {!rewardInfo && (
                                 <div className="bg-green-50 text-green-800 border border-green-100 rounded-xl px-4 py-3 text-xs flex items-start gap-2.5">
-                                    <span className="text-sm">🎁</span>
+                                    <LineIcon name="gift" size={16} className="shrink-0" />
                                     <div>
                                         <p className="font-bold">Đánh giá để nhận ngay:</p>
                                         <ul className="list-disc list-inside mt-1 space-y-0.5 text-[11px] text-green-700">
@@ -465,7 +467,7 @@ const OrderDetailPage = () => {
                                 /* Reward Success Popup Contents */
                                 <div className="text-center py-4 space-y-4">
                                     <div className="w-16 h-16 bg-green-155 rounded-full flex items-center justify-center text-3xl mx-auto animate-bounce">
-                                        🎉
+                                        <LineIcon name="check" size={32} />
                                     </div>
                                     <div>
                                         <h4 className="text-lg font-bold text-gray-900">Đánh giá thành công!</h4>
@@ -474,7 +476,7 @@ const OrderDetailPage = () => {
                                     <div className="bg-green-50/50 border border-green-100 rounded-xl p-4 space-y-3 text-left">
                                         <div className="flex items-center justify-between text-sm">
                                             <span className="text-gray-500 font-medium">Xu tích lũy nhận được:</span>
-                                            <span className="font-bold text-green-700">🪙 +{rewardInfo.points} xu</span>
+                                            <span className="font-bold text-green-700 inline-flex items-center gap-1"><LineIcon name="coin" size={15} /> +{rewardInfo.points} xu</span>
                                         </div>
                                         {rewardInfo.couponCode && (
                                             <div className="border-t border-green-100/50 pt-3 space-y-2">
@@ -516,7 +518,7 @@ const OrderDetailPage = () => {
                                                     onClick={() => setReviewForm(p => ({ ...p, rating: star }))}
                                                     className="text-2xl transition-transform hover:scale-110 active:scale-95 cursor-pointer text-amber-400"
                                                 >
-                                                    {star <= reviewForm.rating ? "★" : "☆"}
+                                                    <LineIcon name="star" size={24} className={star <= reviewForm.rating ? "text-amber-400" : "text-gray-300"} />
                                                 </button>
                                             ))}
                                             <span className="text-xs font-bold text-gray-600 ml-2">

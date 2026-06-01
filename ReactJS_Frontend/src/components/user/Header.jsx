@@ -1,91 +1,70 @@
-import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useCart } from '../../context/CartContext';
+import { Link } from "react-router-dom";
+import NotificationBell from "../NotificationBell";
+import LineIcon from "../LineIcon";
 
-const Header = () => {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const [search, setSearch] = useState('');
-    const { itemCount } = useCart();
-
-    const handleLogout = () => {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('user');
-        navigate('/login');
-    };
-
-    const handleSearch = (e) => {
-        e.preventDefault();
-        if (search.trim()) {
-            navigate(`/products?q=${encodeURIComponent(search.trim())}`);
-        }
-    };
-
-    const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-
-    return (
-        <header className="bg-[#f8f9fb] w-full pt-6 pb-4">
-            <div className="max-w-7xl mx-auto px-6 flex items-center justify-between gap-8">
-                {/* Logo */}
+const UserHeader = ({ user, token, cartCount = 0, onLogout }) => (
+    <header className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-3">
                 <Link to="/" className="text-2xl font-extrabold tracking-tight text-[#00b14f]">
                     UTEShop
                 </Link>
+                <nav className="hidden md:flex items-center gap-1 ml-2">
+                    <Link to="/" className="text-sm text-gray-600 hover:text-[#00b14f] px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+                        Trang chủ
+                    </Link>
+                    <Link to="/products" className="text-sm text-gray-600 hover:text-[#00b14f] px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+                        Sản phẩm
+                    </Link>
+                </nav>
+            </div>
 
-                {/* Search Bar */}
-                <form onSubmit={handleSearch} className="flex-1 max-w-xl hidden md:flex items-center bg-[#eef2f9] rounded-md px-4 py-2 border border-gray-200 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400 transition-all">
-                    <svg className="w-5 h-5 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    <input
-                        type="text"
-                        placeholder="Tìm kiếm sản phẩm..."
-                        className="bg-transparent border-none focus:outline-none text-sm w-full text-gray-700 placeholder-gray-500"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                </form>
-
-                {/* Right Side */}
-                <div className="flex items-center gap-6">
-                    <nav className="hidden lg:flex items-center gap-5 text-sm font-semibold text-gray-600">
-                        <Link to="/" className={`hover:text-gray-900 ${location.pathname === '/' ? 'text-gray-900 border-b-2 border-gray-900 pb-0.5' : ''}`}>Home</Link>
-                        <Link to="/products" className={`hover:text-gray-900 ${isActive('/products') ? 'text-gray-900 border-b-2 border-gray-900 pb-0.5' : ''}`}>Product</Link>
-                        <Link to="/orders" className={`hover:text-gray-900 ${isActive('/orders') ? 'text-gray-900 border-b-2 border-gray-900 pb-0.5' : ''}`}>Orders</Link>
-                        <Link to="/profile" className={`hover:text-gray-900 ${isActive('/profile') ? 'text-gray-900 border-b-2 border-gray-900 pb-0.5' : ''}`}>Profile</Link>
-                        {(user?.role === 'manager' || user?.role === 'admin') && (
-                            <Link to="/manager/dashboard" className={`hover:text-gray-900 text-emerald-600 ${isActive('/manager/dashboard') ? 'text-emerald-700 border-b-2 border-emerald-600 pb-0.5' : ''}`}>Kênh Quản Lý</Link>
+            <div className="flex items-center gap-3">
+                {token && user ? (
+                    <>
+                        {(user.role === "vendor" || user.role === "manager" || user.role === "admin") && (
+                            <Link
+                                to={user.role === "manager" || user.role === "admin" ? "/manager/dashboard" : "/vendor/dashboard"}
+                                className="text-xs font-semibold text-[#00b14f] hover:underline hidden md:block"
+                            >
+                                {user.role === "vendor" ? "Kênh người bán" : "Quản lý"}
+                            </Link>
                         )}
-                    </nav>
-
-                    {localStorage.getItem('accessToken') ? (
-                        <button onClick={handleLogout} className="bg-[#008a3d] hover:bg-[#007031] text-white px-5 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer">
-                            Logout
-                        </button>
-                    ) : (
-                        <Link to="/login" className="bg-[#00b14f] hover:bg-[#008a3d] text-white px-5 py-1.5 rounded-md text-sm font-semibold transition-colors">
-                            Login
+                        <NotificationBell />
+                        <Link to="/orders" className="p-2 text-gray-500 hover:text-[#00b14f] hover:bg-gray-50 rounded-lg transition-colors" title="Đơn hàng">
+                            <LineIcon name="clipboard" size={20} />
                         </Link>
-                    )}
-
-                    <div className="flex items-center gap-4 text-gray-600 border-l pl-4 border-gray-300">
-                        {/* Cart Icon with Badge */}
-                        <Link to="/cart" className="hover:text-gray-900 transition-colors relative">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
-                            {itemCount > 0 && (
-                                <span className="absolute -top-2 -right-2 bg-[#00b14f] text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
-                                    {itemCount > 99 ? '99+' : itemCount}
+                        <Link to="/wishlist" className="p-2 text-gray-500 hover:text-[#00b14f] hover:bg-gray-50 rounded-lg transition-colors" title="Yêu thích">
+                            <LineIcon name="heart" size={20} />
+                        </Link>
+                        <Link to="/cart" className="relative p-2 text-gray-500 hover:text-[#00b14f] hover:bg-gray-50 rounded-lg transition-colors" title="Giỏ hàng">
+                            <LineIcon name="cart" size={20} />
+                            {cartCount > 0 && (
+                                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-[#00b14f] text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
+                                    {cartCount > 99 ? "99+" : cartCount}
                                 </span>
                             )}
                         </Link>
-                        <button className="hover:text-gray-900 transition-colors">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        <Link to="/profile" className="text-sm font-semibold text-gray-700 hover:text-[#00b14f] transition-colors">
+                            {user.name || "Tài khoản"}
+                        </Link>
+                        <button onClick={onLogout} className="text-xs font-bold px-4 py-1.5 bg-[#00b14f] hover:bg-[#009943] text-white rounded-lg transition-colors cursor-pointer">
+                            Đăng xuất
                         </button>
-                    </div>
-                </div>
+                    </>
+                ) : (
+                    <>
+                        <Link to="/login" className="text-sm font-semibold text-gray-700 hover:text-[#00b14f] transition-colors">
+                            Đăng nhập
+                        </Link>
+                        <Link to="/register" className="text-sm font-bold px-4 py-1.5 bg-[#00b14f] hover:bg-[#009943] text-white rounded-lg transition-colors">
+                            Đăng ký
+                        </Link>
+                    </>
+                )}
             </div>
-        </header>
-    );
-};
+        </div>
+    </header>
+);
 
-export default Header;
+export default UserHeader;

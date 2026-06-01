@@ -72,7 +72,7 @@ const VendorSettings = ({ shop, onShopUpdate }) => {
             <form onSubmit={handleSaveSettings} className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6 text-left max-w-2xl">
                 {success && (
                     <div className="p-4 bg-green-50 text-green-600 border border-green-100 rounded-2xl text-xs font-semibold">
-                        🎉 Cập nhật thông tin shop thành công!
+                        Cập nhật thông tin shop thành công!
                     </div>
                 )}
 
