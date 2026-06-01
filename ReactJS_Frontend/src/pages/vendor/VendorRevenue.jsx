@@ -1,14 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
+import LineIcon from "../../components/LineIcon";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const fmt = (n) => Number(n || 0).toLocaleString("vi-VN") + "đ";
-const fmtShort = (n) => {
-    n = Number(n || 0);
-    if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1) + "tỷ";
-    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "tr";
-    if (n >= 1_000) return (n / 1_000).toFixed(0) + "k";
-    return n.toLocaleString("vi-VN");
-};
+const fmtMoney = (n) => fmt(n);
 
 const STATUS_META = {
     pending:          { label: "Chờ xác nhận",  color: "#f59e0b", bg: "#fef3c7" },
@@ -109,7 +104,7 @@ const StatCard = ({ label, value, sub, icon, accent = "#00b14f", trend, trendPos
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-3">
         <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{label}</span>
-            <span className="text-xl">{icon}</span>
+            <LineIcon name={icon} size={22} className="text-gray-400" />
         </div>
         <div>
             <div className="text-2xl font-black text-gray-900" style={{ color: accent }}>{value}</div>
@@ -198,11 +193,11 @@ const VendorRevenue = ({ shop }) => {
 
     const s = analytics?.summary;
     const TABS = [
-        { id: "overview",  label: "📊 Tổng quan" },
-        { id: "orders",    label: "📋 Đơn hàng" },
-        { id: "products",  label: "🏆 Sản phẩm" },
-        { id: "cashflow",  label: "💸 Dòng tiền" },
-        { id: "wallet",    label: "💰 Ví Shop" },
+        { id: "overview",  label: "Tổng quan", icon: "receipt" },
+        { id: "orders",    label: "Đơn hàng", icon: "clipboard" },
+        { id: "products",  label: "Sản phẩm", icon: "box" },
+        { id: "cashflow",  label: "Dòng tiền", icon: "wallet" },
+        { id: "wallet",    label: "Ví Shop", icon: "coin" },
     ];
 
     return (
@@ -226,9 +221,10 @@ const VendorRevenue = ({ shop }) => {
                     </div>
                     <button
                         onClick={() => setWithdrawModal(true)}
-                        className="px-4 py-2 bg-[#00b14f] hover:bg-green-600 text-white font-bold text-xs rounded-xl transition-all shadow-md cursor-pointer"
+                        className="px-4 py-2 bg-[#00b14f] hover:bg-green-600 text-white font-bold text-xs rounded-xl transition-all shadow-md cursor-pointer inline-flex items-center gap-2"
                     >
-                        💳 Rút tiền
+                        <LineIcon name="card" size={14} />
+                        Rút tiền
                     </button>
                 </div>
             </div>
@@ -239,8 +235,9 @@ const VendorRevenue = ({ shop }) => {
                     <button
                         key={t.id}
                         onClick={() => setActiveTab(t.id)}
-                        className={`px-4 py-2.5 text-xs font-bold whitespace-nowrap transition-colors border-b-2 -mb-px ${activeTab === t.id ? "border-[#00b14f] text-[#00b14f]" : "border-transparent text-gray-500 hover:text-gray-800"}`}
+                        className={`px-4 py-2.5 text-xs font-bold whitespace-nowrap transition-colors border-b-2 -mb-px inline-flex items-center gap-2 ${activeTab === t.id ? "border-[#00b14f] text-[#00b14f]" : "border-transparent text-gray-500 hover:text-gray-800"}`}
                     >
+                        <LineIcon name={t.icon} size={15} />
                         {t.label}
                     </button>
                 ))}
@@ -257,27 +254,27 @@ const VendorRevenue = ({ shop }) => {
                         {/* KPI row */}
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                             <StatCard
-                                label="Doanh thu" icon="💰"
-                                value={fmtShort(s.totalRevenue) + "đ"}
+                                label="Doanh thu" icon="coin"
+                                value={fmtMoney(s.totalRevenue)}
                                 sub={`${s.totalOrders} đơn hoàn thành`}
                                 trend={s.revenueGrowth}
                                 trendPositive={s.revenueGrowth > 0}
                                 accent="#00b14f"
                             />
                             <StatCard
-                                label="Số dư ví" icon="🏦"
-                                value={fmtShort(s.balance) + "đ"}
+                                label="Số dư ví" icon="bank"
+                                value={fmtMoney(s.balance)}
                                 sub="Khả dụng để rút"
                                 accent="#3b82f6"
                             />
                             <StatCard
-                                label="Giá trị TB / đơn" icon="🧾"
-                                value={fmtShort(s.avgOrderValue) + "đ"}
+                                label="Giá trị TB / đơn" icon="receipt"
+                                value={fmtMoney(s.avgOrderValue)}
                                 sub={`${s.allOrdersCount} đơn trong kỳ`}
                                 accent="#8b5cf6"
                             />
                             <StatCard
-                                label="Khách mới" icon="👥"
+                                label="Khách mới" icon="users"
                                 value={s.newCustomers}
                                 sub={`Tổng ${s.totalUniqueCustomers} khách trong kỳ`}
                                 accent="#f59e0b"
@@ -410,7 +407,10 @@ const VendorRevenue = ({ shop }) => {
                     <div className="space-y-6">
                         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                             <div className="px-6 py-4 border-b border-gray-50">
-                                <h3 className="font-extrabold text-gray-900">🏆 Top 10 sản phẩm bán chạy nhất</h3>
+                                <h3 className="font-extrabold text-gray-900 flex items-center gap-2">
+                                    <LineIcon name="star" size={18} className="text-gray-500" />
+                                    Top 10 sản phẩm bán chạy nhất
+                                </h3>
                                 <p className="text-xs text-gray-400 mt-0.5">Tính theo doanh thu từ đơn đã giao trong kỳ</p>
                             </div>
                             {analytics.topProducts?.length === 0 ? (
@@ -432,7 +432,7 @@ const VendorRevenue = ({ shop }) => {
                                                     i === 2 ? "bg-orange-100 text-orange-700" :
                                                     "bg-gray-50 text-gray-400"
                                                 }`}>
-                                                    {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
+                                                    {i + 1}
                                                 </div>
                                                 {/* Image */}
                                                 <div className="w-10 h-10 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-100">
@@ -455,7 +455,7 @@ const VendorRevenue = ({ shop }) => {
                                                 </div>
                                                 {/* Stats */}
                                                 <div className="text-right shrink-0">
-                                                    <div className="text-sm font-extrabold text-[#00b14f]">{fmtShort(p.totalRevenue)}đ</div>
+                                                    <div className="text-sm font-extrabold text-[#00b14f]">{fmtMoney(p.totalRevenue)}</div>
                                                     <div className="text-[10px] text-gray-400 mt-0.5">{p.totalQty} sản phẩm · {p.orderCount} đơn</div>
                                                 </div>
                                             </div>
@@ -473,17 +473,17 @@ const VendorRevenue = ({ shop }) => {
                         {/* Summary cards */}
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                             {[
-                                { label: "Đã vào ví",      value: s.totalRevenue,   icon: "✅", color: "#00b14f", sub: `${s.totalOrders} đơn giao thành công` },
-                                { label: "Đang giao",       value: s.shippingRevenue, icon: "🚚", color: "#8b5cf6", sub: "Sẽ vào ví khi hoàn thành" },
-                                { label: "Chờ xử lý",       value: s.pendingRevenue,  icon: "⏳", color: "#f59e0b", sub: "Đơn chưa đến tay khách" },
-                                { label: "Đơn bị hủy",      value: s.cancelledRevenue,icon: "❌", color: "#ef4444", sub: "Doanh thu mất do hủy" },
+                                { label: "Đã vào ví",      value: s.totalRevenue,   icon: "check", color: "#00b14f", sub: `${s.totalOrders} đơn giao thành công` },
+                                { label: "Đang giao",       value: s.shippingRevenue, icon: "truck", color: "#8b5cf6", sub: "Sẽ vào ví khi hoàn thành" },
+                                { label: "Chờ xử lý",       value: s.pendingRevenue,  icon: "receipt", color: "#f59e0b", sub: "Đơn chưa đến tay khách" },
+                                { label: "Đơn bị hủy",      value: s.cancelledRevenue,icon: "x", color: "#ef4444", sub: "Doanh thu mất do hủy" },
                             ].map((c, i) => (
                                 <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                                     <div className="flex items-center justify-between mb-3">
                                         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{c.label}</span>
-                                        <span className="text-lg">{c.icon}</span>
+                                        <LineIcon name={c.icon} size={20} className="text-gray-400" />
                                     </div>
-                                    <div className="text-xl font-black" style={{ color: c.color }}>{fmtShort(c.value)}đ</div>
+                                    <div className="text-xl font-black" style={{ color: c.color }}>{fmtMoney(c.value)}</div>
                                     <div className="text-[10px] text-gray-400 mt-1">{c.sub}</div>
                                 </div>
                             ))}
@@ -560,7 +560,8 @@ const VendorRevenue = ({ shop }) => {
                                     onClick={() => setWithdrawModal(true)}
                                     className="px-6 py-3 bg-white text-[#00b14f] rounded-2xl font-black text-sm shadow-md hover:shadow-xl transition-all hover:-translate-y-0.5 cursor-pointer"
                                 >
-                                    💳 Rút tiền về ngân hàng
+                                    <LineIcon name="card" size={16} />
+                                    Rút tiền về ngân hàng
                                 </button>
                             </div>
                         </div>
@@ -585,7 +586,7 @@ const VendorRevenue = ({ shop }) => {
                                         <div key={w.id} className="flex items-center justify-between px-6 py-4 hover:bg-gray-50/50 transition-colors">
                                             <div className="flex items-center gap-4">
                                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 ${w.type === "credit" ? "bg-green-50" : "bg-red-50"}`}>
-                                                    {w.type === "credit" ? "⬆️" : "⬇️"}
+                                                    <LineIcon name={w.type === "credit" ? "check" : "card"} size={18} className={w.type === "credit" ? "text-green-600" : "text-red-500"} />
                                                 </div>
                                                 <div>
                                                     <div className="text-sm font-bold text-gray-900">{w.note}</div>
@@ -623,7 +624,9 @@ const VendorRevenue = ({ shop }) => {
                         ✕
                     </button>
                     <div className="text-center mb-6">
-                        <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3">💳</div>
+                        <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-green-700">
+                            <LineIcon name="card" size={28} />
+                        </div>
                         <h2 className="text-xl font-extrabold text-gray-900">Rút tiền về ngân hàng</h2>
                         <p className="text-xs text-gray-400 mt-1">Số dư: <strong className="text-green-600">{fmt(s?.balance)}</strong></p>
                     </div>
@@ -643,7 +646,8 @@ const VendorRevenue = ({ shop }) => {
                             <p className="text-[10px] text-gray-400 mt-1">Tối thiểu: 50.000đ · Tối đa: {fmt(s?.balance)}</p>
                         </div>
                         <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 text-xs text-amber-700">
-                            💡 Tiền sẽ được chuyển trong vòng <strong>24h làm việc</strong> sau khi xác nhận.
+                            <span className="inline-flex align-middle mr-1"><LineIcon name="alert" size={14} /></span>
+                            Tiền sẽ được chuyển trong vòng <strong>24h làm việc</strong> sau khi xác nhận.
                         </div>
                         <button
                             type="submit"
