@@ -264,7 +264,7 @@ const VendorShippers = ({ shop }) => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
                     <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-gray-150 animate-in fade-in zoom-in-95 duration-150">
                         {/* Header */}
-                        <div className="bg-gradient-to-r from-[#00b14f] to-[#009943] px-6 py-4 text-white flex items-center justify-between">
+                        <div className="bg-linear-to-r from-[#00b14f] to-[#009943] px-6 py-4 text-white flex items-center justify-between">
                             <h3 className="font-extrabold text-base">
                                 {editingShipper ? "Chỉnh sửa Shipper" : "Thêm Shipper mới"}
                             </h3>
@@ -355,7 +355,7 @@ const VendorShippers = ({ shop }) => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
                     <div className="bg-white rounded-2xl max-w-4xl w-full overflow-hidden shadow-2xl border border-gray-150 animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
                         {/* Header */}
-                        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 text-white flex items-center justify-between shrink-0">
+                        <div className="bg-linear-to-r from-blue-600 to-indigo-600 px-6 py-4 text-white flex items-center justify-between shrink-0">
                             <h3 className="font-extrabold text-base flex items-center gap-2">
                                 <span>📦</span>
                                 Đơn hàng do shipper: {selectedShipper?.name} phụ trách
@@ -405,7 +405,7 @@ const VendorShippers = ({ shop }) => {
                                                             {o.shippingAddress?.phone || "N/A"}
                                                         </div>
                                                     </td>
-                                                    <td className="p-4 text-gray-600 max-w-[200px] truncate" title={o.shippingAddress?.street}>
+                                                    <td className="p-4 text-gray-600 max-w-50 truncate" title={o.shippingAddress?.street}>
                                                         {o.shippingAddress?.street || "—"}
                                                     </td>
                                                     <td className="p-4 font-bold text-gray-900">{fmt(o.total)}</td>

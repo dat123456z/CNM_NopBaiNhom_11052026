@@ -10,14 +10,6 @@ const humanize = (seg) => {
   }
 };
 
-/**
- * Breadcrumb
- * Props:
- * - items: [{ label, to }]
- * - showBack: boolean
- * - align: 'container' | 'viewport' (default: 'viewport')
- * - className: extra wrapper classes
- */
 const Breadcrumb = ({ items, showBack = false, align = "viewport", className = "" }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -34,7 +26,6 @@ const Breadcrumb = ({ items, showBack = false, align = "viewport", className = "
 
   const list = Array.isArray(items) && items.length ? items : auto;
 
-  // If align=viewport we compute a left offset so breadcrumb lines up with header logo
   const viewportOffsetStyle = align === "viewport"
     ? { marginLeft: "max(24px, calc((100vw - 1280px)/2 + 24px))" }
     : {};

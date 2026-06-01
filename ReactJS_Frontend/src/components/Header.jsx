@@ -7,7 +7,7 @@ const Header = ({ title, subtitle, children, small = false }) => {
     const subtitleClass = small ? "text-sm" : "text-sm";
 
     return (
-        <header className={`bg-gradient-to-r from-primary/90 to-indigo-600 text-white ${padding}`}>
+        <header className={`bg-linear-to-r from-primary/90 to-indigo-600 text-white ${padding}`}>
             <div className="container mx-auto px-4 flex items-center justify-between">
                 <div>
                     <h1 className={`${titleClass} font-extrabold`}>{title}</h1>

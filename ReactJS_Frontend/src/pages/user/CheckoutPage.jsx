@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "../../components/user/Header";
-import Footer from "../../components/user/Footer";
 import Breadcrumb from "../../components/Breadcrumb";
 import { useCart } from "../../context/CartContext";
 
@@ -213,8 +211,9 @@ const CheckoutPage = () => {
     const fmtCountdown = `${String(Math.floor(countdown / 60)).padStart(2, "0")}:${String(countdown % 60).padStart(2, "0")}`;
 
     return (
-        <div className="min-h-screen bg-[#f8f9fb] flex flex-col">
-            <Header />
+        <>
+
+
             <Breadcrumb align="viewport"/>
             <main className="flex-1 max-w-6xl mx-auto px-6 py-10 w-full">
                 {/* Step Indicator */}
@@ -327,7 +326,7 @@ const CheckoutPage = () => {
 
                                 {payMethod === "cod" && (
                                     <div className="mt-4 p-4 bg-green-50 rounded-xl text-sm text-gray-600 flex items-center gap-3">
-                                        <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-5 h-5 text-green-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                         <span>Thanh toán khi nhận hàng. Vui lòng chuẩn bị đúng số tiền khi nhận hàng.</span>
@@ -435,7 +434,7 @@ const CheckoutPage = () => {
 
                                 {/* Payment Method Review */}
                                 <div className="mb-6 p-4 bg-gray-50 rounded-xl flex items-center gap-3">
-                                    <span className="flex-shrink-0">
+                                    <span className="shrink-0">
                                         {payMethod === "cod" ? (
                                             <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -464,7 +463,7 @@ const CheckoutPage = () => {
                                 <div className="space-y-3 mb-6">
                                     {items.map((item) => (
                                         <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100">
-                                            <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                                            <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 shrink-0">
                                                 {item.product?.image
                                                     ? <img src={item.product.image.startsWith("http") ? item.product.image : `${API_URL}${item.product.image}`} alt="" className="w-full h-full object-cover" />
                                                     : <div className="w-full h-full bg-gray-200" />
@@ -474,7 +473,7 @@ const CheckoutPage = () => {
                                                 <p className="text-sm font-semibold text-gray-900 truncate">{item.product?.title}</p>
                                                 {item.color && <p className="text-xs text-gray-400">{item.color}</p>}
                                             </div>
-                                            <div className="text-right text-sm flex-shrink-0">
+                                            <div className="text-right text-sm shrink-0">
                                                 <p className="text-gray-500">x{item.quantity}</p>
                                                 <p className="font-bold text-gray-900">{fmt(item.lineTotal || 0)}</p>
                                             </div>
@@ -504,7 +503,7 @@ const CheckoutPage = () => {
                     </div>
 
                     {/* Order Summary Sidebar */}
-                    <div className="lg:w-80 flex-shrink-0">
+                    <div className="lg:w-80 shrink-0">
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-6">
                             <h2 className="font-bold text-gray-900 text-lg mb-4">Tổng đơn hàng</h2>
                             <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
@@ -514,7 +513,7 @@ const CheckoutPage = () => {
                                         : null;
                                     return (
                                         <div key={item.id} className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                                            <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 shrink-0">
                                                 {imgSrc ? <img src={imgSrc} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gray-200" />}
                                             </div>
                                             <div className="flex-1 min-w-0">
@@ -522,7 +521,7 @@ const CheckoutPage = () => {
                                                 {item.color && <p className="text-xs text-gray-400">{item.color}</p>}
                                                 <p className="text-xs text-gray-500">Số lượng: {item.quantity}</p>
                                             </div>
-                                            <span className="text-xs font-bold text-gray-900 flex-shrink-0">{fmt(item.lineTotal || 0)}</span>
+                                            <span className="text-xs font-bold text-gray-900 shrink-0">{fmt(item.lineTotal || 0)}</span>
                                         </div>
                                     );
                                 })}
@@ -618,12 +617,10 @@ const CheckoutPage = () => {
                     </div>
                 </div>
             </main>
-            <Footer />
-        </div>
+        </>
     );
 };
 
-// ── Sub-components ──────────────────────────────────────────────────────────
 const FormField = ({ label, value, onChange, error, placeholder, className = "" }) => (
     <div className={`mb-4 ${className}`}>
         <label className="block text-xs font-semibold text-gray-600 mb-1.5">{label}</label>

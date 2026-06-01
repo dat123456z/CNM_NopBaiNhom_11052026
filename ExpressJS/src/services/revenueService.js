@@ -1,56 +1,214 @@
 const { sequelize } = require('../config/database');
-const { Order } = require('../models/Order');
+const { Order, OrderItem } = require('../models/Order');
+const Product = require('../models/Product');
 const Shop = require('../models/Shop');
+const User = require('../models/User');
 const WalletTransaction = require('../models/WalletTransaction');
-const { Op, fn, col, literal } = require('sequelize');
+const { Op } = require('sequelize');
 
-const getShopRevenue = async (shopId, { from, to, groupBy = 'day' }) => {
-    const groupFormats = { day: '%Y-%m-%d', month: '%Y-%m', year: '%Y' };
-    const fmt = groupFormats[groupBy] || groupFormats.day;
+// Trả về chuỗi ngày theo local time (YYYY-MM-DD), tránh lệch timezone UTC
+const localDate = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+};
 
-    const replacements = { shopId, fmt };
-    let dateFilter = '';
-    if (from) { dateFilter += ' AND deliveredAt >= :from'; replacements.from = new Date(from); }
-    if (to)   { dateFilter += ' AND deliveredAt <= :to';   replacements.to   = new Date(to); }
+const getPeriodRange = (period) => {
+    const now = new Date();
+    let start, end, groupFn, labelFn, points;
 
-    const chart = await sequelize.query(
-        `SELECT DATE_FORMAT(deliveredAt, :fmt) as period,
-                COUNT(*) as orderCount,
-                SUM(total) as revenue,
-                SUM(discount) as totalDiscount
-         FROM orders
-         WHERE shopId = :shopId AND status = 'delivered'
-         ${dateFilter}
-         GROUP BY period
-         ORDER BY period ASC`,
-        { replacements, type: sequelize.QueryTypes.SELECT }
-    );
+    switch (period) {
+        case '7d':
+            start = new Date(now); start.setDate(start.getDate() - 6); start.setHours(0, 0, 0, 0);
+            end = new Date(now); end.setHours(23, 59, 59, 999);
+            groupFn = (d) => localDate(d);
+            labelFn = (k) => { const [, m, day] = k.split('-'); return `${Number(day)}/${Number(m)}`; };
+            points = Array.from({ length: 7 }, (_, i) => {
+                const d = new Date(now); d.setDate(d.getDate() - (6 - i)); d.setHours(0, 0, 0, 0);
+                return localDate(d);
+            });
+            break;
+        case '30d':
+            start = new Date(now); start.setDate(start.getDate() - 29); start.setHours(0, 0, 0, 0);
+            end = new Date(now); end.setHours(23, 59, 59, 999);
+            groupFn = (d) => localDate(d);
+            labelFn = (k) => { const [, m, day] = k.split('-'); return `${Number(day)}/${Number(m)}`; };
+            points = Array.from({ length: 30 }, (_, i) => {
+                const d = new Date(now); d.setDate(d.getDate() - (29 - i)); d.setHours(0, 0, 0, 0);
+                return localDate(d);
+            });
+            break;
+        case '12m':
+        default:
+            start = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+            end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+            groupFn = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            labelFn = (k) => { const [y, m] = k.split('-'); return `T${m}/${y}`; };
+            points = Array.from({ length: 12 }, (_, i) => {
+                const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1);
+                return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            });
+            break;
+    }
+    return { start, end, groupFn, labelFn, points };
+};
 
-    const shop = await Shop.findByPk(shopId, { attributes: ['id', 'name', 'balance', 'rating'] });
-    if (!shop) throw Object.assign(new Error('Shop không tồn tại.'), { status: 404 });
+const getShopAnalytics = async (shopId, period = '12m') => {
+    const { start, end, groupFn, labelFn, points } = getPeriodRange(period);
 
-    const [stats] = await sequelize.query(
-        `SELECT COUNT(*) as totalOrders,
-                COALESCE(SUM(total), 0) as totalRevenue,
-                COALESCE(SUM(discount), 0) as totalDiscount
-         FROM orders
-         WHERE shopId = :shopId AND status = 'delivered'`,
-        { replacements: { shopId }, type: sequelize.QueryTypes.SELECT }
-    );
+    const allOrders = await Order.findAll({
+        where: {
+            shopId,
+            createdAt: { [Op.between]: [start, end] }
+        },
+        include: [{ model: OrderItem, as: 'items' }]
+    });
+
+    const deliveredOrders = allOrders.filter(o => o.status === 'delivered');
+    const revenueMap = {};
+    const orderCountMap = {};
+    points.forEach(p => { revenueMap[p] = 0; orderCountMap[p] = 0; });
+
+    deliveredOrders.forEach(o => {
+        const key = groupFn(new Date(o.createdAt));
+        if (revenueMap[key] !== undefined) {
+            revenueMap[key] += Number(o.total);
+            orderCountMap[key] = (orderCountMap[key] || 0) + 1;
+        }
+    });
+
+    const chart = points.map(k => ({
+        period: labelFn(k),
+        revenue: revenueMap[k] || 0,
+        orderCount: orderCountMap[k] || 0
+    }));
+
+    const statusCounts = {};
+    allOrders.forEach(o => {
+        statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
+    });
+
+    const shippingRevenue = allOrders
+        .filter(o => o.status === 'shipping')
+        .reduce((s, o) => s + Number(o.total), 0);
+    const pendingRevenue = allOrders
+        .filter(o => ['pending', 'confirmed', 'preparing'].includes(o.status))
+        .reduce((s, o) => s + Number(o.total), 0);
+    const totalRevenue = deliveredOrders.reduce((s, o) => s + Number(o.total), 0);
+    const cancelledRevenue = allOrders
+        .filter(o => ['cancelled', 'refunded'].includes(o.status))
+        .reduce((s, o) => s + Number(o.total), 0);
+
+    const allShopOrdersBefore = await Order.findAll({
+        where: { shopId, createdAt: { [Op.lt]: start } },
+        attributes: ['userId']
+    });
+    const existingCustomerIds = new Set(allShopOrdersBefore.map(o => o.userId));
+    const newCustomerIds = new Set();
+    allOrders.forEach(o => {
+        if (!existingCustomerIds.has(o.userId)) newCustomerIds.add(o.userId);
+    });
+    const totalUniqueCustomers = new Set(allOrders.map(o => o.userId)).size;
+
+    const newCustMap = {};
+    points.forEach(p => { newCustMap[p] = new Set(); });
+    allOrders.forEach(o => {
+        if (!existingCustomerIds.has(o.userId)) {
+            const key = groupFn(new Date(o.createdAt));
+            if (newCustMap[key]) newCustMap[key].add(o.userId);
+        }
+    });
+    const newCustomersChart = points.map(k => ({
+        period: labelFn(k),
+        count: newCustMap[k]?.size || 0
+    }));
+
+    const productStats = {};
+    allOrders
+        .filter(o => o.status === 'delivered')
+        .forEach(o => {
+            (o.items || []).forEach(item => {
+                if (!productStats[item.productId]) {
+                    productStats[item.productId] = {
+                        productId: item.productId,
+                        title: item.productTitle,
+                        image: item.productImage,
+                        totalQty: 0,
+                        totalRevenue: 0,
+                        orderCount: 0
+                    };
+                }
+                productStats[item.productId].totalQty += item.quantity;
+                productStats[item.productId].totalRevenue += Number(item.price) * item.quantity;
+                productStats[item.productId].orderCount += 1;
+            });
+        });
+
+    const topProducts = Object.values(productStats)
+        .sort((a, b) => b.totalRevenue - a.totalRevenue)
+        .slice(0, 10);
+
+    const brackets = [
+        { label: '< 100k',   min: 0,       max: 100000 },
+        { label: '100-300k', min: 100000,   max: 300000 },
+        { label: '300-500k', min: 300000,   max: 500000 },
+        { label: '500k-1tr', min: 500000,   max: 1000000 },
+        { label: '> 1tr',    min: 1000000,  max: Infinity }
+    ];
+    const orderValueDist = brackets.map(b => ({
+        label: b.label,
+        count: deliveredOrders.filter(o => Number(o.total) >= b.min && Number(o.total) < b.max).length
+    }));
+
+    const shop = await Shop.findByPk(shopId, { attributes: ['balance', 'rating', 'reviewCount'] });
+
+    const periodMs = end.getTime() - start.getTime();
+    const prevStart = new Date(start.getTime() - periodMs);
+    const prevEnd = new Date(start.getTime() - 1);
+    const prevOrders = await Order.findAll({
+        where: { shopId, status: 'delivered', createdAt: { [Op.between]: [prevStart, prevEnd] } },
+        attributes: ['total']
+    });
+    const prevRevenue = prevOrders.reduce((s, o) => s + Number(o.total), 0);
+    const revenueGrowth = prevRevenue > 0
+        ? (((totalRevenue - prevRevenue) / prevRevenue) * 100).toFixed(1)
+        : (totalRevenue > 0 ? 100 : 0);
 
     return {
         summary: {
-            balance: Number(shop.balance),
-            totalRevenue: Number(stats.totalRevenue),
-            totalOrders: Number(stats.totalOrders),
-            totalDiscount: Number(stats.totalDiscount),
-            rating: Number(shop.rating)
+            totalRevenue,
+            totalOrders: deliveredOrders.length,
+            allOrdersCount: allOrders.length,
+            balance: Number(shop?.balance || 0),
+            rating: Number(shop?.rating || 0),
+            reviewCount: Number(shop?.reviewCount || 0),
+            revenueGrowth: Number(revenueGrowth),
+            pendingRevenue,
+            shippingRevenue,
+            cancelledRevenue,
+            newCustomers: newCustomerIds.size,
+            totalUniqueCustomers,
+            avgOrderValue: deliveredOrders.length > 0
+                ? Math.round(totalRevenue / deliveredOrders.length)
+                : 0
         },
-        chart
+        chart,
+        statusCounts,
+        cashFlow: {
+            delivered: totalRevenue,
+            shipping: shippingRevenue,
+            pending: pendingRevenue,
+            cancelled: cancelledRevenue
+        },
+        topProducts,
+        newCustomersChart,
+        orderValueDist,
+        period
     };
 };
 
-const getWalletHistory = async (shopId, { page = 1, limit = 20 }) => {
+const getWalletHistory = async (shopId, { page = 1, limit = 20 } = {}) => {
     const offset = (page - 1) * limit;
     const { count, rows } = await WalletTransaction.findAndCountAll({
         where: { shopId },
@@ -61,68 +219,32 @@ const getWalletHistory = async (shopId, { page = 1, limit = 20 }) => {
     return { total: count, page: Number(page), limit: Number(limit), transactions: rows };
 };
 
-const getPlatformRevenue = async ({ from, to }) => {
-    const replacements = {};
-    let dateFilter = '';
-    if (from) { dateFilter += ' AND deliveredAt >= :from'; replacements.from = new Date(from); }
-    if (to)   { dateFilter += ' AND deliveredAt <= :to';   replacements.to   = new Date(to); }
+const withdraw = async (shopId, amount) => {
+    if (!amount || amount < 50000)
+        throw Object.assign(new Error('Số tiền rút tối thiểu là 50.000đ.'), { status: 400 });
 
-    const [result] = await sequelize.query(
-        `SELECT COUNT(*) as totalOrders,
-                COALESCE(SUM(total), 0) as totalRevenue,
-                COUNT(DISTINCT userId) as uniqueCustomers
-         FROM orders
-         WHERE status = 'delivered'
-         ${dateFilter}`,
-        { replacements, type: sequelize.QueryTypes.SELECT }
-    );
-
-    const topShops = await sequelize.query(
-        `SELECT s.id, s.name, s.rating,
-                COUNT(o.id) as totalOrders,
-                COALESCE(SUM(o.total), 0) as totalRevenue
-         FROM shops s
-         LEFT JOIN orders o ON o.shopId = s.id AND o.status = 'delivered'
-         GROUP BY s.id
-         ORDER BY totalRevenue DESC
-         LIMIT 10`,
-        { type: sequelize.QueryTypes.SELECT }
-    );
-
-    return { platform: result, topShops };
-};
-
-const requestWithdrawal = async (shopId, amount) => {
     const shop = await Shop.findByPk(shopId);
     if (!shop) throw Object.assign(new Error('Shop không tồn tại.'), { status: 404 });
-
-    if (Number(shop.balance) < amount) {
-        throw Object.assign(new Error('Số dư ví không đủ để thực hiện giao dịch này.'), { status: 400 });
-    }
+    if (Number(shop.balance) < amount)
+        throw Object.assign(new Error('Số dư không đủ.'), { status: 400 });
 
     const t = await sequelize.transaction();
     try {
         const newBalance = Number(shop.balance) - amount;
         await shop.update({ balance: newBalance }, { transaction: t });
-
         const tx = await WalletTransaction.create({
             shopId,
-            type: 'withdrawal',
-            amount: -amount,
+            type: 'debit',
+            amount,
             balanceAfter: newBalance,
-            note: `Rút tiền từ ví về tài khoản ngân hàng`
+            note: `Yêu cầu rút tiền về tài khoản ngân hàng`
         }, { transaction: t });
-
         await t.commit();
-        return {
-            message: 'Rút tiền thành công.',
-            balance: newBalance,
-            transaction: tx
-        };
+        return { transaction: tx, balance: newBalance };
     } catch (err) {
         await t.rollback();
         throw err;
     }
 };
 
-module.exports = { getShopRevenue, getWalletHistory, getPlatformRevenue, requestWithdrawal };
+module.exports = { getShopAnalytics, getWalletHistory, withdraw };

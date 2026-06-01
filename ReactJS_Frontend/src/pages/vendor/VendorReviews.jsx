@@ -6,6 +6,7 @@ const VendorReviews = ({ shop }) => {
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(false);
     const [replyText, setReplyText] = useState({});
+    const [submitting, setSubmitting] = useState({});
 
     useEffect(() => {
         if (!shop) return;
@@ -31,7 +32,9 @@ const VendorReviews = ({ shop }) => {
     const handleReviewReply = async (reviewId) => {
         const text = replyText[reviewId];
         if (!text || !text.trim()) return;
+        if (submitting[reviewId]) return;
 
+        setSubmitting(prev => ({ ...prev, [reviewId]: true }));
         const token = localStorage.getItem("accessToken");
         try {
             const res = await fetch(`${API_URL}/api/reviews/${reviewId}/reply`, {
@@ -52,6 +55,8 @@ const VendorReviews = ({ shop }) => {
             }
         } catch (err) {
             console.error(err);
+        } finally {
+            setSubmitting(prev => ({ ...prev, [reviewId]: false }));
         }
     };
 
@@ -94,9 +99,10 @@ const VendorReviews = ({ shop }) => {
                                     />
                                     <button
                                         onClick={() => handleReviewReply(r.id)}
-                                        className="px-4 py-2 bg-[#00b14f] hover:bg-green-600 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                                        disabled={submitting[r.id]}
+                                        className="px-4 py-2 bg-[#00b14f] hover:bg-green-600 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                                     >
-                                        Gửi phản hồi
+                                        {submitting[r.id] ? "Đang gửi..." : "Gửi phản hồi"}
                                     </button>
                                 </div>
                             )}

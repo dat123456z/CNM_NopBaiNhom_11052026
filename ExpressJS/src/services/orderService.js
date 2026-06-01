@@ -8,8 +8,8 @@ const User = require('../models/User');
 const WalletTransaction = require('../models/WalletTransaction');
 const { ProductReview } = require('../models/Review');
 const { Op } = require('sequelize');
+const notificationService = require('./notificationService');
 
-// ── Auto-confirm sau 30 phút nếu đơn vẫn pending ──────────────────────────
 const scheduleAutoConfirm = (orderId) => {
     const THIRTY_MIN = 30 * 60 * 1000;
     setTimeout(async () => {
@@ -17,6 +17,11 @@ const scheduleAutoConfirm = (orderId) => {
             const order = await Order.findByPk(orderId);
             if (order && order.status === 'pending') {
                 await order.update({ status: 'confirmed', confirmedAt: new Date() });
+                // Notify user khi auto-confirm
+                const user = await User.findByPk(order.userId);
+                if (user) {
+                    await notificationService.notifyOrderStatusChanged({ order, user, newStatus: 'confirmed' });
+                }
                 console.log(`[Auto-confirm] Order #${orderId} confirmed automatically.`);
             }
         } catch (err) {
@@ -25,7 +30,6 @@ const scheduleAutoConfirm = (orderId) => {
     }, THIRTY_MIN);
 };
 
-// ── Tạo đơn hàng ──────────────────────────────────────────────────────────
 const createOrder = async (userId, { items, couponCode, usePoints, shippingAddress, paymentMethod, note }) => {
     if (!items || items.length === 0) throw Object.assign(new Error('Giỏ hàng trống.'), { status: 400 });
 
@@ -105,7 +109,7 @@ const createOrder = async (userId, { items, couponCode, usePoints, shippingAddre
                 }
             }
 
-            const shippingFee = 0; // Miễn phí vận chuyển
+            const shippingFee = 0;
             const tax = Math.round(subtotal * 0.08);
             const total = subtotal + tax - discount - pointsDiscount + shippingFee;
 
@@ -137,7 +141,7 @@ const createOrder = async (userId, { items, couponCode, usePoints, shippingAddre
                 await product.increment('sold', { by: item.quantity, transaction: t });
             }
 
-            orders.push(order);
+            orders.push({ order, shopId: Number(shopId), orderItems });
         }
 
         if (totalPointsUsed > 0 && user) {
@@ -147,29 +151,51 @@ const createOrder = async (userId, { items, couponCode, usePoints, shippingAddre
         await CartItem.destroy({ where: { userId, productId: { [Op.in]: productIds } }, transaction: t });
         await t.commit();
 
-        // Schedule auto-confirm sau 30 phút cho mỗi đơn hàng
-        for (const order of orders) {
+        for (const { order, shopId, orderItems } of orders) {
             scheduleAutoConfirm(order.id);
+
+            try {
+                const shop = await Shop.findByPk(shopId);
+                const shopOwner = shop ? await User.findByPk(shop.userId) : null;
+                if (shopOwner) {
+                    await notificationService.notifyNewOrder({
+                        order,
+                        shopOwner,
+                        items: orderItems
+                    });
+                }
+            } catch (err) {
+                console.error('[Notify] notifyNewOrder error:', err.message);
+            }
         }
 
-        return orders;
+        return orders.map(o => o.order);
     } catch (err) {
         await t.rollback();
         throw err;
     }
 };
 
-// ── Confirm đơn hàng thủ công (shop) ─────────────────────────────────────
 const confirmOrder = async (orderId, shopId) => {
     const order = await Order.findOne({ where: { id: orderId, shopId } });
     if (!order) throw Object.assign(new Error('Đơn hàng không tồn tại.'), { status: 404 });
     if (order.status !== 'pending')
         throw Object.assign(new Error('Chỉ có thể xác nhận đơn hàng mới.'), { status: 400 });
     await order.update({ status: 'confirmed', confirmedAt: new Date() });
+
+    // Notify người dùng
+    try {
+        const user = await User.findByPk(order.userId);
+        if (user) {
+            await notificationService.notifyOrderStatusChanged({ order, user, newStatus: 'confirmed' });
+        }
+    } catch (err) {
+        console.error('[Notify] confirmOrder error:', err.message);
+    }
+
     return order;
 };
 
-// ── Lấy danh sách đơn hàng của user ──────────────────────────────────────
 const getMyOrders = async (userId, { page = 1, limit = 10, status }) => {
     const where = { userId };
     if (status) where.status = status;
@@ -191,7 +217,6 @@ const getMyOrders = async (userId, { page = 1, limit = 10, status }) => {
     return { total: count, page: Number(page), limit: Number(limit), orders: rows };
 };
 
-// ── Chi tiết đơn hàng ─────────────────────────────────────────────────────
 const getOrderDetail = async (orderId, userId, role) => {
     const where = { id: orderId };
     if (!['admin', 'manager'].includes(role)) where.userId = userId;
@@ -212,7 +237,6 @@ const getOrderDetail = async (orderId, userId, role) => {
     return order;
 };
 
-// ── Hủy đơn hàng ─────────────────────────────────────────────────────────
 const cancelOrder = async (orderId, userId, reason) => {
     const order = await Order.findOne({ where: { id: orderId, userId } });
     if (!order) throw Object.assign(new Error('Đơn hàng không tồn tại.'), { status: 404 });
@@ -222,13 +246,23 @@ const cancelOrder = async (orderId, userId, reason) => {
     const diffMs = now - createdAt;
     const THIRTY_MIN = 30 * 60 * 1000;
 
-    // Nếu đang ở bước preparing → gửi yêu cầu hủy cho shop
     if (order.status === 'preparing') {
         await order.update({ status: 'cancel_requested', cancelReason: reason || null });
+
+        try {
+            const shop = await Shop.findByPk(order.shopId);
+            const shopOwner = shop ? await User.findByPk(shop.userId) : null;
+            const user = await User.findByPk(userId);
+            if (shopOwner && user) {
+                await notificationService.notifyCancelRequest({ order, shopOwner, user });
+            }
+        } catch (err) {
+            console.error('[Notify] cancelOrder (cancel_requested) error:', err.message);
+        }
+
         return order;
     }
 
-    // Chỉ cho hủy khi pending hoặc confirmed và trong vòng 30 phút
     if (!['pending', 'confirmed'].includes(order.status)) {
         throw Object.assign(new Error('Không thể huỷ đơn hàng ở trạng thái này.'), { status: 400 });
     }
@@ -254,14 +288,13 @@ const cancelOrder = async (orderId, userId, reason) => {
     return order;
 };
 
-// ── Cập nhật trạng thái đơn hàng (shop/admin) ────────────────────────────
 const updateOrderStatus = async (orderId, shopId, newStatus) => {
     const validTransitions = {
         pending: ['confirmed', 'cancelled'],
         confirmed: ['preparing', 'cancelled'],
         preparing: ['shipping', 'cancelled'],
         shipping: ['delivered'],
-        cancel_requested: ['cancelled', 'preparing'] // shop xử lý yêu cầu hủy
+        cancel_requested: ['cancelled', 'preparing']
     };
 
     const order = await Order.findOne({ where: { id: orderId, shopId } });
@@ -299,7 +332,6 @@ const updateOrderStatus = async (orderId, shopId, newStatus) => {
             throw err;
         }
     } else if (newStatus === 'cancelled') {
-        // Hoàn lại stock khi shop hủy đơn
         const t = await sequelize.transaction();
         try {
             await order.update(updates, { transaction: t });
@@ -317,10 +349,18 @@ const updateOrderStatus = async (orderId, shopId, newStatus) => {
         await order.update(updates);
     }
 
+    try {
+        const user = await User.findByPk(order.userId);
+        if (user) {
+            await notificationService.notifyOrderStatusChanged({ order, user, newStatus });
+        }
+    } catch (err) {
+        console.error('[Notify] updateOrderStatus error:', err.message);
+    }
+
     return order;
 };
 
-// ── Lấy đơn hàng của shop ────────────────────────────────────────────────
 const getShopOrders = async (shopId, { page = 1, limit = 20, status }) => {
     const where = { shopId };
     if (status) where.status = status;
@@ -347,7 +387,7 @@ const checkCoupon = async (userId, { items, couponCode }) => {
 const assignShipper = async (orderId, shopId, shipperId) => {
     const order = await Order.findOne({ where: { id: orderId, shopId } });
     if (!order) throw Object.assign(new Error('Đơn hàng không tồn tại.'), { status: 404 });
-    
+
     if (order.status === 'pending') {
         throw Object.assign(new Error('Vui lòng xác nhận đơn hàng trước khi chọn shipper.'), { status: 400 });
     }

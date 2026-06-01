@@ -181,7 +181,7 @@ const VendorOrders = ({ shop }) => {
                                                 <select
                                                     value={o.shipperId || ""}
                                                     onChange={(e) => handleAssignShipper(o.id, e.target.value)}
-                                                    className="border border-gray-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-[#00b14f] bg-white w-full max-w-[150px] font-medium"
+                                                    className="border border-gray-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-[#00b14f] bg-white w-full max-w-37.5 font-medium"
                                                 >
                                                     <option value="">-- Chọn Shipper --</option>
                                                     {shippers.filter(s => s.status === "active").map(s => (

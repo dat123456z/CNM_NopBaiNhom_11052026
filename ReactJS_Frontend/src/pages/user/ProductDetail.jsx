@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ProductCard from "../../components/ProductCard";
-import Header from "../../components/user/Header";
-import Footer from "../../components/user/Footer";
 import Breadcrumb from "../../components/Breadcrumb";
 import { useCart } from "../../context/CartContext";
 
@@ -384,8 +382,7 @@ const ProductDetail = () => {
     if (!product) return <div className="p-4">Not found</div>;
 
     return (
-        <div className="min-h-screen bg-[#f8f9fb]">
-            <Header />
+        <>
 
             <Breadcrumb align="viewport" items={[
                 { label: 'Homepage', to: '/' },
@@ -398,7 +395,7 @@ const ProductDetail = () => {
                     <div className="w-1/2">
                         {images.length ? (
                             <div className="flex flex-col gap-4">
-                                <div className="w-full aspect-[4/4] bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
+                                <div className="w-full aspect-4/4 bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
                                     <img src={images[activeImage]} className="w-full h-full object-cover" alt={product.title} />
                                 </div>
                                 <div className="flex gap-3 overflow-x-auto pb-2">
@@ -413,7 +410,7 @@ const ProductDetail = () => {
                                                     if (colorLabel) setSelectedColor(colorLabel);
                                                 }
                                             }}
-                                            className={`w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden cursor-pointer border-2 transition-colors ${activeImage === idx ? 'border-blue-600' : 'border-transparent hover:border-gray-300'}`}
+                                            className={`w-24 h-24 shrink-0 rounded-lg overflow-hidden cursor-pointer border-2 transition-colors ${activeImage === idx ? 'border-blue-600' : 'border-transparent hover:border-gray-300'}`}
                                         >
                                             <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
                                         </div>
@@ -421,7 +418,7 @@ const ProductDetail = () => {
                                 </div>
                             </div>
                         ) : (
-                            <div className="w-full aspect-[4/4] bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">Không có hình ảnh</div>
+                            <div className="w-full aspect-4/4 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">Không có hình ảnh</div>
                         )}
                     </div>
 
@@ -443,7 +440,7 @@ const ProductDetail = () => {
                             </button>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-3 text-xs text-gray-500 border-b border-gray-150 pb-4">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-3 text-xs text-gray-500 border-b border-gray-200 pb-4">
                             <span className="flex items-center gap-1 text-orange-400 text-sm">
                                 {'★'.repeat(Math.round(product.rating || 5)) + '☆'.repeat(5 - Math.round(product.rating || 5))}
                                 <span className="text-gray-500 ml-1 text-xs font-semibold">{product.rating ? Number(product.rating).toFixed(1) : '5.0'}</span>
@@ -691,7 +688,7 @@ const ProductDetail = () => {
                                 <button
                                     type="submit"
                                     disabled={submittingReview}
-                                    className="px-5 py-2.5 bg-[#00b14f] hover:bg-green-600 text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
+                                    className="px-5 py-2.5 bg-[#00b14f] hover:bg-green-600 text-white font-bold text-xs rounded-xl shadow transition-colors cursor-pointer"
                                 >
                                     {submittingReview ? "Đang gửi..." : "Gửi đánh giá"}
                                 </button>
@@ -706,7 +703,7 @@ const ProductDetail = () => {
                     ) : reviews.length === 0 ? (
                         <p className="text-gray-400 text-sm italic py-4">Chưa có đánh giá nào cho sản phẩm này.</p>
                     ) : (
-                        <div className="space-y-6 divide-y divide-gray-150">
+                        <div className="space-y-6 divide-y divide-gray-200">
                             {reviews.map((rev, idx) => (
                                 <div key={rev.id} className={`pt-6 ${idx === 0 ? "pt-0" : ""}`}>
                                     <div className="flex justify-between items-start gap-4 text-left">
@@ -740,9 +737,7 @@ const ProductDetail = () => {
                     )}
                 </div>
             </main>
-
-            <Footer />
-        </div>
+        </>
     );
 };
 

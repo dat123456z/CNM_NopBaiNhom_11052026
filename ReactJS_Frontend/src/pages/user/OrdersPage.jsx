@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import Header from "../../components/user/Header";
-import Footer from "../../components/user/Footer";
 import Breadcrumb from "../../components/Breadcrumb";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -112,14 +110,14 @@ const OrdersPage = () => {
         .reduce((s, o) => s + Number(o.total), 0);
 
     return (
-        <div className="min-h-screen bg-[#f8f9fb] flex flex-col">
-            <Header />
-            <Breadcrumb align="viewport"/>
+        
+
+
             <main className="flex-1 max-w-7xl mx-auto px-6 py-10 w-full">
                 {/* Success Banner */}
                 {successBanner && (
                     <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-center gap-3 text-green-700">
-                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                        <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
                         <span className="font-semibold">Đặt hàng thành công! Đơn hàng của bạn đang được xử lý.</span>
                         <button onClick={() => setSuccessBanner(false)} className="ml-auto text-green-500 hover:text-green-700">✕</button>
                     </div>
@@ -163,7 +161,7 @@ const OrdersPage = () => {
 
                         {/* Search */}
                         <div className="flex items-center bg-white border border-gray-200 rounded-lg px-4 py-2.5 mb-4 gap-3">
-                            <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                             <input
                                 type="text" value={search} onChange={(e) => setSearch(e.target.value)}
                                 placeholder="Tìm đơn hàng, sản phẩm hoặc mã đơn..."
@@ -215,10 +213,10 @@ const OrdersPage = () => {
                                                             ? (item.productImage.startsWith("http") ? item.productImage : `${API_URL}${item.productImage}`)
                                                             : null;
                                                         return (
-                                                            <div key={item.id} className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
+                                                            <div key={item.id} className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-100">
                                                                 {imgSrc
                                                                     ? <img src={imgSrc} alt={item.productTitle} className="w-full h-full object-cover" />
-                                                                    : <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300" />
+                                                                    : <div className="w-full h-full bg-linear-to-br from-gray-200 to-gray-300" />
                                                                 }
                                                             </div>
                                                         );
@@ -281,7 +279,7 @@ const OrdersPage = () => {
                     </div>
 
                     {/* Right — Stats */}
-                    <div className="w-64 flex-shrink-0">
+                    <div className="w-64 shrink-0">
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sticky top-6">
                             <h3 className="text-xs font-semibold text-gray-400 uppercase mb-3">Annual Spend</h3>
                             <p className="text-3xl font-extrabold text-gray-900">{fmt(annualSpend)}</p>
@@ -294,8 +292,6 @@ const OrdersPage = () => {
                     </div>
                 </div>
             </main>
-            <Footer />
-        </div>
     );
 };
 

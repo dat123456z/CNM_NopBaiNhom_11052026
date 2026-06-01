@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ProductCard from "../../components/ProductCard";
-import Header from "../../components/user/Header";
-import Footer from "../../components/user/Footer";
 import Breadcrumb from "../../components/Breadcrumb";
 import { fetchAllProducts } from "../../utils/productApi";
 
@@ -249,13 +247,11 @@ const ProductPage = () => {
                 @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
                 .fade-up { animation: fadeUp 0.35s ease both; }
             `}</style>
-
-            <Header />
             <Breadcrumb align="viewport"/>
 
             <main className="max-w-7xl mx-auto px-6 py-10 flex gap-8">
                 {/* Sidebar */}
-                <aside className="w-64 flex-shrink-0">
+                <aside className="w-64 shrink-0">
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                         {/* Categories */}
                         <div className="mb-8">
@@ -408,8 +404,6 @@ const ProductPage = () => {
                     )}
                 </div>
             </main>
-
-            <Footer />
         </div>
     );
 };

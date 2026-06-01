@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import Header from "../../components/user/Header";
-import Footer from "../../components/user/Footer";
 import Breadcrumb from "../../components/Breadcrumb";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -163,22 +161,16 @@ const OrderDetailPage = () => {
     };
 
     if (loading) return (
-        <div className="min-h-screen bg-[#f8f9fb] flex flex-col">
-            <Header />
-            <div className="flex-1 flex items-center justify-center">
-                <div className="animate-spin w-12 h-12 border-2 border-[#00b14f] border-t-transparent rounded-full" />
-            </div>
+        <div className="flex-1 flex items-center justify-center">
+            <div className="animate-spin w-12 h-12 border-2 border-[#00b14f] border-t-transparent rounded-full" />
         </div>
     );
 
     if (!order && !loading) return (
-        <div className="min-h-screen bg-[#f8f9fb] flex flex-col">
-            <Header />
             <div className="flex-1 flex items-center justify-center flex-col gap-4 text-gray-500">
                 <p className="text-lg font-semibold">Không tìm thấy đơn hàng</p>
                 <button onClick={() => navigate("/orders")} className="text-[#00b14f] font-semibold hover:underline">← Quay lại</button>
             </div>
-        </div>
     );
 
     const sc = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
@@ -186,8 +178,7 @@ const OrderDetailPage = () => {
     const reviewedProductIds = new Set((order.productReviews || []).map((review) => Number(review.productId)));
 
     return (
-        <div className="min-h-screen bg-[#f8f9fb] flex flex-col">
-            <Header />
+        <>
             <main className="flex-1 max-w-5xl mx-auto px-6 py-10 w-full">
                 {/* Back */}
                 <button onClick={() => navigate("/orders")} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 font-medium mb-6 transition-colors">
@@ -233,7 +224,7 @@ const OrderDetailPage = () => {
                                                     <div className={`absolute left-4 top-9 w-0.5 h-full ${isCompleted ? "bg-[#00b14f]" : "bg-gray-200"}`} />
                                                 )}
                                                 {/* Icon Circle */}
-                                                <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-sm z-10 border-2 transition-all ${
+                                                <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-sm z-10 border-2 transition-all ${
                                                     isActive
                                                         ? "border-[#00b14f] bg-[#00b14f] text-white ring-4 ring-green-100"
                                                         : isCompleted
@@ -263,7 +254,7 @@ const OrderDetailPage = () => {
                         ) : (
                             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                                 <div className="flex items-center gap-4">
-                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl flex-shrink-0 ${order.status === "cancelled" ? "bg-red-50" : "bg-amber-50"}`}>
+                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl shrink-0 ${order.status === "cancelled" ? "bg-red-50" : "bg-amber-50"}`}>
                                         {order.status === "cancelled" ? "❌" : "⏳"}
                                     </div>
                                     <div>
@@ -292,15 +283,15 @@ const OrderDetailPage = () => {
                                     return (
                                         <div key={item.id} className="p-3 rounded-xl border border-gray-150 hover:bg-gray-50 transition-colors space-y-3">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
-                                                    {imgSrc ? <img src={imgSrc} alt={item.productTitle} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300" />}
+                                                <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-100">
+                                                    {imgSrc ? <img src={imgSrc} alt={item.productTitle} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-linear-to-br from-gray-200 to-gray-300" />}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="font-semibold text-gray-900 text-sm">{item.productTitle}</p>
                                                     {item.color && <p className="text-xs text-gray-400 mt-0.5">Màu: {item.color}</p>}
                                                     <p className="text-xs text-gray-500 mt-1">x{item.quantity} · {fmt(item.price)} / sản phẩm</p>
                                                 </div>
-                                                <p className="font-bold text-gray-900 text-sm flex-shrink-0">{fmt(Number(item.price) * item.quantity)}</p>
+                                                <p className="font-bold text-gray-900 text-sm shrink-0">{fmt(Number(item.price) * item.quantity)}</p>
                                             </div>
                                             {order.status === "delivered" && (
                                                 <div className="flex justify-end pt-2 border-t border-gray-100">
@@ -366,7 +357,7 @@ const OrderDetailPage = () => {
                     </div>
 
                     {/* Right — Summary */}
-                    <div className="w-72 flex-shrink-0 space-y-4">
+                    <div className="w-72 shrink-0 space-y-4">
                         {/* Order Info */}
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
                             <h3 className="font-bold text-gray-900 mb-4 text-sm">Thông tin đơn hàng</h3>
@@ -423,14 +414,13 @@ const OrderDetailPage = () => {
                     </div>
                 </div>
             </main>
-            <Footer />
 
             {/* Review Modal */}
             {reviewProduct && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
                     <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-gray-100">
                         {/* Header */}
-                        <div className="bg-gradient-to-r from-[#00b14f] to-[#009943] px-6 py-4 text-white flex items-center justify-between">
+                        <div className="bg-linear-to-r from-[#00b14f] to-[#009943] px-6 py-4 text-white flex items-center justify-between">
                             <h3 className="font-bold text-base flex items-center gap-1.5">
                                 <span>✍️</span> Đánh giá sản phẩm
                             </h3>
@@ -440,7 +430,7 @@ const OrderDetailPage = () => {
                         <div className="p-6 space-y-5">
                             {/* Product Info */}
                             <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl">
-                                <div className="w-12 h-12 bg-gray-100 border border-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                                <div className="w-12 h-12 bg-gray-100 border border-gray-200 rounded-lg overflow-hidden shrink-0">
                                     {reviewProduct.productImage ? (
                                         <img 
                                             src={reviewProduct.productImage.startsWith("http") ? reviewProduct.productImage : `${API_URL}${reviewProduct.productImage}`} 
@@ -567,7 +557,7 @@ const OrderDetailPage = () => {
                     </div>
                 </div>
             )}
-        </div>
+        </>
     );
 };
 

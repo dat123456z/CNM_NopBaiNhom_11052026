@@ -4,6 +4,7 @@ const Product = require('../models/Product');
 const Shop = require('../models/Shop');
 const User = require('../models/User');
 const { sequelize } = require('../config/database');
+const notificationService = require('./notificationService');
 
 const verifyPurchased = async (userId, productId, orderId) => {
     const order = await Order.findOne({ where: { id: orderId, userId, status: 'delivered' } });
@@ -65,9 +66,22 @@ const createProductReview = async (userId, { productId, orderId, rating, comment
         await user.increment('points', { by: 10 });
     }
 
-    // Tạo mã giảm giá 10% cho shop này, chỉ dùng 1 lần cho user này
     const couponService = require('./couponService');
     const couponCode = await couponService.createReviewRewardCoupon(userId, product.shopId);
+
+    try {
+        const shop = await Shop.findByPk(product.shopId);
+        const shopOwner = shop ? await User.findByPk(shop.userId) : null;
+        if (shopOwner) {
+            await notificationService.notifyNewReview({
+                review,
+                shopOwner,
+                productTitle: product.title
+            });
+        }
+    } catch (err) {
+        console.error('[Notify] notifyNewReview error:', err.message);
+    }
 
     const plainReview = review.get({ plain: true });
     plainReview.rewardPoints = 10;
@@ -139,7 +153,7 @@ const getShopProductReviews = async (shopId, { page = 1, limit = 20 }) => {
 
 const vendorReplyReview = async (vendorUserId, reviewId, reply) => {
     const review = await ProductReview.findByPk(reviewId, {
-        include: [{ model: Product, as: 'product', attributes: ['shopId'] }]
+        include: [{ model: Product, as: 'product', attributes: ['id', 'title', 'shopId'] }]
     });
     if (!review) throw Object.assign(new Error('Đánh giá không tồn tại.'), { status: 404 });
 
@@ -147,6 +161,47 @@ const vendorReplyReview = async (vendorUserId, reviewId, reply) => {
     if (!shop) throw Object.assign(new Error('Không có quyền phản hồi.'), { status: 403 });
 
     await review.update({ vendorReply: reply });
+
+    try {
+        const buyer = await User.findByPk(review.userId);
+        if (buyer) {
+            await notificationService.notify({
+                userId:  buyer.id,
+                type:    'review_reply',
+                title:   '💬 Shop đã phản hồi đánh giá của bạn',
+                message: `Shop đã phản hồi đánh giá của bạn về sản phẩm "${review.product.title}".`,
+                orderId: review.orderId || null,
+                email: {
+                    to:      buyer.email,
+                    subject: `[UTEShop] Shop đã phản hồi đánh giá của bạn`,
+                    html:    `
+<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><style>
+  body{font-family:Arial,sans-serif;color:#333;background:#f8f9fb;margin:0;padding:0}
+  .wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .header{background:#00b14f;padding:24px 32px}.header h1{color:#fff;margin:0;font-size:22px}
+  .body{padding:28px 32px;line-height:1.6}
+  .btn{display:inline-block;margin-top:16px;padding:10px 24px;background:#00b14f;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold}
+  .footer{padding:16px 32px;background:#f0f4f8;color:#888;font-size:12px}
+  .reply-box{background:#f0fdf4;border-left:3px solid #00b14f;padding:12px 16px;border-radius:6px;margin-top:12px}
+</style></head>
+<body><div class="wrap">
+  <div class="header"><h1>UTEShop</h1></div>
+  <div class="body">
+    <h2>💬 Shop đã phản hồi đánh giá của bạn</h2>
+    <p>Xin chào <strong>${buyer.name}</strong>,</p>
+    <p>Shop vừa phản hồi đánh giá của bạn về sản phẩm <strong>${review.product.title}</strong>:</p>
+    <div class="reply-box">${reply}</div>
+    <a class="btn" href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/orders">Xem đánh giá</a>
+  </div>
+  <div class="footer">Bạn nhận được email này từ UTEShop. Vui lòng không trả lời email này.</div>
+</div></body></html>`
+                }
+            });
+        }
+    } catch (err) {
+        console.error('[Notify] vendorReplyReview error:', err.message);
+    }
+
     return review;
 };
 

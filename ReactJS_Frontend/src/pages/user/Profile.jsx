@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Message, PageWrapper } from "../../components";
-import Header from "../../components/user/Header";
-import Footer from "../../components/user/Footer";
 import Breadcrumb from "../../components/Breadcrumb";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -356,8 +354,7 @@ const Profile = () => {
     if (!user) return null;
 
     return (
-        <div className="min-h-screen bg-[#f4f6fa] flex flex-col font-sans">
-            <Header />
+        <>
             <Breadcrumb align="viewport" />
             <main className="flex-1 py-10">
                 <div className="max-w-5xl w-full mx-auto px-4">
@@ -412,7 +409,7 @@ const Profile = () => {
                     <div className="space-y-6">
                         {/* Vendor Onboarding CTA – only for regular users */}
                         {user.role !== "vendor" && user.role !== "manager" && user.role !== "admin" && (
-                            <div className="bg-gradient-to-r from-[#00b14f] to-[#009943] rounded-xl shadow-lg border border-green-600/20 overflow-hidden relative">
+                            <div className="bg-linear-to-r from-[#00b14f] to-[#009943] rounded-xl shadow-lg border border-green-600/20 overflow-hidden relative">
                                 {/* Background decorations */}
                                 <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none" />
                                 <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none" />
@@ -473,7 +470,7 @@ const Profile = () => {
                             {/* Loyalty & Coupons */}
                             <div className="lg:col-span-5">
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                                    <div className="bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-4 flex items-center justify-between text-white">
+                                    <div className="bg-linear-to-r from-emerald-500 to-green-600 px-6 py-4 flex items-center justify-between text-white">
                                         <div className="flex items-center gap-2">
                                             <span className="text-xl">🪙</span>
                                             <h3 className="font-semibold text-sm sm:text-base">Kho Điểm & Ví Voucher</h3>
@@ -487,7 +484,7 @@ const Profile = () => {
                                         <div className="flex items-center justify-between bg-green-50/50 p-4 rounded-xl border border-green-100">
                                             <div>
                                                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Điểm tích lũy</p>
-                                                <p className="text-2xl font-bold text-green-750 mt-1 flex items-center gap-1.5">
+                                                <p className="text-2xl font-bold text-green-700 mt-1 flex items-center gap-1.5">
                                                     <span>{user.points || 0}</span>
                                                     <span className="text-sm font-medium text-green-600">xu</span>
                                                 </p>
@@ -513,7 +510,7 @@ const Profile = () => {
                                                     <p className="text-[10px] text-gray-400 mt-1">Đánh giá sản phẩm đã mua để nhận voucher 10%!</p>
                                                 </div>
                                             ) : (
-                                                <div className="space-y-3 max-h-[250px] overflow-y-auto pr-1">
+                                                <div className="space-y-3 max-h-62.5 overflow-y-auto pr-1">
                                                     {coupons.map((coupon) => (
                                                         <div key={coupon.id} className="relative flex items-center justify-between p-3 border border-dashed border-green-200 rounded-xl bg-green-50/10 hover:bg-green-50/20 transition-colors">
                                                             <div className="flex-1 min-w-0 pr-3">
@@ -537,7 +534,7 @@ const Profile = () => {
                                                                     navigator.clipboard.writeText(coupon.code);
                                                                     alert("Đã sao chép mã giảm giá!");
                                                                 }}
-                                                                className="text-[11px] font-semibold text-green-700 hover:text-green-900 border border-green-250 hover:border-green-300 bg-white px-2 py-1 rounded-lg shadow-2xs hover:shadow-xs transition-all active:scale-95 cursor-pointer"
+                                                                className="text-[11px] font-semibold text-green-700 hover:text-green-900 border border-green-200 hover:border-green-300 bg-white px-2 py-1 rounded-lg shadow-sm hover:shadow transition-all active:scale-95 cursor-pointer"
                                                             >
                                                                 Sao chép
                                                             </button>
@@ -644,7 +641,7 @@ const Profile = () => {
                                                 </button>
                                             </div>
                                         ) : (
-                                            <div className="space-y-3 max-h-[148px] overflow-y-auto pr-1 flex-1">
+                                            <div className="space-y-3 max-h-37 overflow-y-auto pr-1 flex-1">
                                                 {wishlist.map((item) => {
                                                     const imgUrl = Array.isArray(item.images) && item.images.length > 0
                                                         ? (item.images[0].startsWith('http') ? item.images[0] : `${API_URL}${item.images[0]}`)
@@ -656,7 +653,7 @@ const Profile = () => {
                                                                 className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
                                                                 onClick={() => navigate(`/product/${item.id}`)}
                                                             >
-                                                                <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-150 flex-shrink-0 bg-gray-50">
+                                                                <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-200 shrink-0 bg-gray-50">
                                                                     <img src={imgUrl} alt={item.title} className="w-full h-full object-cover" />
                                                                 </div>
                                                                 <div className="flex-1 min-w-0">
@@ -737,8 +734,7 @@ const Profile = () => {
 
                 </div>
             </main>
-            <Footer />
-        </div>
+        </>
     );
 };
 
