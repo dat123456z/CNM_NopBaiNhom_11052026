@@ -24,7 +24,7 @@ const UserHeader = ({ user, token, cartCount = 0, onLogout }) => (
                     <>
                         {(user.role === "vendor" || user.role === "manager" || user.role === "admin") && (
                             <Link
-                                to={user.role === "manager" || user.role === "admin" ? "/manager/dashboard" : "/vendor/dashboard"}
+                                to={user.role === "admin" ? "/admin/dashboard" : user.role === "manager" ? "/manager/dashboard" : "/vendor/dashboard"}
                                 className="text-xs font-semibold text-[#00b14f] hover:underline hidden md:block"
                             >
                                 {user.role === "vendor" ? "Kênh người bán" : "Quản lý"}

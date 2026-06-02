@@ -63,6 +63,15 @@ const getShopOrders = async (req, res) => {
     }
 };
 
+const getAllOrders = async (req, res) => {
+    try {
+        const result = await orderService.getAllOrders(req.query);
+        return res.json(result);
+    } catch (err) {
+        return res.status(err.status || 500).json({ message: err.message });
+    }
+};
+
 const checkCoupon = async (req, res) => {
     try {
         const result = await orderService.checkCoupon(req.user.id, req.body);
@@ -81,4 +90,4 @@ const assignShipper = async (req, res) => {
     }
 };
 
-module.exports = { createOrder, confirmOrder, getMyOrders, getOrderDetail, cancelOrder, updateOrderStatus, getShopOrders, checkCoupon, assignShipper };
+module.exports = { createOrder, confirmOrder, getMyOrders, getOrderDetail, cancelOrder, updateOrderStatus, getShopOrders, getAllOrders, checkCoupon, assignShipper };

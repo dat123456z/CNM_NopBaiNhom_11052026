@@ -17,7 +17,11 @@ const Login = () => {
         if (token && userRaw) {
             try {
                 const user = JSON.parse(userRaw);
-                if (user?.role === "manager" || user?.role === "admin") {
+                if (user?.role === "admin") {
+                    navigate("/admin/dashboard", { replace: true });
+                    return;
+                }
+                if (user?.role === "manager") {
                     navigate("/manager/dashboard", { replace: true });
                     return;
                 }
@@ -80,7 +84,9 @@ const Login = () => {
 
             const params = new URLSearchParams(window.location.search);
             let redirectUrl = params.get("redirect") || "/";
-            if (data.user.role === "manager" || data.user.role === "admin") {
+            if (data.user.role === "admin") {
+                redirectUrl = "/admin/dashboard";
+            } else if (data.user.role === "manager") {
                 redirectUrl = "/manager/dashboard";
             } else if (data.user.role === "vendor") {
                 redirectUrl = "/vendor/dashboard";

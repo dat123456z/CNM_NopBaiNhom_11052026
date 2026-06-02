@@ -15,6 +15,8 @@ const TYPE_ICON = {
     order_cancel_requested: 'alert',
     review_new:             'star',
     review_reply:           'edit',
+    manager_product_pending: 'clipboard',
+    manager_vendor_new:      'shop',
     system:                 'bell'
 };
 
@@ -106,6 +108,19 @@ const NotificationBell = () => {
     const handleNotificationClick = async (n) => {
         if (!n.isRead) await markOne(n.id);
         setOpen(false);
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user.role === 'admin') {
+            if (n.type === 'manager_product_pending') navigate('/admin/dashboard?tab=products');
+            else if (n.type === 'manager_vendor_new') navigate('/admin/dashboard?tab=vendors');
+            else navigate('/admin/dashboard');
+            return;
+        }
+        if (user.role === 'manager') {
+            if (n.type === 'manager_product_pending') navigate('/manager/dashboard?tab=moderation');
+            else if (n.type === 'manager_vendor_new') navigate('/manager/dashboard?tab=vendors');
+            else navigate('/manager/dashboard');
+            return;
+        }
         if (n.type === 'review_reply') {
             navigate('/orders');
             return;
@@ -115,7 +130,6 @@ const NotificationBell = () => {
             return;
         }
         if (n.orderId) {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
             if (user.role === 'vendor') {
                 navigate('/vendor/dashboard/orders');
             } else {

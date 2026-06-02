@@ -2,7 +2,7 @@ import LineIcon from "../LineIcon";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-const VendorSidebar = ({ shop, tabs, currentTab, onTabChange }) => {
+const VendorSidebar = ({ shop, tabs, currentTab, onTabChange, onLogout }) => {
     const shopLogoSrc = shop?.logo
         ? (shop.logo.startsWith("http") ? shop.logo : `${API_URL}${shop.logo}`)
         : null;
@@ -34,6 +34,16 @@ const VendorSidebar = ({ shop, tabs, currentTab, onTabChange }) => {
                     {tab.label}
                 </button>
             ))}
+
+            <div className="mt-4 pt-4 border-t border-gray-100">
+                <button
+                    onClick={onLogout}
+                    className="w-full flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all text-left cursor-pointer"
+                >
+                    <LineIcon name="x" size={16} />
+                    Đăng xuất
+                </button>
+            </div>
         </aside>
     );
 };

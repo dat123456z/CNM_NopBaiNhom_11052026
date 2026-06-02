@@ -1,5 +1,7 @@
 const nodemailer = require('nodemailer');
 const Notification = require('../models/Notification');
+const User = require('../models/User');
+const { Op } = require('sequelize');
 const socketManager = require('../socketManager');
 
 const transporter = nodemailer.createTransport({
@@ -45,6 +47,25 @@ const notify = async ({ userId, type, title, message, orderId = null, email = nu
     }
 
     return notification;
+};
+
+const notifyManagers = async ({ type = 'system', title, message }) => {
+    const managers = await User.findAll({
+        where: {
+            role: { [Op.in]: ['manager', 'admin'] },
+            isActive: true
+        },
+        attributes: ['id']
+    });
+
+    await Promise.all(managers.map((manager) =>
+        notify({
+            userId: manager.id,
+            type,
+            title,
+            message
+        })
+    ));
 };
 
 const baseHtml = (content) => `
@@ -193,6 +214,7 @@ const markAsRead = async (userId, notificationId) => {
 
 module.exports = {
     notify,
+    notifyManagers,
     notifyNewOrder,
     notifyOrderStatusChanged,
     notifyCancelRequest,

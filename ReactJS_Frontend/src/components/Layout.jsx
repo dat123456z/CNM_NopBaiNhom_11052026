@@ -6,6 +6,12 @@ import VendorFooter from "./vendor/Footer";
 const Layout = () => {
     const { pathname } = useLocation();
     const isVendor = pathname.startsWith("/vendor");
+    const isManager = pathname.startsWith("/manager");
+    const isAdmin = pathname.startsWith("/admin");
+
+    if (isManager || isAdmin) {
+        return <Outlet />;
+    }
 
     return (
         <div className="min-h-screen bg-[#f8f9fb] flex flex-col font-sans text-gray-800">

@@ -70,6 +70,15 @@ const getProducts = async (req, res) => {
     }
 };
 
+const getShopProducts = async (req, res) => {
+    try {
+        const result = await productService.getShopProducts(req.shop.id, req.query);
+        return res.json(result);
+    } catch (err) {
+        return res.status(err.status || 500).json({ message: err.message });
+    }
+};
+
 const getProductById = async (req, res) => {
     try {
         const product = await productService.getProductById(req.params.id);
@@ -204,7 +213,17 @@ const deleteProduct = async (req, res) => {
 
 const setProductStatus = async (req, res) => {
     try {
-        const product = await productService.setProductStatus(req.params.id, req.body.status);
+        const options = req.shop
+            ? {
+                shopId: req.shop.id,
+                allowedStatuses: ['active', 'hidden'],
+                allowedTransitions: {
+                    active: ['hidden'],
+                    hidden: ['active']
+                }
+            }
+            : {};
+        const product = await productService.setProductStatus(req.params.id, req.body.status, options);
         return res.json(product);
     } catch (err) {
         return res.status(err.status || 500).json({ message: err.message });
@@ -231,6 +250,7 @@ const getManagerProducts = async (req, res) => {
 
 module.exports = {
     getProducts,
+    getShopProducts,
     getProductById,
     createProduct,
     updateProduct,

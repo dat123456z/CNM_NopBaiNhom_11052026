@@ -27,6 +27,12 @@ const vendorMiddleware = async (req, res, next) => {
         if (!shop) {
             return res.status(403).json({ message: 'Bạn không có cửa hàng.' });
         }
+        if (shop.status !== 'active') {
+            return res.status(403).json({
+                message: 'Shop is not active. Please contact manager for support.',
+                shopStatus: shop.status
+            });
+        }
         req.shop = shop;
         next();
     } catch (err) {

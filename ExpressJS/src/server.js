@@ -70,9 +70,15 @@ const start = async () => {
         await sequelize.sync();
 
         try {
-            await sequelize.query("ALTER TABLE products MODIFY COLUMN status ENUM('active', 'draft', 'hidden', 'deleted', 'pending', 'rejected') NOT NULL DEFAULT 'active';");
+            await sequelize.query("ALTER TABLE products MODIFY COLUMN status ENUM('active', 'draft', 'hidden', 'deleted', 'pending', 'rejected') NOT NULL DEFAULT 'pending';");
         } catch (e) {
             console.error('>>> Error altering products status ENUM:', e.message);
+        }
+
+        try {
+            await sequelize.query("ALTER TABLE notifications MODIFY COLUMN type ENUM('order_new', 'order_confirmed', 'order_preparing', 'order_shipping', 'order_delivered', 'order_cancelled', 'order_cancel_requested', 'review_new', 'review_reply', 'manager_product_pending', 'manager_vendor_new', 'system') NOT NULL;");
+        } catch (e) {
+            console.error('>>> Error altering notifications type ENUM:', e.message);
         }
 
         await seedIfEmpty();

@@ -7,6 +7,7 @@ const { authMiddleware, vendorMiddleware, requireRole } = require('../middleware
 
 const {
     getProducts,
+    getShopProducts,
     getProductById,
     createProduct,
     updateProduct,
@@ -37,6 +38,7 @@ const upload = multer({
 });
 
 router.get('/manager/queue', authMiddleware, requireRole('manager', 'admin'), getManagerProducts);
+router.get('/shop', authMiddleware, vendorMiddleware, getShopProducts);
 
 router.get('/', getProducts);
 router.get('/:id/similar', getSimilarProducts);

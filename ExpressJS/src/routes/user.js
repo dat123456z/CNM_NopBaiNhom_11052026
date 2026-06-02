@@ -4,7 +4,7 @@ const path = require('path');
 
 const router = express.Router();
 
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, requireRole } = require('../middleware/auth');
 
 const {
     getProfile,
@@ -62,10 +62,10 @@ router.patch(
 );
 
 router.get('/coupons', authMiddleware, getUserCoupons);
-router.get('/', authMiddleware, listUsers);
+router.get('/', authMiddleware, requireRole('admin'), listUsers);
 
-router.patch('/:id/status', authMiddleware, setUserStatus);
+router.patch('/:id/status', authMiddleware, requireRole('admin'), setUserStatus);
 
-router.patch('/:id/role', authMiddleware, setUserRole);
+router.patch('/:id/role', authMiddleware, requireRole('admin'), setUserRole);
 
 module.exports = router;

@@ -5,6 +5,15 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const fmt = (n) => Number(n || 0).toLocaleString("vi-VN") + "đ";
 const PRODUCTS_PER_PAGE = 5;
 
+const PRODUCT_STATUS = {
+    active: { label: "Đang bán", className: "bg-green-50 text-green-600 hover:bg-green-100" },
+    hidden: { label: "Ẩn", className: "bg-slate-100 text-slate-500 hover:bg-slate-200" },
+    pending: { label: "Chờ duyệt", className: "bg-amber-50 text-amber-600 cursor-not-allowed" },
+    draft: { label: "Cần sửa", className: "bg-blue-50 text-blue-600 cursor-not-allowed" },
+    rejected: { label: "Từ chối", className: "bg-red-50 text-red-500 cursor-not-allowed" },
+    deleted: { label: "Đã xóa", className: "bg-gray-100 text-gray-400 cursor-not-allowed" }
+};
+
 const VendorProducts = ({ shop }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -39,7 +48,7 @@ const VendorProducts = ({ shop }) => {
         try {
             setLoading(true);
             const token = localStorage.getItem("accessToken");
-            const res = await fetch(`${API_URL}/api/products?shopId=${shop.id}&allStatus=true`, {
+            const res = await fetch(`${API_URL}/api/products/shop`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json();
@@ -184,7 +193,8 @@ const VendorProducts = ({ shop }) => {
     };
 
     const toggleProductStatus = async (p) => {
-        const nextStatus = p.status === "active" ? "inactive" : "active";
+        if (!["active", "hidden"].includes(p.status)) return;
+        const nextStatus = p.status === "active" ? "hidden" : "active";
         const token = localStorage.getItem("accessToken");
         try {
             const res = await fetch(`${API_URL}/api/products/${p.id}/status`, {
@@ -245,6 +255,8 @@ const VendorProducts = ({ shop }) => {
                                     {paginatedProducts.map(p => {
                                         const img = p.images && p.images.length > 0 ? p.images[0] : "";
                                         const imgSrc = img.startsWith("http") ? img : `${API_URL}${img}`;
+                                        const statusMeta = PRODUCT_STATUS[p.status] || PRODUCT_STATUS.hidden;
+                                        const canToggleStatus = ["active", "hidden"].includes(p.status);
                                         return (
                                             <tr key={p.id} className="hover:bg-gray-50/50 transition-colors">
                                                 <td className="p-4">
@@ -265,9 +277,10 @@ const VendorProducts = ({ shop }) => {
                                                 <td className="p-4">
                                                     <button
                                                         onClick={() => toggleProductStatus(p)}
-                                                        className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase transition-all cursor-pointer ${p.status === "active" ? "bg-green-50 text-green-600 hover:bg-green-100" : "bg-red-50 text-red-500 hover:bg-red-100"}`}
+                                                        disabled={!canToggleStatus}
+                                                        className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase transition-all ${canToggleStatus ? "cursor-pointer" : ""} ${statusMeta.className}`}
                                                     >
-                                                        {p.status === "active" ? "Đang bán" : "Ẩn"}
+                                                        {statusMeta.label}
                                                     </button>
                                                 </td>
                                                 <td className="p-4 text-right space-x-1">

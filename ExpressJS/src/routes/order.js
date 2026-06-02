@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware, vendorMiddleware } = require('../middleware/auth');
+const { authMiddleware, vendorMiddleware, requireRole } = require('../middleware/auth');
 const {
     createOrder,
     confirmOrder,
@@ -9,6 +9,7 @@ const {
     cancelOrder,
     updateOrderStatus,
     getShopOrders,
+    getAllOrders,
     checkCoupon,
     assignShipper
 } = require('../controllers/orderController');
@@ -17,6 +18,7 @@ router.post('/', authMiddleware, createOrder);
 router.post('/check-coupon', authMiddleware, checkCoupon);
 router.get('/me', authMiddleware, getMyOrders);
 router.get('/shop', authMiddleware, vendorMiddleware, getShopOrders);
+router.get('/admin', authMiddleware, requireRole('admin'), getAllOrders);
 router.get('/:id', authMiddleware, getOrderDetail);
 router.post('/:id/confirm', authMiddleware, vendorMiddleware, confirmOrder);
 router.patch('/:id/cancel', authMiddleware, cancelOrder);

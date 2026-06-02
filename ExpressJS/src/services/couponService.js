@@ -16,7 +16,9 @@ const getUserCoupons = async (userId) => {
         include: [{
             model: Shop,
             as: 'shop',
-            attributes: ['id', 'name', 'avatar']
+            attributes: ['id', 'name', 'logo'],
+            where: { status: 'active' },
+            required: true
         }]
     });
     return coupons;
@@ -29,7 +31,16 @@ const checkCoupon = async (userId, { items, couponCode }) => {
     if (!couponCode) return { discount: 0, coupon: null };
 
     const productIds = items.map((i) => i.productId);
-    const products = await Product.findAll({ where: { id: { [Op.in]: productIds }, status: 'active' } });
+    const products = await Product.findAll({
+        where: { id: { [Op.in]: productIds }, status: 'active' },
+        include: [{
+            model: Shop,
+            as: 'shop',
+            attributes: ['id', 'status'],
+            where: { status: 'active' },
+            required: true
+        }]
+    });
 
     const shopSubtotals = {};
     for (const item of items) {
@@ -45,7 +56,14 @@ const checkCoupon = async (userId, { items, couponCode }) => {
             isActive: true,
             [Op.or]: [{ userId: null }, { userId }],
             [Op.or]: [{ expiresAt: null }, { expiresAt: { [Op.gte]: new Date() } }]
-        }
+        },
+        include: [{
+            model: Shop,
+            as: 'shop',
+            attributes: ['id', 'status'],
+            where: { status: 'active' },
+            required: true
+        }]
     });
 
     if (!coupon) {

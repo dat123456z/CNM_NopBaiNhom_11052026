@@ -3,6 +3,7 @@ const Product = require('../models/Product');
 const { ProductReview } = require('../models/Review');
 const Shop = require('../models/Shop');
 const { sequelize } = require('../config/database');
+const notificationService = require('./notificationService');
 
 const slugify = (text) =>
     text
@@ -42,14 +43,21 @@ const normalizeProduct = (product) => {
     };
 };
 
-const getProducts = async ({ ids, category, search, shopId, minPrice, maxPrice, sort = 'newest', page = 1, limit = 20, allStatus }) => {
+const activeShopInclude = {
+    model: Shop,
+    as: 'shop',
+    attributes: ['id', 'name', 'logo', 'rating', 'reviewCount', 'description', 'address', 'createdAt', 'status'],
+    where: { status: 'active' },
+    required: true
+};
+
+const getProducts = async ({ ids, category, search, shopId, minPrice, maxPrice, sort = 'newest', page = 1, limit = 20 }) => {
     const where = {};
+    const include = [activeShopInclude];
     if (shopId) {
         where.shopId = shopId;
     }
-    if (allStatus !== 'true') {
-        where.status = 'active';
-    }
+    where.status = 'active';
     if (ids) {
         const parsedIds = ids.split(',').map((v) => parseInt(v.trim(), 10)).filter((n) => !isNaN(n));
         if (parsedIds.length === 0) return { total: 0, page: Number(page), limit: Number(limit), products: [] };
@@ -75,18 +83,35 @@ const getProducts = async ({ ids, category, search, shopId, minPrice, maxPrice, 
     const order = orderMap[sort] || orderMap.newest;
     const offset = (page - 1) * limit;
 
-    const { count, rows } = await Product.findAndCountAll({ where, order, limit: Number(limit), offset });
+    const { count, rows } = await Product.findAndCountAll({
+        where,
+        include,
+        distinct: true,
+        order,
+        limit: Number(limit),
+        offset
+    });
+    return { total: count, page: Number(page), limit: Number(limit), products: rows.map(normalizeProduct) };
+};
+
+const getShopProducts = async (shopId, { page = 1, limit = 100 } = {}) => {
+    const offset = (page - 1) * limit;
+    const { count, rows } = await Product.findAndCountAll({
+        where: {
+            shopId,
+            status: { [Op.ne]: 'deleted' }
+        },
+        order: [['createdAt', 'DESC']],
+        limit: Number(limit),
+        offset
+    });
     return { total: count, page: Number(page), limit: Number(limit), products: rows.map(normalizeProduct) };
 };
 
 const getProductById = async (id) => {
     const product = await Product.findOne({
         where: { id, status: 'active' },
-        include: [{
-            model: Shop,
-            as: 'shop',
-            attributes: ['id', 'name', 'logo', 'rating', 'reviewCount', 'description', 'address', 'createdAt']
-        }]
+        include: [activeShopInclude]
     });
     if (!product) throw Object.assign(new Error('Sản phẩm không tồn tại.'), { status: 404 });
 
@@ -123,8 +148,20 @@ const createProduct = async (shopId, data) => {
     const product = await Product.create({
         shopId, title, slug, description, price, originalPrice,
         images: images || [], category, stock: stock || 0,
-        colors: colors || [], status: 'active'
+        colors: colors || [], status: 'pending'
     });
+
+    try {
+        const shop = await Shop.findByPk(shopId, { attributes: ['name'] });
+        await notificationService.notifyManagers({
+            type: 'manager_product_pending',
+            title: 'Sản phẩm mới chờ duyệt',
+            message: `Vendor ${shop?.name || `Shop #${shopId}`} vừa gửi sản phẩm "${title}" để manager duyệt.`
+        });
+    } catch (err) {
+        console.error('[Notify] manager product moderation error:', err.message);
+    }
+
     return normalizeProduct(product);
 };
 
@@ -144,9 +181,25 @@ const deleteProduct = async (productId, shopId) => {
     await product.update({ status: 'deleted' });
 };
 
-const setProductStatus = async (productId, status) => {
-    const product = await Product.findByPk(productId);
+const setProductStatus = async (productId, status, options = {}) => {
+    const validStatuses = ['active', 'draft', 'hidden', 'deleted', 'pending', 'rejected'];
+    if (!validStatuses.includes(status)) {
+        throw Object.assign(new Error('Trạng thái sản phẩm không hợp lệ.'), { status: 400 });
+    }
+    if (options.allowedStatuses && !options.allowedStatuses.includes(status)) {
+        throw Object.assign(new Error('Bạn không có quyền cập nhật trạng thái này.'), { status: 403 });
+    }
+
+    const where = { id: productId };
+    if (options.shopId) where.shopId = options.shopId;
+    const product = await Product.findOne({ where });
     if (!product) throw Object.assign(new Error('Sản phẩm không tồn tại.'), { status: 404 });
+    if (options.allowedTransitions) {
+        const nextStatuses = options.allowedTransitions[product.status] || [];
+        if (!nextStatuses.includes(status)) {
+            throw Object.assign(new Error('Bạn không có quyền chuyển sản phẩm sang trạng thái này.'), { status: 403 });
+        }
+    }
     await product.update({ status });
     return normalizeProduct(product);
 };
@@ -178,6 +231,7 @@ const getSimilarProducts = async (id) => {
             status: 'active',
             [Op.or]: clauses
         },
+        include: [activeShopInclude],
         limit: 4,
         order: [['sold', 'DESC']]
     });
@@ -207,6 +261,7 @@ const getManagerProducts = async ({ status, page = 1, limit = 20 }) => {
 module.exports = {
     normalizeProduct,
     getProducts,
+    getShopProducts,
     getProductById,
     createProduct,
     updateProduct,

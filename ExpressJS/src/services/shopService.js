@@ -1,6 +1,7 @@
 const Shop = require('../models/Shop');
 const User = require('../models/User');
 const { sequelize } = require('../config/database');
+const notificationService = require('./notificationService');
 
 const slugify = (name) => name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '') + '-' + Date.now();
 
@@ -16,6 +17,15 @@ const registerShop = async (userId, { name, description, address, phone, logo })
         );
         await User.update({ role: 'vendor' }, { where: { id: userId }, transaction: t });
         await t.commit();
+        try {
+            await notificationService.notifyManagers({
+                type: 'manager_vendor_new',
+                title: 'Vendor mới được tạo',
+                message: `Shop "${shop.name}" vừa được đăng ký trên hệ thống.`
+            });
+        } catch (err) {
+            console.error('[Notify] manager shop registration error:', err.message);
+        }
         return shop;
     } catch (err) {
         await t.rollback();
@@ -44,6 +54,7 @@ const getShopById = async (id) => {
 
 const listShops = async ({ page = 1, limit = 20, status, search }) => {
     const { Op } = require('sequelize');
+    const { Order } = require('../models/Order');
     const where = {};
     if (status) where.status = status;
     if (search) where.name = { [Op.like]: `%${search}%` };
@@ -55,7 +66,36 @@ const listShops = async ({ page = 1, limit = 20, status, search }) => {
         limit: Number(limit),
         offset
     });
-    return { total: count, page: Number(page), limit: Number(limit), shops: rows };
+    const shopIds = rows.map((shop) => shop.id);
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+
+    const monthlyRevenueRows = shopIds.length > 0 ? await Order.findAll({
+        attributes: [
+            'shopId',
+            [sequelize.fn('SUM', sequelize.col('total')), 'monthlySales']
+        ],
+        where: {
+            shopId: { [Op.in]: shopIds },
+            status: 'delivered',
+            createdAt: { [Op.gte]: monthStart }
+        },
+        group: ['shopId'],
+        raw: true
+    }) : [];
+
+    const monthlySalesByShop = monthlyRevenueRows.reduce((acc, item) => {
+        acc[item.shopId] = Number(item.monthlySales || 0);
+        return acc;
+    }, {});
+
+    const shops = rows.map((shop) => ({
+        ...shop.get({ plain: true }),
+        monthlySales: monthlySalesByShop[shop.id] || 0
+    }));
+
+    return { total: count, page: Number(page), limit: Number(limit), shops };
 };
 
 const setShopStatus = async (shopId, status) => {

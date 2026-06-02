@@ -18,7 +18,7 @@ const Product = sequelize.define('Product', {
     status: {
         type: DataTypes.ENUM('active', 'draft', 'hidden', 'deleted', 'pending', 'rejected'),
         allowNull: false,
-        defaultValue: 'active'
+        defaultValue: 'pending'
     },
     rating: { type: DataTypes.DECIMAL(3, 2), allowNull: false, defaultValue: 0 },
     reviewCount: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },

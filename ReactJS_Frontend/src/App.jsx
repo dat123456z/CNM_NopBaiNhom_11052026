@@ -14,6 +14,7 @@ import WishlistPage from "./pages/user/WishlistPage";
 import VendorOnboarding from "./pages/vendor/VendorOnboarding";
 import VendorDashboard from "./pages/vendor/VendorDashboard";
 import ManagerDashboard from "./pages/manager/ManagerDashboard";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Layout from "./components/Layout";
 import { CartProvider } from "./context/CartContext";
@@ -40,6 +41,7 @@ function App() {
                         <Route path="/vendor/setup" element={<ProtectedRoute><VendorOnboarding /></ProtectedRoute>} />
                         <Route path="/vendor/dashboard/*" element={<ProtectedRoute><VendorDashboard /></ProtectedRoute>} />
                         <Route path="/manager/dashboard" element={<ProtectedRoute><ManagerDashboard /></ProtectedRoute>} />
+                        <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
                     </Route>
                 </Routes>
             </CartProvider>

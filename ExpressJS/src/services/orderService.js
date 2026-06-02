@@ -34,7 +34,16 @@ const createOrder = async (userId, { items, couponCode, usePoints, shippingAddre
     if (!items || items.length === 0) throw Object.assign(new Error('Giỏ hàng trống.'), { status: 400 });
 
     const productIds = items.map((i) => i.productId);
-    const products = await Product.findAll({ where: { id: { [Op.in]: productIds }, status: 'active' } });
+    const products = await Product.findAll({
+        where: { id: { [Op.in]: productIds }, status: 'active' },
+        include: [{
+            model: Shop,
+            as: 'shop',
+            attributes: ['id', 'status'],
+            where: { status: 'active' },
+            required: true
+        }]
+    });
     if (products.length !== productIds.length)
         throw Object.assign(new Error('Một số sản phẩm không tồn tại.'), { status: 400 });
 
@@ -379,6 +388,26 @@ const getShopOrders = async (shopId, { page = 1, limit = 20, status }) => {
     return { total: count, page: Number(page), limit: Number(limit), orders: rows };
 };
 
+const getAllOrders = async ({ page = 1, limit = 50, status } = {}) => {
+    const where = {};
+    if (status) where.status = status;
+    const offset = (page - 1) * limit;
+    const Shipper = require('../models/Shipper');
+    const { count, rows } = await Order.findAndCountAll({
+        where,
+        order: [['createdAt', 'DESC']],
+        limit: Number(limit),
+        offset,
+        include: [
+            { model: OrderItem, as: 'items' },
+            { model: Shipper, as: 'shipper' },
+            { model: Shop, as: 'shop', attributes: ['id', 'name', 'logo'] },
+            { model: User, as: 'user', attributes: ['id', 'name', 'email'] }
+        ]
+    });
+    return { total: count, page: Number(page), limit: Number(limit), orders: rows };
+};
+
 const checkCoupon = async (userId, { items, couponCode }) => {
     const couponService = require('./couponService');
     return couponService.checkCoupon(userId, { items, couponCode });
@@ -422,6 +451,7 @@ module.exports = {
     cancelOrder,
     updateOrderStatus,
     getShopOrders,
+    getAllOrders,
     checkCoupon,
     assignShipper
 };
