@@ -161,6 +161,7 @@ const createOrder = async (userId, { items, couponCode, usePoints, shippingAddre
         await t.commit();
 
         for (const { order, shopId, orderItems } of orders) {
+            if (order.paymentMethod === 'vnpay') continue;
             scheduleAutoConfirm(order.id);
 
             try {
@@ -408,6 +409,66 @@ const getAllOrders = async ({ page = 1, limit = 50, status } = {}) => {
     return { total: count, page: Number(page), limit: Number(limit), orders: rows };
 };
 
+const activatePaidOrders = async (orderIds = []) => {
+    if (!orderIds.length) return [];
+    const orders = await Order.findAll({
+        where: { id: { [Op.in]: orderIds } },
+        include: [{ model: OrderItem, as: 'items' }]
+    });
+
+    for (const order of orders) {
+        const wasUnpaid = order.paymentStatus !== 'paid';
+        if (order.paymentStatus !== 'paid') {
+            await order.update({ paymentStatus: 'paid' });
+        }
+        if (!wasUnpaid) continue;
+        scheduleAutoConfirm(order.id);
+        try {
+            const shop = await Shop.findByPk(order.shopId);
+            const shopOwner = shop ? await User.findByPk(shop.userId) : null;
+            if (shopOwner) {
+                await notificationService.notifyNewOrder({
+                    order,
+                    shopOwner,
+                    items: order.items || []
+                });
+            }
+        } catch (err) {
+            console.error('[Notify] notify paid VNPay order error:', err.message);
+        }
+    }
+
+    return orders;
+};
+
+const cancelUnpaidPaymentOrders = async (orderIds = [], reason = 'VNPay payment failed') => {
+    if (!orderIds.length) return [];
+    const orders = await Order.findAll({
+        where: {
+            id: { [Op.in]: orderIds },
+            paymentStatus: 'unpaid',
+            status: 'pending'
+        },
+        include: [{ model: OrderItem, as: 'items' }]
+    });
+
+    const t = await sequelize.transaction();
+    try {
+        for (const order of orders) {
+            await order.update({ status: 'cancelled', cancelledAt: new Date(), cancelReason: reason }, { transaction: t });
+            for (const item of order.items || []) {
+                await Product.increment('stock', { by: item.quantity, where: { id: item.productId }, transaction: t });
+                await Product.decrement('sold', { by: item.quantity, where: { id: item.productId }, transaction: t });
+            }
+        }
+        await t.commit();
+        return orders;
+    } catch (err) {
+        await t.rollback();
+        throw err;
+    }
+};
+
 const checkCoupon = async (userId, { items, couponCode }) => {
     const couponService = require('./couponService');
     return couponService.checkCoupon(userId, { items, couponCode });
@@ -452,6 +513,8 @@ module.exports = {
     updateOrderStatus,
     getShopOrders,
     getAllOrders,
+    activatePaidOrders,
+    cancelUnpaidPaymentOrders,
     checkCoupon,
     assignShipper
 };

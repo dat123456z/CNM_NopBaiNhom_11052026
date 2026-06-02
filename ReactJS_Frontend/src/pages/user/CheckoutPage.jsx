@@ -11,7 +11,14 @@ const fmt = (n) => Number(n).toLocaleString("vi-VN") + "đ";
 const MOMO_QR = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=MoMo-UTEShop-Payment";
 const VNPAY_QR = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=VNPay-UTEShop-Payment";
 
-const STEPS = ["Shipping", "Payment", "Review"];
+const STEPS = ["Shipping", "Payment"];
+const VNPAY_TEST_FIELDS = [
+    { label: "Ngân hàng", value: "NCB" },
+    { label: "Số thẻ", value: "9704198526191432198" },
+    { label: "Tên chủ thẻ", value: "NGUYEN VAN A" },
+    { label: "Ngày phát hành", value: "07/15" },
+    { label: "OTP", value: "123456" }
+];
 
 const CheckoutPage = () => {
     const navigate = useNavigate();
@@ -30,6 +37,8 @@ const CheckoutPage = () => {
     const [payMethod, setPayMethod] = useState("cod");
     const [payConfirmed, setPayConfirmed] = useState(false); // VNPay/MoMo đã xác nhận
     const [countdown, setCountdown] = useState(600); // 10 phút
+    const [copiedVNPayTest, setCopiedVNPayTest] = useState(false);
+    const [orderPlaced, setOrderPlaced] = useState(false);
 
     // Coupon & Points states
     const [couponCode, setCouponCode] = useState("");
@@ -146,6 +155,17 @@ const CheckoutPage = () => {
         }
     }, [step, payMethod]);
 
+    const copyVNPayTestInfo = async () => {
+        const text = VNPAY_TEST_FIELDS.map((field) => `${field.label}: ${field.value}`).join("\n");
+        try {
+            await navigator.clipboard.writeText(text);
+            setCopiedVNPayTest(true);
+            setTimeout(() => setCopiedVNPayTest(false), 1800);
+        } catch {
+            setMsg(text);
+        }
+    };
+
     const validateShip = () => {
         const errs = {};
         if (!ship.firstName.trim()) errs.firstName = "Vui lòng nhập họ.";
@@ -161,14 +181,20 @@ const CheckoutPage = () => {
     };
 
     const goToReview = () => {
-        if (payMethod === "cod" || payConfirmed) setStep(2);
+        if (payMethod === "cod" || payMethod === "vnpay" || payConfirmed) setStep(2);
         else setMsg("Vui lòng xác nhận thanh toán trước khi tiếp tục.");
     };
 
     const handlePlaceOrder = async () => {
         const token = localStorage.getItem("accessToken");
         if (!token) { navigate("/login"); return; }
+        if (!validateShip()) { setStep(0); return; }
         if (items.length === 0) { setMsg("Giỏ hàng trống."); return; }
+
+        if (payMethod === "momo") {
+            setMsg("MoMo sandbox chua duoc cau hinh. Vui long chon COD hoac VNPay de thanh toan.");
+            return;
+        }
 
         setLoading(true); setMsg(null);
         try {
@@ -182,7 +208,10 @@ const CheckoutPage = () => {
                 quantity: i.quantity,
                 color: i.color || null
             }));
-            const res = await fetch(`${API_URL}/api/orders`, {
+            const endpoint = payMethod === "vnpay"
+                ? `${API_URL}/api/payments/vnpay/create`
+                : `${API_URL}/api/orders`;
+            const res = await fetch(endpoint, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
                 body: JSON.stringify({ 
@@ -195,8 +224,18 @@ const CheckoutPage = () => {
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || "Đặt hàng thất bại.");
+            if (payMethod === "vnpay") {
+                if (!data.paymentUrl) throw new Error("Không thể tạo liên kết thanh toán VNPay.");
+                window.location.href = data.paymentUrl;
+                return;
+            }
+            if (payMethod === "momo") {
+                setMsg("MoMo sandbox chua duoc cau hinh. Vui long chon COD hoac VNPay de thanh toan.");
+                return;
+            }
             await fetchCart();
-            navigate("/orders", { state: { success: true } });
+            setOrderPlaced(true);
+            setStep(1);
         } catch (err) {
             setMsg(err.message || "Đặt hàng thất bại.");
         } finally {
@@ -339,7 +378,8 @@ const CheckoutPage = () => {
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
                                         Quay lại giỏ hàng
                                     </button>
-                                    <button onClick={goToPayment} className="bg-[#00b14f] hover:bg-[#009943] text-white font-bold px-8 py-3 rounded-xl transition-colors text-sm">
+                                    <button onClick={handlePlaceOrder} disabled={loading} className="relative bg-[#00b14f] hover:bg-[#009943] disabled:opacity-60 text-white font-bold px-8 py-3 rounded-xl transition-colors text-[0px]">
+                                        <span className="text-sm">{loading ? "Đang xử lý..." : payMethod === "cod" ? "Đặt hàng COD" : payMethod === "vnpay" ? "Thanh toán VNPay" : "Thanh toán MoMo"}</span>
                                         Tiếp tục →
                                     </button>
                                 </div>
@@ -349,8 +389,90 @@ const CheckoutPage = () => {
                         {/* ── Step 1: QR Payment / Confirm ── */}
                         {step === 1 && (
                             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                                {orderPlaced ? (
+                                    <div className="text-center py-10">
+                                        <div className="flex justify-center mb-5">
+                                            <div className="w-16 h-16 rounded-full bg-green-50 text-[#00b14f] flex items-center justify-center">
+                                                <LineIcon name="check" size={34} />
+                                            </div>
+                                        </div>
+                                        <h2 className="text-2xl font-black text-gray-900 mb-3">Cảm ơn bạn đã đặt hàng.</h2>
+                                        <p className="text-gray-500 text-sm max-w-md mx-auto">
+                                            Đơn hàng COD của bạn đã được ghi nhận. Shop sẽ chuẩn bị hàng và giao tới địa chỉ đã chọn.
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={() => navigate("/orders", { state: { success: true } })}
+                                            className="mt-8 bg-[#00b14f] hover:bg-[#009943] text-white font-bold px-8 py-3 rounded-xl transition-colors text-sm"
+                                        >
+                                            Xem đơn hàng
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <h2 className="font-bold text-gray-900 text-lg mb-2">Chọn phương thức thanh toán</h2>
+                                        <p className="text-sm text-gray-500 mb-5">
+                                            COD sẽ đặt hàng ngay. VNPay hoặc MoMo sẽ chuyển sang trang checkout sandbox để hoàn tất thanh toán.
+                                        </p>
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                            <PayOption id="cod" label="COD (Tiền mặt)" selected={payMethod === "cod"}
+                                                onClick={() => setPayMethod("cod")} />
+                                            <PayOption id="vnpay" label="VNPay" selected={payMethod === "vnpay"}
+                                                onClick={() => setPayMethod("vnpay")} />
+                                            <PayOption id="momo" label="MoMo" selected={payMethod === "momo"}
+                                                onClick={() => setPayMethod("momo")} />
+                                        </div>
+
+                                        {payMethod === "cod" && (
+                                            <div className="mt-5 rounded-xl border border-green-100 bg-green-50 p-4 text-sm text-gray-600 flex gap-3">
+                                                <LineIcon name="check" size={20} className="text-[#00b14f] shrink-0 mt-0.5" />
+                                                <span>Thanh toán khi nhận hàng. Sau khi bấm đặt hàng, hệ thống sẽ tạo đơn và gửi thông tin cho shop.</span>
+                                            </div>
+                                        )}
+
+                                        {payMethod === "vnpay" && (
+                                            <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-5">
+                                                <div className="flex items-start gap-3">
+                                                    <LineIcon name="card" size={24} className="text-blue-600 shrink-0 mt-0.5" />
+                                                    <div className="flex-1">
+                                                        <p className="font-bold text-gray-900">Thanh toán qua cổng VNPay sandbox</p>
+                                                        <p className="mt-1 text-sm text-gray-600">
+                                                            Sau khi bấm thanh toán, hệ thống sẽ chuyển bạn sang VNPay để thanh toán {fmt(finalTotal)}.
+                                                        </p>
+                                                        <div className="mt-4 rounded-xl bg-white/80 border border-blue-100 p-4">
+                                                            <div className="flex items-center justify-between gap-3 mb-3">
+                                                                <p className="text-xs font-black uppercase text-blue-700">Thông tin test sandbox</p>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={copyVNPayTestInfo}
+                                                                    className="text-[11px] font-bold text-blue-700 hover:underline"
+                                                                >
+                                                                    {copiedVNPayTest ? "Đã copy" : "Copy tất cả"}
+                                                                </button>
+                                                            </div>
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                                {VNPAY_TEST_FIELDS.map((field) => (
+                                                                    <div key={field.label} className="rounded-lg border border-blue-50 bg-blue-50/50 px-3 py-2">
+                                                                        <p className="text-[10px] uppercase font-bold text-gray-400">{field.label}</p>
+                                                                        <p className="mt-0.5 text-sm font-black text-gray-900 break-all">{field.value}</p>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {payMethod === "momo" && (
+                                            <div className="mt-5 rounded-xl border border-pink-100 bg-pink-50 p-4 text-sm text-gray-600">
+                                                MoMo sandbox chưa được cấu hình endpoint riêng. Khi có API MoMo, nút thanh toán sẽ chuyển sang trang checkout sandbox giống VNPay.
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                                 {payMethod === "cod" ? (
-                                    <div className="text-center py-8">
+                                    <div className="hidden">
                                         <div className="flex justify-center mb-4">
                                             <svg className="w-16 h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -361,7 +483,7 @@ const CheckoutPage = () => {
                                         <p className="text-gray-500 text-sm mt-1">Vui lòng chuẩn bị đúng số tiền khi nhận hàng.</p>
                                     </div>
                                 ) : (
-                                    <div className="text-center">
+                                    <div className="hidden">
                                         <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-2">
                                             {payMethod === "momo" ? (
                                                 <>
@@ -379,27 +501,63 @@ const CheckoutPage = () => {
                                                 </>
                                             )}
                                         </h3>
-                                        <p className="text-sm text-gray-500 mb-6">Quét mã QR để thanh toán {fmt(finalTotal)}</p>
-                                        <div className="inline-block p-3 bg-gray-50 rounded-2xl border border-gray-200 mb-4">
+                                        <p className={`${payMethod === "vnpay" ? "hidden " : ""}text-sm text-gray-500 mb-6`}>Quét mã QR để thanh toán {fmt(finalTotal)}</p>
+                                        {payMethod === "vnpay" && (
+                                            <div className="max-w-md mx-auto my-8 rounded-2xl border border-blue-100 bg-blue-50 p-6 text-left">
+                                                <div className="flex items-start gap-3">
+                                                    <LineIcon name="card" size={24} className="text-blue-600 shrink-0 mt-0.5" />
+                                                    <div>
+                                                        <p className="font-bold text-gray-900">Thanh toán qua cổng VNPay</p>
+                                                        <p className="mt-1 text-sm text-gray-600">
+                                                            Sau khi xác nhận đơn hàng, hệ thống sẽ chuyển bạn sang VNPay để thanh toán {fmt(finalTotal)}.
+                                                        </p>
+                                                        <div className="mt-4 rounded-xl bg-white/80 border border-blue-100 p-4">
+                                                            <div className="flex items-center justify-between gap-3 mb-3">
+                                                                <p className="text-xs font-black uppercase tracking-wide text-blue-700">Thông tin test sandbox</p>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={copyVNPayTestInfo}
+                                                                    className="text-[11px] font-bold text-blue-700 hover:underline"
+                                                                >
+                                                                    {copiedVNPayTest ? "Đã copy" : "Copy tất cả"}
+                                                                </button>
+                                                            </div>
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                                {VNPAY_TEST_FIELDS.map((field) => (
+                                                                    <div key={field.label} className="rounded-lg border border-blue-50 bg-blue-50/50 px-3 py-2">
+                                                                        <p className="text-[10px] uppercase font-bold text-gray-400">{field.label}</p>
+                                                                        <p className="mt-0.5 text-sm font-black text-gray-900 break-all">{field.value}</p>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                            <p className="mt-3 text-[11px] leading-relaxed text-gray-500">
+                                                                Trên VNPay sandbox chọn ngân hàng NCB, nhập đúng thông tin trên, sau đó dùng OTP 123456.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div className={`${payMethod === "vnpay" ? "hidden " : ""}inline-block p-3 bg-gray-50 rounded-2xl border border-gray-200 mb-4`}>
                                             <img
                                                 src={payMethod === "momo" ? MOMO_QR : VNPAY_QR}
                                                 alt="QR Code"
                                                 className="w-48 h-48 rounded-lg"
                                             />
                                         </div>
-                                        <div className={`text-lg font-mono font-bold mb-6 ${countdown < 60 ? "text-red-500" : "text-gray-700"}`}>
+                                        <div className={`${payMethod === "vnpay" ? "hidden " : ""}text-lg font-mono font-bold mb-6 ${countdown < 60 ? "text-red-500" : "text-gray-700"}`}>
                                             Hết hạn sau: {fmtCountdown}
                                         </div>
                                         {!payConfirmed ? (
                                             <button
                                                 onClick={() => setPayConfirmed(true)}
-                                                className="w-full py-3.5 rounded-xl font-bold text-white transition-colors text-sm"
+                                                className={`${payMethod === "vnpay" ? "hidden " : ""}w-full py-3.5 rounded-xl font-bold text-white transition-colors text-sm`}
                                                 style={{ background: payMethod === "momo" ? "#ae2070" : "#0063a5" }}
                                             >
                                                 ✓ Tôi đã thanh toán
                                             </button>
                                         ) : (
-                                            <div className="w-full py-3.5 rounded-xl font-bold text-green-700 bg-green-50 border border-green-200 text-sm text-center">
+                                            <div className={`${payMethod === "vnpay" ? "hidden " : ""}w-full py-3.5 rounded-xl font-bold text-green-700 bg-green-50 border border-green-200 text-sm text-center`}>
                                                 ✓ Đã xác nhận thanh toán
                                             </div>
                                         )}
@@ -408,15 +566,16 @@ const CheckoutPage = () => {
 
                                 {msg && <p className="text-red-500 text-sm text-center mt-4">{msg}</p>}
 
-                                <div className="flex justify-between mt-8">
+                                {!orderPlaced && <div className="flex justify-between mt-8">
                                     <button onClick={() => { setStep(0); setMsg(null); }} className="text-sm text-gray-500 hover:text-gray-800 font-medium flex items-center gap-2">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
                                         Quay lại
                                     </button>
-                                    <button onClick={goToReview} className="bg-[#00b14f] hover:bg-[#009943] text-white font-bold px-8 py-3 rounded-xl transition-colors text-sm">
+                                    <button onClick={handlePlaceOrder} disabled={loading} className="relative bg-[#00b14f] hover:bg-[#009943] disabled:opacity-60 text-white font-bold px-8 py-3 rounded-xl transition-colors text-[0px]">
+                                        <span className="text-sm">{loading ? "Đang xử lý..." : payMethod === "cod" ? "Đặt hàng COD" : payMethod === "vnpay" ? "Thanh toán VNPay" : "Thanh toán MoMo"}</span>
                                         Xem lại đơn hàng →
                                     </button>
-                                </div>
+                                </div>}
                             </div>
                         )}
 
