@@ -101,7 +101,7 @@ const VendorDashboard = () => {
                     <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Gian hàng {statusText}</h1>
                     <p className="text-gray-500 max-w-xl mx-auto">
                         Hiện tại bạn không thể quản lý sản phẩm, đơn hàng, mã giảm giá hoặc ví của shop này.
-                        Vui lòng liên hệ quản lý để được hỗ trợ.
+                        Vui lòng liên hệ quản lý để được hỗ trợ
                     </p>
                     <button
                         type="button"
