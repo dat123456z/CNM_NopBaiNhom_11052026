@@ -1,6 +1,6 @@
 import LineIcon from "../LineIcon";
 
-const ManagerSidebar = ({ tabs, activeTab, onTabChange, pendingCount = 0, onGoHome, onLogout }) => (
+const ManagerSidebar = ({ tabs, activeTab, onTabChange, pendingCount = 0, onLogout }) => (
     <aside className="w-64 shrink-0 bg-[#eaf1fb] border-r border-slate-200 flex flex-col">
         <div className="h-16 px-5 flex items-center gap-3 border-b border-slate-200">
             <div className="w-9 h-9 rounded-lg bg-[#9a4f00] text-white flex items-center justify-center font-black">
@@ -35,10 +35,6 @@ const ManagerSidebar = ({ tabs, activeTab, onTabChange, pendingCount = 0, onGoHo
         </nav>
 
         <div className="mt-auto p-4 border-t border-slate-200 space-y-2 text-xs text-slate-500">
-            <button onClick={onGoHome} className="flex items-center gap-2 hover:text-slate-900">
-                <LineIcon name="home" size={14} />
-                Trang mua hàng
-            </button>
             <button onClick={onLogout} className="flex items-center gap-2 hover:text-slate-900">
                 <LineIcon name="x" size={14} />
                 Đăng xuất

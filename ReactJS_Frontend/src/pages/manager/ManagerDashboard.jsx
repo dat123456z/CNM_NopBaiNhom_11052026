@@ -192,12 +192,11 @@ const ManagerDashboard = () => {
                 activeTab={activeTab}
                 pendingCount={pendingProducts.length}
                 onTabChange={handleTabChange}
-                onGoHome={() => navigate("/")}
                 onLogout={handleLogout}
             />
 
             <main className="flex-1 min-w-0">
-                <ManagerHeader onSwitchRole={() => navigate("/")} onLogout={handleLogout} />
+                <ManagerHeader onLogout={handleLogout} />
 
                 <section className="p-7 max-w-7xl mx-auto space-y-6">
                     {activeTab === "vendors" && (

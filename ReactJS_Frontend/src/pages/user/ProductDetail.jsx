@@ -112,7 +112,9 @@ const ProductDetail = () => {
                     signal: controller.signal
                 });
 
-                if (!res.ok) throw new Error("Load product failed");
+                if (!res.ok) {
+                    throw new Error("Sản phẩm không khả dụng hoặc shop đang bị khóa.");
+                }
 
                 const data = await res.json();
                 setProduct(data);

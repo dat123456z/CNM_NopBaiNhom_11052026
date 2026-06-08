@@ -31,7 +31,7 @@ const fmtStats = ({ users, vendors, products, orders }) => {
         .reduce((sum, order) => sum + Number(order.total || 0), 0);
 
     return {
-        totalUsers: users.length,
+        totalUsers: users.filter((user) => user.role === "user").length,
         totalVendors: vendors.length,
         activeVendors: vendors.filter((shop) => shop.status === "active").length,
         pendingVendors: vendors.filter((shop) => shop.status === "pending").length,
@@ -152,16 +152,16 @@ const AdminDashboard = () => {
     return (
         <div className="min-h-screen bg-[#f3f6fb] text-slate-900 flex font-sans">
             {toast && <div className={`fixed right-5 top-5 z-50 rounded-lg px-4 py-3 text-sm font-bold text-white shadow-lg ${toast.type === "error" ? "bg-rose-600" : "bg-emerald-600"}`}>{toast.message}</div>}
-            <AdminSidebar tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} onGoHome={() => navigate("/")} onLogout={handleLogout} />
+            <AdminSidebar tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} onLogout={handleLogout} />
             <main className="flex-1 min-w-0">
-                <AdminHeader onSwitchRole={() => navigate("/manager/dashboard")} onLogout={handleLogout} />
+                <AdminHeader onLogout={handleLogout} />
                 <section className="p-7 max-w-7xl mx-auto">
-                    {activeTab === "dashboard" && <AdminOverview stats={stats} vendors={vendors} />}
-                    {activeTab === "users" && <AdminUsers users={users} onSetUserStatus={setUserStatus} onSetUserRole={setUserRole} />}
+                    {activeTab === "dashboard" && <AdminOverview stats={stats} vendors={vendors} orders={orders} />}
+                    {activeTab === "users" && <AdminUsers users={users} onSetUserStatus={setUserStatus} />}
                     {activeTab === "vendors" && <AdminVendors stats={stats} vendors={vendors} loading={loading} vendorSearch={vendorSearch} vendorStatus={vendorStatus} onSearchChange={setVendorSearch} onStatusChange={setVendorStatus} onUpdateVendorStatus={updateVendorStatus} />}
                     {activeTab === "products" && <AdminProducts products={products} stats={stats} onUpdateProductStatus={updateProductStatus} />}
                     {activeTab === "orders" && <AdminOrders orders={orders} stats={stats} />}
-                    {activeTab === "revenue" && <AdminRevenue orders={orders} vendors={vendors} stats={stats} />}
+                    {activeTab === "revenue" && <AdminRevenue orders={orders} vendors={vendors} />}
                     {activeTab === "roles" && <AdminRoles users={users} />}
                 </section>
             </main>

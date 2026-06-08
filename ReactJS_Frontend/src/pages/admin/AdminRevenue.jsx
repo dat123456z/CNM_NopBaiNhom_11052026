@@ -1,37 +1,206 @@
 import LineIcon from "../../components/LineIcon";
 import AdminCard, { AdminStatCard } from "../../components/admin/AdminCard";
 
-const fmtMoney = (value) => `${Number(value || 0).toLocaleString("vi-VN")}đ`;
+const COMMISSION_RATE = 0.125;
 
-const AdminRevenue = ({ orders, vendors, stats }) => {
-    const bars = [42, 31, 55, 74, 48, 82];
+const fmtMoney = (value) => `${Number(value || 0).toLocaleString("vi-VN")}đ`;
+const fmtNumber = (value) => Number(value || 0).toLocaleString("vi-VN");
+
+const csvValue = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+const downloadCsv = (filename, headers, rows) => {
+    const csv = [
+        headers.map(csvValue).join(","),
+        ...rows.map((row) => row.map(csvValue).join(",")),
+    ].join("\n");
+    const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+};
+
+const getDeliveredOrders = (orders) => orders.filter((order) => order.status === "delivered");
+
+const buildVendorRevenue = (orders, vendors) => {
+    const vendorMap = new Map(vendors.map((vendor) => [Number(vendor.id), vendor]));
+
+    orders.forEach((order) => {
+        const shopId = Number(order.shopId || order.shop?.id);
+        if (!vendorMap.has(shopId)) {
+            vendorMap.set(shopId, {
+                id: shopId,
+                name: order.shop?.name || `Shop #${shopId}`,
+                status: order.shop?.status || "unknown",
+            });
+        }
+    });
+
+    return Array.from(vendorMap.values())
+        .map((vendor) => {
+            const vendorOrders = orders.filter((order) => Number(order.shopId || order.shop?.id) === Number(vendor.id));
+            const gross = vendorOrders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+            const commission = Math.round(gross * COMMISSION_RATE);
+            return {
+                ...vendor,
+                orderCount: vendorOrders.length,
+                gross,
+                commission,
+                payout: Math.max(0, gross - commission),
+                lastOrderAt: vendorOrders
+                    .map((order) => order.deliveredAt || order.createdAt)
+                    .filter(Boolean)
+                    .sort()
+                    .at(-1),
+            };
+        })
+        .filter((vendor) => vendor.orderCount > 0)
+        .sort((a, b) => b.gross - a.gross);
+};
+
+const buildCategoryRevenue = (orders) => {
+    const totals = new Map();
+
+    orders.forEach((order) => {
+        const items = Array.isArray(order.items) ? order.items : [];
+        if (items.length === 0) {
+            const key = "Uncategorized";
+            totals.set(key, (totals.get(key) || 0) + Number(order.total || 0));
+            return;
+        }
+
+        const itemTotal = items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0) || 1;
+        items.forEach((item) => {
+            const key = item.product?.category || item.category || "Uncategorized";
+            const share = (Number(item.price || 0) * Number(item.quantity || 0)) / itemTotal;
+            totals.set(key, (totals.get(key) || 0) + Number(order.total || 0) * share);
+        });
+    });
+
+    return Array.from(totals.entries())
+        .map(([category, value]) => ({ category, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 6);
+};
+
+const AdminRevenue = ({ orders, vendors }) => {
+    const deliveredOrders = getDeliveredOrders(orders);
+    const vendorRevenue = buildVendorRevenue(deliveredOrders, vendors);
+    const categoryRevenue = buildCategoryRevenue(deliveredOrders);
+    const gross = deliveredOrders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+    const commission = Math.round(gross * COMMISSION_RATE);
+    const payout = Math.max(0, gross - commission);
+    const paidOrders = deliveredOrders.filter((order) => order.paymentStatus === "paid").length;
+    const maxVendorRevenue = Math.max(...vendorRevenue.map((vendor) => vendor.gross), 0);
+    const maxCategoryRevenue = Math.max(...categoryRevenue.map((item) => item.value), 0);
+
+    const handleExport = () => {
+        downloadCsv(
+            "vendor-settlements.csv",
+            ["Vendor", "Orders", "Gross Revenue", "Commission", "Payout", "Last Order"],
+            vendorRevenue.map((vendor) => [
+                vendor.name,
+                vendor.orderCount,
+                vendor.gross,
+                vendor.commission,
+                vendor.payout,
+                vendor.lastOrderAt ? new Date(vendor.lastOrderAt).toLocaleDateString("vi-VN") : "",
+            ])
+        );
+    };
+
     return (
         <div className="space-y-6">
-            <div><p className="text-2xl font-black">Revenue Control</p><p className="text-xs text-slate-500 mt-1">Financial reporting, commissions, and vendor payouts.</p></div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-                <AdminStatCard icon={<LineIcon name="card" size={18} />} label="Total Volume" value={fmtMoney(stats.totalRevenue)} sub="+14.2% last month" />
-                <AdminStatCard icon={<LineIcon name="coin" size={18} />} label="Commission" value={fmtMoney(stats.commission)} sub="base rate 12.5%" tone="red" />
-                <AdminStatCard icon={<LineIcon name="wallet" size={18} />} label="Total Payouts" value={fmtMoney(Math.max(0, stats.totalRevenue - stats.commission))} />
-                <AdminStatCard icon={<LineIcon name="receipt" size={18} />} label="Settlements" value={fmtMoney(stats.totalRevenue)} sub="completion 48 hours" tone="amber" />
+            <div>
+                <p className="text-2xl font-black">Revenue Control</p>
+                <p className="text-xs text-slate-500 mt-1">Detailed financial reporting, commissions, and vendor payouts from delivered orders.</p>
             </div>
-            <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+                <AdminStatCard icon={<LineIcon name="card" size={18} />} label="Delivered Volume" value={fmtMoney(gross)} sub={`${fmtNumber(deliveredOrders.length)} delivered orders`} />
+                <AdminStatCard icon={<LineIcon name="coin" size={18} />} label="Platform Commission" value={fmtMoney(commission)} sub={`${COMMISSION_RATE * 100}% base rate`} tone="red" />
+                <AdminStatCard icon={<LineIcon name="wallet" size={18} />} label="Vendor Payouts" value={fmtMoney(payout)} sub={`${fmtNumber(vendorRevenue.length)} vendors`} />
+                <AdminStatCard icon={<LineIcon name="receipt" size={18} />} label="Paid Orders" value={fmtNumber(paidOrders)} sub={`${fmtNumber(Math.max(0, deliveredOrders.length - paidOrders))} unpaid/refunded`} tone="amber" />
+            </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-5">
                 <AdminCard className="p-5">
-                    <p className="font-black">Revenue Flow by Category</p>
-                    <div className="h-64 mt-6 flex items-end gap-5 px-6">
-                        {bars.map((height, index) => <div key={index} className={`flex-1 rounded-t-md ${index === 5 ? "bg-blue-600" : "bg-blue-100"}`} style={{ height: `${height}%` }} />)}
+                    <div className="flex items-center justify-between">
+                        <p className="font-black">Top Vendor Revenue</p>
+                        <button onClick={handleExport} className="rounded-md bg-blue-600 px-4 py-2 text-xs font-bold text-white">
+                            Export Settlements
+                        </button>
+                    </div>
+                    <div className="mt-6 space-y-4">
+                        {vendorRevenue.slice(0, 8).map((vendor) => (
+                            <div key={vendor.id}>
+                                <div className="flex items-center justify-between text-xs font-bold">
+                                    <span>{vendor.name}</span>
+                                    <span>{fmtMoney(vendor.gross)}</span>
+                                </div>
+                                <div className="mt-2 h-2 rounded-full bg-slate-100 overflow-hidden">
+                                    <div
+                                        className="h-full rounded-full bg-blue-600"
+                                        style={{ width: `${maxVendorRevenue > 0 ? (vendor.gross / maxVendorRevenue) * 100 : 0}%` }}
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                        {vendorRevenue.length === 0 && <p className="py-8 text-center text-sm font-bold text-slate-400">No delivered revenue yet.</p>}
                     </div>
                 </AdminCard>
+
                 <AdminCard className="p-5">
-                    <p className="font-black">Income Streams</p>
-                    <div className="mx-auto mt-8 w-36 h-36 rounded-full border-[22px] border-blue-600 flex items-center justify-center text-center text-xs font-black">Total Share<br />100%</div>
-                    <div className="mt-8 space-y-3 text-xs font-bold"><p>Sales Commission 65%</p><p>Premium Subs 22%</p><p>Promotional Fees 13%</p></div>
+                    <p className="font-black">Revenue by Category</p>
+                    <div className="mt-6 space-y-4">
+                        {categoryRevenue.map((item) => (
+                            <div key={item.category}>
+                                <div className="flex justify-between text-xs font-bold">
+                                    <span>{item.category}</span>
+                                    <span>{fmtMoney(Math.round(item.value))}</span>
+                                </div>
+                                <div className="mt-2 h-2 rounded-full bg-slate-100 overflow-hidden">
+                                    <div
+                                        className="h-full rounded-full bg-emerald-500"
+                                        style={{ width: `${maxCategoryRevenue > 0 ? (item.value / maxCategoryRevenue) * 100 : 0}%` }}
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                        {categoryRevenue.length === 0 && <p className="py-8 text-center text-sm font-bold text-slate-400">No category revenue yet.</p>}
+                    </div>
                 </AdminCard>
             </div>
+
             <AdminCard className="overflow-hidden">
-                <div className="p-5 border-b border-slate-100 flex justify-between"><p className="font-black">Vendor Payout Requests</p><button className="text-xs font-bold text-blue-600">View All</button></div>
+                <div className="p-5 border-b border-slate-100">
+                    <p className="font-black">Vendor Settlement Summary</p>
+                    <p className="mt-1 text-xs text-slate-500">Payout = delivered gross revenue minus platform commission.</p>
+                </div>
                 <table className="w-full text-left text-sm">
-                    <thead className="bg-slate-50 text-[10px] uppercase text-slate-400"><tr><th className="px-5 py-3">Vendor Name</th><th>Amount</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
-                    <tbody className="divide-y divide-slate-100">{vendors.slice(0, 5).map((shop) => <tr key={shop.id}><td className="px-5 py-4 font-bold">{shop.name}</td><td>{fmtMoney(shop.monthlySales || 0)}</td><td>Processed</td><td>{new Date(shop.createdAt).toLocaleDateString("vi-VN")}</td><td>...</td></tr>)}</tbody>
+                    <thead className="bg-slate-50 text-[10px] uppercase text-slate-400">
+                        <tr>
+                            <th className="px-5 py-3">Vendor</th>
+                            <th>Orders</th>
+                            <th>Gross</th>
+                            <th>Commission</th>
+                            <th>Payout</th>
+                            <th>Last Order</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                        {vendorRevenue.slice(0, 10).map((vendor) => (
+                            <tr key={vendor.id}>
+                                <td className="px-5 py-4 font-bold">{vendor.name}</td>
+                                <td>{vendor.orderCount}</td>
+                                <td>{fmtMoney(vendor.gross)}</td>
+                                <td>{fmtMoney(vendor.commission)}</td>
+                                <td className="font-bold text-emerald-600">{fmtMoney(vendor.payout)}</td>
+                                <td>{vendor.lastOrderAt ? new Date(vendor.lastOrderAt).toLocaleDateString("vi-VN") : ""}</td>
+                            </tr>
+                        ))}
+                    </tbody>
                 </table>
             </AdminCard>
         </div>

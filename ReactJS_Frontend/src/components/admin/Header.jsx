@@ -1,7 +1,7 @@
 import LineIcon from "../LineIcon";
 import NotificationBell from "../NotificationBell";
 
-const AdminHeader = ({ onSwitchRole, onLogout }) => (
+const AdminHeader = ({ onLogout }) => (
     <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
             <p className="font-black text-red-500">UTEShop</p>
@@ -13,9 +13,6 @@ const AdminHeader = ({ onSwitchRole, onLogout }) => (
         <div className="flex items-center gap-3">
             <NotificationBell />
             <LineIcon name="cart" size={18} className="text-slate-600" />
-            <button onClick={onSwitchRole} className="h-8 px-3 rounded-md border border-red-300 text-red-500 text-xs font-bold">
-                Switch Role
-            </button>
             <button onClick={onLogout} className="h-8 px-3 rounded-md border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50">
                 Đăng xuất
             </button>
