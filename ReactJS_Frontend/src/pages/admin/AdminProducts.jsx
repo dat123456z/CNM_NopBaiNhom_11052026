@@ -34,7 +34,7 @@ const downloadCsv = (filename, headers, rows) => {
     URL.revokeObjectURL(url);
 };
 
-const AdminProducts = ({ products, stats, onUpdateProductStatus }) => {
+const AdminProducts = ({ products, stats }) => {
     const {
         currentPage,
         pageItems: pagedProducts,
@@ -77,7 +77,7 @@ const AdminProducts = ({ products, stats, onUpdateProductStatus }) => {
                     </button>
                 </div>
                 <table className="w-full text-left text-sm">
-                    <thead className="bg-slate-50 text-[10px] uppercase text-slate-400"><tr><th className="px-5 py-3">Sản phẩm</th><th>Shop</th><th>Ngày gửi</th><th>Trạng thái</th><th className="text-right pr-5">Thao tác</th></tr></thead>
+                    <thead className="bg-slate-50 text-[10px] uppercase text-slate-400"><tr><th className="px-5 py-3">Sản phẩm</th><th>Shop</th><th>Ngày gửi</th><th>Trạng thái</th></tr></thead>
                     <tbody className="divide-y divide-slate-100">
                         {pagedProducts.map((product) => (
                             <tr key={product.id}>
@@ -85,10 +85,6 @@ const AdminProducts = ({ products, stats, onUpdateProductStatus }) => {
                                 <td>{product.shop?.name || `Shop #${product.shopId}`}</td>
                                 <td>{product.createdAt ? new Date(product.createdAt).toLocaleDateString("vi-VN") : ""}</td>
                                 <td><span className={`rounded-full px-2 py-1 text-[10px] font-black ${statusClass[product.status] || statusClass.hidden}`}>{statusLabel[product.status] || product.status}</span></td>
-                                <td className="text-right pr-5 space-x-3">
-                                    {product.status === "pending" && <button onClick={() => onUpdateProductStatus(product.id, "active")} className="text-xs font-bold text-emerald-600">Duyệt</button>}
-                                    {product.status === "pending" && <button onClick={() => onUpdateProductStatus(product.id, "rejected")} className="text-xs font-bold text-rose-600">Từ chối</button>}
-                                </td>
                             </tr>
                         ))}
                     </tbody>

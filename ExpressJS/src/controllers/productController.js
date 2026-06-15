@@ -223,7 +223,10 @@ const setProductStatus = async (req, res) => {
                 }
             }
             : {};
-        const product = await productService.setProductStatus(req.params.id, req.body.status, options);
+        const product = await productService.setProductStatus(req.params.id, req.body.status, {
+            ...options,
+            reason: req.body.reason
+        });
         return res.json(product);
     } catch (err) {
         return res.status(err.status || 500).json({ message: err.message });

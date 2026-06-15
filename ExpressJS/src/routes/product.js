@@ -51,6 +51,6 @@ router.put('/:id', authMiddleware, vendorMiddleware, upload.array('images', 10),
 router.delete('/:id', authMiddleware, vendorMiddleware, deleteProduct);
 
 router.patch('/:id/status', authMiddleware, vendorMiddleware, setProductStatus);
-router.patch('/:id/moderation', authMiddleware, requireRole('manager', 'admin'), setProductStatus);
+router.patch('/:id/moderation', authMiddleware, requireRole('manager'), setProductStatus);
 
 module.exports = router;

@@ -130,12 +130,6 @@ const AdminDashboard = () => {
         fetchAll();
     };
 
-    const updateProductStatus = async (productId, status) => {
-        const res = await fetch(`${API_URL}/api/products/${productId}/moderation`, { method: "PATCH", headers, body: JSON.stringify({ status }) });
-        showToast(res.ok ? "Đã cập nhật sản phẩm." : "Không thể cập nhật sản phẩm.", res.ok ? "success" : "error");
-        fetchAll();
-    };
-
     const setUserStatus = async (userId, isActive) => {
         const res = await fetch(`${API_URL}/api/users/${userId}/status`, { method: "PATCH", headers, body: JSON.stringify({ isActive }) });
         showToast(res.ok ? "Đã cập nhật tài khoản." : "Không thể cập nhật tài khoản.", res.ok ? "success" : "error");
@@ -170,7 +164,7 @@ const AdminDashboard = () => {
                     {activeTab === "dashboard" && <AdminOverview stats={stats} vendors={vendors} orders={orders} />}
                     {activeTab === "users" && <AdminUsers users={users} onSetUserStatus={setUserStatus} onCreateUser={createUser} creatingUser={creatingUser} />}
                     {activeTab === "vendors" && <AdminVendors stats={stats} vendors={vendors} loading={loading} vendorSearch={vendorSearch} vendorStatus={vendorStatus} onSearchChange={setVendorSearch} onStatusChange={setVendorStatus} onUpdateVendorStatus={updateVendorStatus} />}
-                    {activeTab === "products" && <AdminProducts products={products} stats={stats} onUpdateProductStatus={updateProductStatus} />}
+                    {activeTab === "products" && <AdminProducts products={products} stats={stats} />}
                     {activeTab === "orders" && <AdminOrders orders={orders} stats={stats} />}
                     {activeTab === "revenue" && <AdminRevenue orders={orders} vendors={vendors} />}
                 </section>

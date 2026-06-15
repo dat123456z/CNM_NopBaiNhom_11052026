@@ -8,7 +8,9 @@ const Notification = sequelize.define('Notification', {
         type: DataTypes.ENUM(
             'order_new', 'order_confirmed', 'order_preparing', 'order_shipping',
             'order_delivered', 'order_cancelled', 'order_cancel_requested',
-            'review_new', 'review_reply', 'manager_product_pending', 'manager_vendor_new', 'system'
+            'review_new', 'review_reply',
+            'manager_product_pending', 'manager_product_updated_pending',
+            'manager_vendor_new', 'product_rejected', 'system'
         ),
         allowNull: false
     },

@@ -146,18 +146,18 @@ const ManagerDashboard = () => {
         fetchStats();
     };
 
-    const updateProductStatus = async (productId, status) => {
+    const updateProductStatus = async (productId, status, reason) => {
         const res = await fetch(`${API_URL}/api/products/${productId}/moderation`, {
             method: "PATCH",
             headers: authHeaders,
-            body: JSON.stringify({ status }),
+            body: JSON.stringify({ status, reason }),
         });
         if (!res.ok) {
             const data = await res.json().catch(() => ({}));
             showToast(data.message || "Không thể cập nhật sản phẩm.", "error");
             return;
         }
-        showToast(status === "active" ? "Đã duyệt sản phẩm." : "Đã cập nhật yêu cầu kiểm duyệt.");
+        showToast(status === "active" ? "Đã duyệt sản phẩm." : "Đã từ chối sản phẩm.");
         fetchPendingProducts();
         fetchStats();
     };

@@ -77,7 +77,15 @@ const start = async () => {
         }
 
         try {
-            await sequelize.query("ALTER TABLE notifications MODIFY COLUMN type ENUM('order_new', 'order_confirmed', 'order_preparing', 'order_shipping', 'order_delivered', 'order_cancelled', 'order_cancel_requested', 'review_new', 'review_reply', 'manager_product_pending', 'manager_vendor_new', 'system') NOT NULL;");
+            await sequelize.query("ALTER TABLE products ADD COLUMN rejectionReason TEXT NULL;");
+        } catch (e) {
+            if (!String(e.message).includes('Duplicate column')) {
+                console.error('>>> Error adding products rejectionReason:', e.message);
+            }
+        }
+
+        try {
+            await sequelize.query("ALTER TABLE notifications MODIFY COLUMN type ENUM('order_new', 'order_confirmed', 'order_preparing', 'order_shipping', 'order_delivered', 'order_cancelled', 'order_cancel_requested', 'review_new', 'review_reply', 'manager_product_pending', 'manager_product_updated_pending', 'manager_vendor_new', 'product_rejected', 'system') NOT NULL;");
         } catch (e) {
             console.error('>>> Error altering notifications type ENUM:', e.message);
         }

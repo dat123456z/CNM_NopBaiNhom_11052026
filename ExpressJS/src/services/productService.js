@@ -37,6 +37,7 @@ const normalizeProduct = (product) => {
         reviewCount: p.reviewCount != null ? Number(p.reviewCount) : 0,
         sold: p.sold != null ? Number(p.sold) : 0,
         views: p.views != null ? Number(p.views) : 0,
+        rejectionReason: p.rejectionReason || null,
         createdAt: p.createdAt,
         updatedAt: p.updatedAt,
         shop: p.Shop || p.shop || null
@@ -172,6 +173,7 @@ const updateProduct = async (productId, shopId, data) => {
         data.slug = `${slugify(data.title)}-${Date.now()}`;
     }
     data.status = 'pending';
+    data.rejectionReason = null;
     await product.update(data);
 
     try {
@@ -213,7 +215,33 @@ const setProductStatus = async (productId, status, options = {}) => {
             throw Object.assign(new Error('Bạn không có quyền chuyển sản phẩm sang trạng thái này.'), { status: 403 });
         }
     }
-    await product.update({ status });
+    const reason = options.reason?.trim();
+    if (status === 'rejected' && !reason) {
+        throw Object.assign(new Error('Vui lòng nhập lý do từ chối hoặc nội dung cần chỉnh sửa.'), { status: 400 });
+    }
+
+    const updates = { status };
+    if (status === 'rejected') updates.rejectionReason = reason;
+    if (['active', 'pending'].includes(status)) updates.rejectionReason = null;
+
+    await product.update(updates);
+
+    if (status === 'rejected') {
+        try {
+            const shop = await Shop.findByPk(product.shopId, { attributes: ['name', 'userId'] });
+            if (shop?.userId) {
+                await notificationService.notify({
+                    userId: shop.userId,
+                    type: 'product_rejected',
+                    title: 'Sản phẩm bị từ chối',
+                    message: `Sản phẩm "${product.title}" bị từ chối. Lý do: ${reason}`
+                });
+            }
+        } catch (err) {
+            console.error('[Notify] product rejected error:', err.message);
+        }
+    }
+
     return normalizeProduct(product);
 };
 
