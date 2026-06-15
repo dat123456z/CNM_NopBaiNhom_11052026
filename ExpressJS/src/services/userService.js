@@ -1,7 +1,10 @@
 const path = require('path');
 const fs = require('fs');
+const bcrypt = require('bcrypt');
 const { Op } = require('sequelize');
 const User = require('../models/User');
+
+const VALID_ROLES = ['user', 'vendor', 'manager', 'admin'];
 
 const formatUser = (user) => ({
     id: user.id,
@@ -119,6 +122,47 @@ const listUsers = async ({ page = 1, limit = 20, role, search }) => {
     return { total: count, page: Number(page), limit: Number(limit), users: rows };
 };
 
+const createUserByAdmin = async ({ name, email, phone, password, address, role }) => {
+    const cleanName = name?.trim();
+    const cleanEmail = email?.trim().toLowerCase();
+    const cleanPhone = phone?.trim();
+    const cleanAddress = address?.trim();
+    const cleanRole = role || 'user';
+
+    if (!cleanName || cleanName.length < 2)
+        throw Object.assign(new Error('Họ tên tối thiểu 2 ký tự.'), { status: 400 });
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail))
+        throw Object.assign(new Error('Email không hợp lệ.'), { status: 400 });
+    if (!cleanPhone || !/^(0[3|5|7|8|9])+([0-9]{8})$/.test(cleanPhone))
+        throw Object.assign(new Error('Số điện thoại không hợp lệ.'), { status: 400 });
+    if (!password || password.length < 6)
+        throw Object.assign(new Error('Mật khẩu tối thiểu 6 ký tự.'), { status: 400 });
+    if (!cleanAddress)
+        throw Object.assign(new Error('Vui lòng nhập địa chỉ.'), { status: 400 });
+    if (!VALID_ROLES.includes(cleanRole))
+        throw Object.assign(new Error('Role không hợp lệ.'), { status: 400 });
+
+    const existing = await User.findOne({ where: { email: cleanEmail } });
+    if (existing) throw Object.assign(new Error('Email đã được đăng ký.'), { status: 409 });
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await User.create({
+        name: cleanName,
+        email: cleanEmail,
+        phone: cleanPhone,
+        password: passwordHash,
+        role: cleanRole,
+        addresses: [{
+            id: Date.now().toString(),
+            street: cleanAddress,
+            phone: cleanPhone,
+            isDefault: true
+        }]
+    });
+
+    return formatUser(user);
+};
+
 const setUserStatus = async (userId, isActive, reason) => {
     const user = await User.findByPk(userId);
     if (!user) throw Object.assign(new Error('Người dùng không tồn tại.'), { status: 404 });
@@ -131,8 +175,7 @@ const setUserStatus = async (userId, isActive, reason) => {
 };
 
 const setUserRole = async (userId, role) => {
-    const validRoles = ['user', 'vendor', 'manager', 'admin'];
-    if (!validRoles.includes(role)) throw Object.assign(new Error('Role không hợp lệ.'), { status: 400 });
+    if (!VALID_ROLES.includes(role)) throw Object.assign(new Error('Role không hợp lệ.'), { status: 400 });
     const user = await User.findByPk(userId);
     if (!user) throw Object.assign(new Error('Người dùng không tồn tại.'), { status: 404 });
     await user.update({ role });
@@ -148,6 +191,6 @@ const getUserCoupons = async (userId) => {
 module.exports = {
     getProfile, updateProfile,
     upsertAddress, removeAddress, setDefaultAddress,
-    listUsers, setUserStatus, setUserRole,
+    listUsers, createUserByAdmin, setUserStatus, setUserRole,
     getUserCoupons
 };

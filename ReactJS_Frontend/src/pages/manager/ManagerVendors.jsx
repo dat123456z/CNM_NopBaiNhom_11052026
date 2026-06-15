@@ -1,13 +1,14 @@
 import LineIcon from "../../components/LineIcon";
 import { ManagerCard, ManagerStatCard } from "../../components/manager/ManagerCard";
+import Pagination, { usePagination } from "../../components/Pagination";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 const statusLabel = {
-    active: "Verified",
-    pending: "Pending",
-    suspended: "Suspended",
-    closed: "Closed",
+    active: "Đã xác minh",
+    pending: "Chờ duyệt",
+    suspended: "Tạm khóa",
+    closed: "Đã đóng",
 };
 
 const statusClass = {
@@ -39,38 +40,35 @@ const ManagerVendors = ({
         ...item,
         height: Math.max(20, Math.round((item.count / maxCategory) * 100)),
     }));
+    const {
+        currentPage,
+        pageItems: pagedVendors,
+        setCurrentPage,
+        totalPages,
+    } = usePagination(vendors);
 
     return (
         <>
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <p className="text-2xl font-black">Vendor Management</p>
-                    <p className="text-xs text-slate-500 mt-1">Monitor, verify, and analyze vendor performance across the marketplace.</p>
+                    <p className="text-2xl font-black">Quản lý nhà bán hàng</p>
+                    <p className="text-xs text-slate-500 mt-1">Theo dõi, xác minh và phân tích hiệu suất nhà bán hàng trên sàn.</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button className="h-9 px-4 rounded-md border border-slate-200 bg-white text-xs font-bold text-slate-600 flex items-center gap-2">
-                        <LineIcon name="search" size={14} />
-                        Filter View
-                    </button>
-                    <button className="h-9 px-4 rounded-md bg-[#9a4f00] text-white text-xs font-bold flex items-center gap-2">
-                        <LineIcon name="card" size={14} />
-                        Export Data
-                    </button>
-                </div>
+
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-                <ManagerStatCard icon="shop" label="Total Vendors" value={fmtCompact(stats.totalVendors)} sub="+12% from last month" />
-                <ManagerStatCard icon="shield" label="Verified Status" value={`${stats.verifiedPercentage}%`} sub="active vendors" />
-                <ManagerStatCard icon="coin" label="Vendor Revenue" value={fmtMoney(stats.totalRevenue)} sub="+ growth" />
-                <ManagerStatCard icon="star" label="Avg Rating" value={Number(stats.avgRating || 0).toFixed(1)} sub="across reviews" />
+                <ManagerStatCard icon="shop" label="Tổng nhà bán hàng" value={fmtCompact(stats.totalVendors)} sub="+12% so với tháng trước" />
+                <ManagerStatCard icon="shield" label="Tỷ lệ xác minh" value={`${stats.verifiedPercentage}%`} sub="nhà bán hàng hoạt động" />
+                <ManagerStatCard icon="coin" label="Doanh thu nhà bán hàng" value={fmtMoney(stats.totalRevenue)} sub="đang tăng trưởng" />
+                <ManagerStatCard icon="star" label="Đánh giá TB" value={Number(stats.avgRating || 0).toFixed(1)} sub="từ các đánh giá" />
             </div>
 
             <ManagerCard className="overflow-hidden">
                 <div className="p-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <p className="font-black">Vendor Directory</p>
-                        <p className="text-xs text-slate-400 mt-1">{vendors.length} vendors loaded</p>
+                        <p className="font-black">Danh sách nhà bán hàng</p>
+                        <p className="text-xs text-slate-400 mt-1">Đã tải {vendors.length} nhà bán hàng</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <select
@@ -78,17 +76,17 @@ const ManagerVendors = ({
                             onChange={(event) => onStatusChange(event.target.value)}
                             className="h-9 rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600"
                         >
-                            <option value="all">All status</option>
-                            <option value="pending">Pending</option>
-                            <option value="active">Verified</option>
-                            <option value="suspended">Suspended</option>
+                            <option value="all">Tất cả trạng thái</option>
+                            <option value="pending">Chờ duyệt</option>
+                            <option value="active">Đã xác minh</option>
+                            <option value="suspended">Tạm khóa</option>
                         </select>
                         <div className="h-9 rounded-md border border-slate-200 bg-slate-50 px-3 flex items-center gap-2">
                             <LineIcon name="search" size={14} className="text-slate-400" />
                             <input
                                 value={vendorSearch}
                                 onChange={(event) => onSearchChange(event.target.value)}
-                                placeholder="Quick search..."
+                                placeholder="Tìm nhanh..."
                                 className="bg-transparent outline-none text-xs w-44"
                             />
                         </div>
@@ -99,19 +97,19 @@ const ManagerVendors = ({
                     <table className="w-full text-left">
                         <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-slate-400">
                             <tr>
-                                <th className="px-5 py-3">Vendor Name</th>
-                                <th className="px-5 py-3">Category</th>
-                                <th className="px-5 py-3">Status</th>
-                                <th className="px-5 py-3">Monthly Sales</th>
-                                <th className="px-5 py-3 text-right">Actions</th>
+                                <th className="px-5 py-3">Tên nhà bán hàng</th>
+                                <th className="px-5 py-3">Danh mục</th>
+                                <th className="px-5 py-3">Trạng thái</th>
+                                <th className="px-5 py-3">Doanh số tháng</th>
+                                <th className="px-5 py-3 text-right">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-sm">
                             {loading ? (
                                 <tr><td colSpan={5} className="px-5 py-10 text-center text-slate-400">Đang tải dữ liệu...</td></tr>
                             ) : vendors.length === 0 ? (
-                                <tr><td colSpan={5} className="px-5 py-10 text-center text-slate-400">Không có vendor phù hợp.</td></tr>
-                            ) : vendors.slice(0, 8).map((shop) => {
+                                <tr><td colSpan={5} className="px-5 py-10 text-center text-slate-400">Không có nhà bán hàng phù hợp.</td></tr>
+                            ) : pagedVendors.map((shop) => {
                                 const logo = getImageSrc(shop.logo);
                                 return (
                                     <tr key={shop.id} className="hover:bg-slate-50/70">
@@ -126,7 +124,7 @@ const ManagerVendors = ({
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-5 py-4 text-xs text-slate-500">{shop.category || "Marketplace"}</td>
+                                        <td className="px-5 py-4 text-xs text-slate-500">{shop.category || "Sàn thương mại"}</td>
                                         <td className="px-5 py-4">
                                             <span className={`px-2.5 py-1 rounded-full border text-[10px] font-black ${statusClass[shop.status] || statusClass.closed}`}>
                                                 {statusLabel[shop.status] || shop.status}
@@ -135,13 +133,13 @@ const ManagerVendors = ({
                                         <td className="px-5 py-4 font-bold text-slate-900">{fmtMoney(shop.monthlySales || 0)}</td>
                                         <td className="px-5 py-4 text-right">
                                             {shop.status === "pending" && (
-                                                <button onClick={() => onUpdateVendorStatus(shop.id, "active")} className="text-xs font-bold text-emerald-700 hover:underline">Approve</button>
+                                                <button onClick={() => onUpdateVendorStatus(shop.id, "active")} className="text-xs font-bold text-emerald-700 hover:underline">Duyệt</button>
                                             )}
                                             {shop.status === "active" && (
-                                                <button onClick={() => onUpdateVendorStatus(shop.id, "suspended")} className="text-xs font-bold text-amber-700 hover:underline">Suspend</button>
+                                                <button onClick={() => onUpdateVendorStatus(shop.id, "suspended")} className="text-xs font-bold text-amber-700 hover:underline">Tạm khóa</button>
                                             )}
                                             {shop.status === "suspended" && (
-                                                <button onClick={() => onUpdateVendorStatus(shop.id, "active")} className="text-xs font-bold text-emerald-700 hover:underline">Restore</button>
+                                                <button onClick={() => onUpdateVendorStatus(shop.id, "active")} className="text-xs font-bold text-emerald-700 hover:underline">Khôi phục</button>
                                             )}
                                         </td>
                                     </tr>
@@ -149,12 +147,18 @@ const ManagerVendors = ({
                             })}
                         </tbody>
                     </table>
+                    <Pagination
+                        currentPage={currentPage}
+                        totalItems={vendors.length}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                    />
                 </div>
             </ManagerCard>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <ManagerCard className="p-5 min-h-56">
-                    <p className="font-black">Recent Alerts</p>
+                    <p className="font-black">Cảnh báo gần đây</p>
                     <div className="mt-5 space-y-4">
                         {(stats.alerts || []).slice(0, 4).map((alert) => (
                             <div key={alert.id} className="flex items-start gap-3">
@@ -166,7 +170,7 @@ const ManagerVendors = ({
                 </ManagerCard>
 
                 <ManagerCard className="p-5 min-h-56">
-                    <p className="font-black">Vendor Category Distribution</p>
+                    <p className="font-black">Phân bố danh mục nhà bán hàng</p>
                     <div className="h-40 mt-5 flex items-end justify-center gap-6">
                         {categories.map((item) => (
                             <div key={item.category} className="flex flex-col items-center gap-2">

@@ -8,18 +8,16 @@ import AdminVendors from "./AdminVendors";
 import AdminProducts from "./AdminProducts";
 import AdminOrders from "./AdminOrders";
 import AdminRevenue from "./AdminRevenue";
-import AdminRoles from "./AdminRoles";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 const TABS = [
-    { id: "dashboard", label: "Dashboard", icon: "home" },
-    { id: "users", label: "Users", icon: "users" },
-    { id: "vendors", label: "Vendors", icon: "shop" },
-    { id: "products", label: "Products", icon: "box" },
-    { id: "orders", label: "Orders", icon: "cart" },
-    { id: "revenue", label: "Revenue", icon: "wallet" },
-    { id: "roles", label: "Settings", icon: "shield" },
+    { id: "dashboard", label: "Tổng quan", icon: "home" },
+    { id: "users", label: "Người dùng", icon: "users" },
+    { id: "vendors", label: "Nhà bán hàng", icon: "shop" },
+    { id: "products", label: "Sản phẩm", icon: "box" },
+    { id: "orders", label: "Đơn hàng", icon: "cart" },
+    { id: "revenue", label: "Doanh thu", icon: "wallet" },
 ];
 
 const fmtStats = ({ users, vendors, products, orders }) => {
@@ -44,7 +42,7 @@ const fmtStats = ({ users, vendors, products, orders }) => {
         verifiedPercentage: vendors.length > 0 ? Number(((vendors.filter((shop) => shop.status === "active").length / vendors.length) * 100).toFixed(1)) : 0,
         avgRating: vendors.length > 0 ? Number((vendors.reduce((sum, shop) => sum + Number(shop.rating || 0), 0) / vendors.length).toFixed(1)) : 0,
         categoryDistribution: Object.entries(vendors.reduce((acc, shop) => {
-            const key = shop.category || "Marketplace";
+            const key = shop.category || "Sàn thương mại";
             acc[key] = (acc[key] || 0) + 1;
             return acc;
         }, {})).map(([category, count]) => ({ category, count })),
@@ -64,6 +62,7 @@ const AdminDashboard = () => {
     const [vendorSearch, setVendorSearch] = useState("");
     const [vendorStatus, setVendorStatus] = useState("all");
     const [toast, setToast] = useState(null);
+    const [creatingUser, setCreatingUser] = useState(false);
 
     const token = localStorage.getItem("accessToken");
     const headers = useMemo(() => ({
@@ -127,7 +126,7 @@ const AdminDashboard = () => {
 
     const updateVendorStatus = async (shopId, status) => {
         const res = await fetch(`${API_URL}/api/shops/${shopId}/status`, { method: "PATCH", headers, body: JSON.stringify({ status }) });
-        showToast(res.ok ? "Đã cập nhật vendor." : "Không thể cập nhật vendor.", res.ok ? "success" : "error");
+        showToast(res.ok ? "Đã cập nhật nhà bán hàng." : "Không thể cập nhật nhà bán hàng.", res.ok ? "success" : "error");
         fetchAll();
     };
 
@@ -143,10 +142,22 @@ const AdminDashboard = () => {
         fetchAll();
     };
 
-    const setUserRole = async (userId, role) => {
-        const res = await fetch(`${API_URL}/api/users/${userId}/role`, { method: "PATCH", headers, body: JSON.stringify({ role }) });
-        showToast(res.ok ? "Đã cập nhật quyền." : "Không thể cập nhật quyền.", res.ok ? "success" : "error");
-        fetchAll();
+    const createUser = async (payload) => {
+        setCreatingUser(true);
+        try {
+            const res = await fetch(`${API_URL}/api/users`, {
+                method: "POST",
+                headers,
+                body: JSON.stringify(payload),
+            });
+            const data = await res.json().catch(() => ({}));
+            const ok = res.ok;
+            showToast(ok ? "Đã tạo tài khoản." : data.message || "Không thể tạo tài khoản.", ok ? "success" : "error");
+            if (ok) fetchAll();
+            return ok;
+        } finally {
+            setCreatingUser(false);
+        }
     };
 
     return (
@@ -157,12 +168,11 @@ const AdminDashboard = () => {
                 <AdminHeader onLogout={handleLogout} />
                 <section className="p-7 max-w-7xl mx-auto">
                     {activeTab === "dashboard" && <AdminOverview stats={stats} vendors={vendors} orders={orders} />}
-                    {activeTab === "users" && <AdminUsers users={users} onSetUserStatus={setUserStatus} />}
+                    {activeTab === "users" && <AdminUsers users={users} onSetUserStatus={setUserStatus} onCreateUser={createUser} creatingUser={creatingUser} />}
                     {activeTab === "vendors" && <AdminVendors stats={stats} vendors={vendors} loading={loading} vendorSearch={vendorSearch} vendorStatus={vendorStatus} onSearchChange={setVendorSearch} onStatusChange={setVendorStatus} onUpdateVendorStatus={updateVendorStatus} />}
                     {activeTab === "products" && <AdminProducts products={products} stats={stats} onUpdateProductStatus={updateProductStatus} />}
                     {activeTab === "orders" && <AdminOrders orders={orders} stats={stats} />}
                     {activeTab === "revenue" && <AdminRevenue orders={orders} vendors={vendors} />}
-                    {activeTab === "roles" && <AdminRoles users={users} />}
                 </section>
             </main>
         </div>

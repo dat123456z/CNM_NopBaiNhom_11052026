@@ -13,6 +13,7 @@ const {
     removeAddress,
     setDefaultAddress,
     listUsers,
+    createUserByAdmin,
     setUserStatus,
     setUserRole,
     getUserCoupons
@@ -63,6 +64,7 @@ router.patch(
 
 router.get('/coupons', authMiddleware, getUserCoupons);
 router.get('/', authMiddleware, requireRole('admin'), listUsers);
+router.post('/', authMiddleware, requireRole('admin'), createUserByAdmin);
 
 router.patch('/:id/status', authMiddleware, requireRole('admin'), setUserStatus);
 

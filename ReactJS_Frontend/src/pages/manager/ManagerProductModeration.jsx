@@ -1,5 +1,6 @@
 import LineIcon from "../../components/LineIcon";
 import { ManagerCard } from "../../components/manager/ManagerCard";
+import Pagination, { usePagination } from "../../components/Pagination";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
@@ -15,20 +16,28 @@ const ManagerProductModeration = ({
     selectedImage,
     onSelectProduct,
     onUpdateProductStatus,
-}) => (
+}) => {
+    const {
+        currentPage,
+        pageItems: pagedProducts,
+        setCurrentPage,
+        totalPages,
+    } = usePagination(pendingProducts);
+
+    return (
     <>
         <div className="flex items-start justify-between gap-4">
             <div>
-                <p className="text-2xl font-black">Vendors</p>
-                <p className="text-xs text-slate-500 mt-1">Review pending listings for compliance and quality standards.</p>
+                <p className="text-2xl font-black">Duyệt sản phẩm</p>
+                <p className="text-xs text-slate-500 mt-1">Rà soát các sản phẩm chờ duyệt theo tiêu chuẩn chất lượng và tuân thủ.</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <ManagerCard className="px-5 py-3">
-                    <p className="text-[10px] uppercase font-bold text-slate-400">Pending Review</p>
+                    <p className="text-[10px] uppercase font-bold text-slate-400">Chờ duyệt</p>
                     <p className="text-xl font-black text-[#9a4f00]">{pendingProducts.length}</p>
                 </ManagerCard>
                 <ManagerCard className="px-5 py-3">
-                    <p className="text-[10px] uppercase font-bold text-slate-400">Avg. Response Time</p>
+                    <p className="text-[10px] uppercase font-bold text-slate-400">Thời gian phản hồi TB</p>
                     <p className="text-xl font-black">4.2h</p>
                 </ManagerCard>
             </div>
@@ -41,11 +50,11 @@ const ManagerProductModeration = ({
                         <div className="px-5 py-4 bg-[#edf3ff] border-b border-slate-200 flex items-center justify-between">
                             <p className="font-black flex items-center gap-2">
                                 <LineIcon name="eye" size={16} />
-                                Item for Review: #PX-{selectedProduct.id}
+                                Sản phẩm cần duyệt: #PX-{selectedProduct.id}
                             </p>
                             <div className="flex items-center gap-2">
-                                <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-black">High Priority</span>
-                                <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-black">{selectedProduct.category || "General"}</span>
+                                <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-black">Ưu tiên cao</span>
+                                <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-black">{selectedProduct.category || "Chung"}</span>
                             </div>
                         </div>
 
@@ -55,20 +64,20 @@ const ManagerProductModeration = ({
                             </div>
                             <div className="space-y-4">
                                 <div>
-                                    <p className="text-[10px] uppercase font-bold text-slate-400">Product Title</p>
+                                    <p className="text-[10px] uppercase font-bold text-slate-400">Tên sản phẩm</p>
                                     <h2 className="text-xl font-black text-slate-950">{selectedProduct.title}</h2>
                                 </div>
                                 <div>
-                                    <p className="text-[10px] uppercase font-bold text-slate-400">Description</p>
+                                    <p className="text-[10px] uppercase font-bold text-slate-400">Mô tả</p>
                                     <p className="text-sm text-slate-600 leading-relaxed">{selectedProduct.desc || "Sản phẩm chưa có mô tả chi tiết."}</p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-5">
                                     <div>
-                                        <p className="text-[10px] uppercase font-bold text-slate-400">Price</p>
+                                        <p className="text-[10px] uppercase font-bold text-slate-400">Giá</p>
                                         <p className="font-black">{fmtMoney(selectedProduct.price)}</p>
                                     </div>
                                     <div>
-                                        <p className="text-[10px] uppercase font-bold text-slate-400">Vendor</p>
+                                        <p className="text-[10px] uppercase font-bold text-slate-400">Nhà bán hàng</p>
                                         <p className="font-black">{selectedProduct.shop?.name || `Shop #${selectedProduct.shopId}`}</p>
                                     </div>
                                 </div>
@@ -76,17 +85,17 @@ const ManagerProductModeration = ({
                         </div>
 
                         <div className="mx-5 mb-5 rounded-md border border-rose-200 bg-rose-50 p-4 text-rose-800">
-                            <p className="text-sm font-black flex items-center gap-2"><LineIcon name="alert" size={16} /> Compliance Flags Detected</p>
+                            <p className="text-sm font-black flex items-center gap-2"><LineIcon name="alert" size={16} /> Gợi ý cần kiểm tra</p>
                             <ul className="mt-2 list-disc pl-5 text-xs space-y-1">
                                 <li>Kiểm tra chất lượng hình ảnh và mô tả sản phẩm.</li>
-                                <li>Xác minh danh mục, giá, và thông tin shop trước khi duyệt.</li>
+                                <li>Xác minh danh mục, giá và thông tin shop trước khi duyệt.</li>
                             </ul>
                         </div>
 
                         <div className="px-5 py-4 bg-[#edf3ff] border-t border-slate-200 flex justify-end gap-3">
-                            <button onClick={() => onUpdateProductStatus(selectedProduct.id, "draft")} className="h-10 px-5 rounded-md border border-slate-300 bg-white text-xs font-bold text-slate-700">Request Changes</button>
-                            <button onClick={() => onUpdateProductStatus(selectedProduct.id, "rejected")} className="h-10 px-5 rounded-md border border-rose-300 bg-white text-xs font-bold text-rose-700">Reject Listing</button>
-                            <button onClick={() => onUpdateProductStatus(selectedProduct.id, "active")} className="h-10 px-5 rounded-md bg-[#9a4f00] text-xs font-bold text-white">Approve Product</button>
+                            <button onClick={() => onUpdateProductStatus(selectedProduct.id, "draft")} className="h-10 px-5 rounded-md border border-slate-300 bg-white text-xs font-bold text-slate-700">Yêu cầu chỉnh sửa</button>
+                            <button onClick={() => onUpdateProductStatus(selectedProduct.id, "rejected")} className="h-10 px-5 rounded-md border border-rose-300 bg-white text-xs font-bold text-rose-700">Từ chối</button>
+                            <button onClick={() => onUpdateProductStatus(selectedProduct.id, "active")} className="h-10 px-5 rounded-md bg-[#9a4f00] text-xs font-bold text-white">Duyệt sản phẩm</button>
                         </div>
                     </>
                 ) : (
@@ -96,11 +105,11 @@ const ManagerProductModeration = ({
 
             <ManagerCard className="overflow-hidden h-fit">
                 <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-                    <p className="font-black">Up Next in Queue</p>
-                    <span className="text-[10px] text-slate-400">Highest Priority</span>
+                    <p className="font-black">Tiếp theo trong hàng chờ</p>
+                    <span className="text-[10px] text-slate-400">Ưu tiên cao nhất</span>
                 </div>
                 <div className="divide-y divide-slate-100">
-                    {pendingProducts.slice(0, 6).map((product) => (
+                    {pagedProducts.map((product) => (
                         <button
                             key={product.id}
                             onClick={() => onSelectProduct(product)}
@@ -115,13 +124,20 @@ const ManagerProductModeration = ({
                                 <p className="text-xs font-black truncate">{product.title}</p>
                                 <p className="text-[10px] text-slate-400 truncate">{product.shop?.name || `Shop #${product.shopId}`}</p>
                             </div>
-                            <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 rounded-full px-2 py-1">Ready</span>
+                            <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 rounded-full px-2 py-1">Sẵn sàng</span>
                         </button>
                     ))}
                 </div>
+                <Pagination
+                    currentPage={currentPage}
+                    totalItems={pendingProducts.length}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                />
             </ManagerCard>
         </div>
     </>
-);
+    );
+};
 
 export default ManagerProductModeration;

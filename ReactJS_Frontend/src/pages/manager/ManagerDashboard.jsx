@@ -13,8 +13,8 @@ const getImageSrc = (image) => {
 };
 
 const TABS = [
-    { id: "vendors", label: "Dashboard", icon: "shop" },
-    { id: "moderation", label: "Vendors", icon: "clipboard" },
+    { id: "vendors", label: "Nhà bán hàng", icon: "shop" },
+    { id: "moderation", label: "Duyệt sản phẩm", icon: "clipboard" },
 ];
 
 const initialStats = {
@@ -31,7 +31,7 @@ const buildStatsFromVendors = (shops) => {
     const activeVendors = shops.filter((shop) => shop.status === "active").length;
     const ratingSum = shops.reduce((sum, shop) => sum + Number(shop.rating || 0), 0);
     const categoryCounts = shops.reduce((acc, shop) => {
-        const category = shop.category || "Marketplace";
+        const category = shop.category || "Sàn thương mại";
         acc[category] = (acc[category] || 0) + 1;
         return acc;
     }, {});

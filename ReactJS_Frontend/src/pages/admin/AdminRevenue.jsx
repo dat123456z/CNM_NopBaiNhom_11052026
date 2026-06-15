@@ -1,5 +1,6 @@
 import LineIcon from "../../components/LineIcon";
 import AdminCard, { AdminStatCard } from "../../components/admin/AdminCard";
+import Pagination, { usePagination } from "../../components/Pagination";
 
 const COMMISSION_RATE = 0.125;
 
@@ -66,14 +67,14 @@ const buildCategoryRevenue = (orders) => {
     orders.forEach((order) => {
         const items = Array.isArray(order.items) ? order.items : [];
         if (items.length === 0) {
-            const key = "Uncategorized";
+            const key = "Chưa phân loại";
             totals.set(key, (totals.get(key) || 0) + Number(order.total || 0));
             return;
         }
 
         const itemTotal = items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0) || 1;
         items.forEach((item) => {
-            const key = item.product?.category || item.category || "Uncategorized";
+            const key = item.product?.category || item.category || "Chưa phân loại";
             const share = (Number(item.price || 0) * Number(item.quantity || 0)) / itemTotal;
             totals.set(key, (totals.get(key) || 0) + Number(order.total || 0) * share);
         });
@@ -88,6 +89,18 @@ const buildCategoryRevenue = (orders) => {
 const AdminRevenue = ({ orders, vendors }) => {
     const deliveredOrders = getDeliveredOrders(orders);
     const vendorRevenue = buildVendorRevenue(deliveredOrders, vendors);
+    const {
+        currentPage: topVendorPage,
+        pageItems: pagedTopVendors,
+        setCurrentPage: setTopVendorPage,
+        totalPages: topVendorPages,
+    } = usePagination(vendorRevenue);
+    const {
+        currentPage: settlementPage,
+        pageItems: pagedSettlements,
+        setCurrentPage: setSettlementPage,
+        totalPages: settlementPages,
+    } = usePagination(vendorRevenue);
     const categoryRevenue = buildCategoryRevenue(deliveredOrders);
     const gross = deliveredOrders.reduce((sum, order) => sum + Number(order.total || 0), 0);
     const commission = Math.round(gross * COMMISSION_RATE);
@@ -99,7 +112,7 @@ const AdminRevenue = ({ orders, vendors }) => {
     const handleExport = () => {
         downloadCsv(
             "vendor-settlements.csv",
-            ["Vendor", "Orders", "Gross Revenue", "Commission", "Payout", "Last Order"],
+            ["Nhà bán hàng", "Đơn hàng", "Doanh thu gộp", "Hoa hồng", "Thanh toán", "Đơn cuối"],
             vendorRevenue.map((vendor) => [
                 vendor.name,
                 vendor.orderCount,
@@ -114,26 +127,26 @@ const AdminRevenue = ({ orders, vendors }) => {
     return (
         <div className="space-y-6">
             <div>
-                <p className="text-2xl font-black">Revenue Control</p>
-                <p className="text-xs text-slate-500 mt-1">Detailed financial reporting, commissions, and vendor payouts from delivered orders.</p>
+                <p className="text-2xl font-black">Quản lý doanh thu</p>
+                <p className="text-xs text-slate-500 mt-1">Báo cáo tài chính, hoa hồng và khoản thanh toán cho nhà bán hàng từ các đơn đã giao.</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-                <AdminStatCard icon={<LineIcon name="card" size={18} />} label="Delivered Volume" value={fmtMoney(gross)} sub={`${fmtNumber(deliveredOrders.length)} delivered orders`} />
-                <AdminStatCard icon={<LineIcon name="coin" size={18} />} label="Platform Commission" value={fmtMoney(commission)} sub={`${COMMISSION_RATE * 100}% base rate`} tone="red" />
-                <AdminStatCard icon={<LineIcon name="wallet" size={18} />} label="Vendor Payouts" value={fmtMoney(payout)} sub={`${fmtNumber(vendorRevenue.length)} vendors`} />
-                <AdminStatCard icon={<LineIcon name="receipt" size={18} />} label="Paid Orders" value={fmtNumber(paidOrders)} sub={`${fmtNumber(Math.max(0, deliveredOrders.length - paidOrders))} unpaid/refunded`} tone="amber" />
+                <AdminStatCard icon={<LineIcon name="card" size={18} />} label="Doanh thu đã giao" value={fmtMoney(gross)} sub={`${fmtNumber(deliveredOrders.length)} đơn đã giao`} />
+                <AdminStatCard icon={<LineIcon name="coin" size={18} />} label="Hoa hồng nền tảng" value={fmtMoney(commission)} sub={`${COMMISSION_RATE * 100}% mức cơ bản`} tone="red" />
+                <AdminStatCard icon={<LineIcon name="wallet" size={18} />} label="Thanh toán nhà bán hàng" value={fmtMoney(payout)} sub={`${fmtNumber(vendorRevenue.length)} nhà bán hàng`} />
+                <AdminStatCard icon={<LineIcon name="receipt" size={18} />} label="Đơn đã thanh toán" value={fmtNumber(paidOrders)} sub={`${fmtNumber(Math.max(0, deliveredOrders.length - paidOrders))} chưa thanh toán/hoàn tiền`} tone="amber" />
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-5">
                 <AdminCard className="p-5">
                     <div className="flex items-center justify-between">
-                        <p className="font-black">Top Vendor Revenue</p>
+                        <p className="font-black">Nhà bán hàng có doanh thu cao</p>
                         <button onClick={handleExport} className="rounded-md bg-blue-600 px-4 py-2 text-xs font-bold text-white">
-                            Export Settlements
+                            Xuất đối soát
                         </button>
                     </div>
                     <div className="mt-6 space-y-4">
-                        {vendorRevenue.slice(0, 8).map((vendor) => (
+                        {pagedTopVendors.map((vendor) => (
                             <div key={vendor.id}>
                                 <div className="flex items-center justify-between text-xs font-bold">
                                     <span>{vendor.name}</span>
@@ -147,12 +160,18 @@ const AdminRevenue = ({ orders, vendors }) => {
                                 </div>
                             </div>
                         ))}
-                        {vendorRevenue.length === 0 && <p className="py-8 text-center text-sm font-bold text-slate-400">No delivered revenue yet.</p>}
+                        {vendorRevenue.length === 0 && <p className="py-8 text-center text-sm font-bold text-slate-400">Chưa có doanh thu từ đơn đã giao.</p>}
                     </div>
+                    <Pagination
+                        currentPage={topVendorPage}
+                        totalItems={vendorRevenue.length}
+                        totalPages={topVendorPages}
+                        onPageChange={setTopVendorPage}
+                    />
                 </AdminCard>
 
                 <AdminCard className="p-5">
-                    <p className="font-black">Revenue by Category</p>
+                    <p className="font-black">Doanh thu theo danh mục</p>
                     <div className="mt-6 space-y-4">
                         {categoryRevenue.map((item) => (
                             <div key={item.category}>
@@ -168,29 +187,29 @@ const AdminRevenue = ({ orders, vendors }) => {
                                 </div>
                             </div>
                         ))}
-                        {categoryRevenue.length === 0 && <p className="py-8 text-center text-sm font-bold text-slate-400">No category revenue yet.</p>}
+                        {categoryRevenue.length === 0 && <p className="py-8 text-center text-sm font-bold text-slate-400">Chưa có doanh thu theo danh mục.</p>}
                     </div>
                 </AdminCard>
             </div>
 
             <AdminCard className="overflow-hidden">
                 <div className="p-5 border-b border-slate-100">
-                    <p className="font-black">Vendor Settlement Summary</p>
-                    <p className="mt-1 text-xs text-slate-500">Payout = delivered gross revenue minus platform commission.</p>
+                    <p className="font-black">Tóm tắt đối soát nhà bán hàng</p>
+                    <p className="mt-1 text-xs text-slate-500">Thanh toán = doanh thu gộp đã giao trừ hoa hồng nền tảng.</p>
                 </div>
                 <table className="w-full text-left text-sm">
                     <thead className="bg-slate-50 text-[10px] uppercase text-slate-400">
                         <tr>
-                            <th className="px-5 py-3">Vendor</th>
-                            <th>Orders</th>
-                            <th>Gross</th>
-                            <th>Commission</th>
-                            <th>Payout</th>
-                            <th>Last Order</th>
+                            <th className="px-5 py-3">Nhà bán hàng</th>
+                            <th>Đơn hàng</th>
+                            <th>Doanh thu gộp</th>
+                            <th>Hoa hồng</th>
+                            <th>Thanh toán</th>
+                            <th>Đơn cuối</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {vendorRevenue.slice(0, 10).map((vendor) => (
+                        {pagedSettlements.map((vendor) => (
                             <tr key={vendor.id}>
                                 <td className="px-5 py-4 font-bold">{vendor.name}</td>
                                 <td>{vendor.orderCount}</td>
@@ -202,6 +221,12 @@ const AdminRevenue = ({ orders, vendors }) => {
                         ))}
                     </tbody>
                 </table>
+                <Pagination
+                    currentPage={settlementPage}
+                    totalItems={vendorRevenue.length}
+                    totalPages={settlementPages}
+                    onPageChange={setSettlementPage}
+                />
             </AdminCard>
         </div>
     );

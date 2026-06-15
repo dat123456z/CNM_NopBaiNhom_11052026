@@ -171,7 +171,20 @@ const updateProduct = async (productId, shopId, data) => {
     if (data.title && data.title !== product.title) {
         data.slug = `${slugify(data.title)}-${Date.now()}`;
     }
+    data.status = 'pending';
     await product.update(data);
+
+    try {
+        const shop = await Shop.findByPk(shopId, { attributes: ['name'] });
+        await notificationService.notifyManagers({
+            type: 'manager_product_updated_pending',
+            title: 'Sản phẩm vừa cập nhật chờ duyệt',
+            message: `Vendor ${shop?.name || `Shop #${shopId}`} vừa cập nhật sản phẩm "${product.title}" và cần manager duyệt lại.`
+        });
+    } catch (err) {
+        console.error('[Notify] manager product update moderation error:', err.message);
+    }
+
     return normalizeProduct(product);
 };
 
@@ -246,7 +259,7 @@ const getManagerProducts = async ({ status, page = 1, limit = 20 }) => {
     const { count, rows } = await Product.findAndCountAll({
         where,
         include: [{ model: Shop, as: 'shop', attributes: ['id', 'name', 'logo'] }],
-        order: [['createdAt', 'DESC']],
+        order: [['updatedAt', 'DESC']],
         limit: Number(limit),
         offset
     });

@@ -55,6 +55,15 @@ const listUsers = async (req, res) => {
     }
 };
 
+const createUserByAdmin = async (req, res) => {
+    try {
+        const user = await userService.createUserByAdmin(req.body);
+        return res.status(201).json({ message: 'Tạo tài khoản thành công.', user });
+    } catch (err) {
+        return res.status(err.status || 500).json({ message: err.message });
+    }
+};
+
 const setUserStatus = async (req, res) => {
     try {
         const { isActive, reason } = req.body;
@@ -84,4 +93,4 @@ const getUserCoupons = async (req, res) => {
     }
 };
 
-module.exports = { getProfile, updateProfile, upsertAddress, removeAddress, setDefaultAddress, listUsers, setUserStatus, setUserRole, getUserCoupons };
+module.exports = { getProfile, updateProfile, upsertAddress, removeAddress, setDefaultAddress, listUsers, createUserByAdmin, setUserStatus, setUserRole, getUserCoupons };

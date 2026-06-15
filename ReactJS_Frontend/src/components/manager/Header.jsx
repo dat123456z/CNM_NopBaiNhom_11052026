@@ -7,7 +7,7 @@ const ManagerHeader = ({ onLogout }) => (
             <p className="font-black text-[#9a4f00]">UTEShop</p>
             <div className="w-72 h-8 rounded-full bg-slate-100 border border-slate-200 px-3 flex items-center gap-2 text-slate-400">
                 <LineIcon name="search" size={14} />
-                <span className="text-xs">Search moderation queue...</span>
+                <span className="text-xs">Tìm kiếm hàng chờ duyệt...</span>
             </div>
         </div>
         <div className="flex items-center gap-3">
