@@ -3,12 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button, InputField, OtpInput, Message, StepIndicator, Card, PageWrapper } from "../components";
 
 const STEPS = ["Email", "Xác thực OTP", "Mật khẩu mới"];
+const OTP_TTL_MS = 10 * 60 * 1000;
 
 const ForgotPassword = () => {
     const navigate = useNavigate();
     const [step, setStep] = useState(0);
     const [email, setEmail] = useState("");
     const [otp, setOtp] = useState("");
+    const [otpExpiresAt, setOtpExpiresAt] = useState(null);
     const [passwords, setPasswords] = useState({ newPassword: "", confirmPassword: "" });
     const [loading, setLoading] = useState(false);
     const [msg, setMsg] = useState(null);
@@ -22,8 +24,19 @@ const ForgotPassword = () => {
         setMsgType(type);
     };
 
+    const isOtpExpired = () => otpExpiresAt && Date.now() >= otpExpiresAt;
+
     const sendOtp = async () => {
-        if (!email) {
+        const trimmedEmail = email.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (trimmedEmail && !emailRegex.test(trimmedEmail)) {
+            setErrors({ email: "Email không đúng định dạng." });
+            setMessage(null);
+            return;
+        }
+
+        if (!trimmedEmail) {
             setErrors({ email: "Vui lòng nhập email." });
             return;
         }
@@ -34,11 +47,14 @@ const ForgotPassword = () => {
             const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email }),
+                body: JSON.stringify({ email: trimmedEmail }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || "Lỗi gửi OTP");
             setStep(1);
+            setEmail(trimmedEmail);
+            setOtp("");
+            setOtpExpiresAt(Number(data.expiresAtMs) || (data.expiresAt ? new Date(data.expiresAt).getTime() : Date.now() + OTP_TTL_MS));
             setMessage("OTP đã được gửi tới email của bạn.", "success");
         } catch (err) {
             setMessage(err.message, "error");
@@ -48,6 +64,12 @@ const ForgotPassword = () => {
     };
 
     const verifyOtp = async () => {
+        if (isOtpExpired()) {
+            setErrors({});
+            setMessage("OTP quá hạn", "error");
+            return;
+        }
+
         if (otp.length !== 6) {
             setErrors({ otp: "Vui lòng nhập đủ 6 chữ số." });
             return;
@@ -125,7 +147,12 @@ const ForgotPassword = () => {
                             name="email"
                             placeholder="example@hcmute.edu.vn"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={(e) => {
+                                setEmail(e.target.value);
+                                setOtpExpiresAt(null);
+                                setErrors((prev) => ({ ...prev, email: null }));
+                                setMessage(null);
+                            }}
                             error={errors.email}
                         />
                         <Button loading={loading} onClick={sendOtp}>Gửi mã OTP</Button>
@@ -144,7 +171,7 @@ const ForgotPassword = () => {
                             variant="secondary"
                             className="mt-2"
                             loading={loading}
-                            onClick={() => { setStep(0); setOtp(""); setMessage(null); }}
+                            onClick={() => { setStep(0); setOtp(""); setOtpExpiresAt(null); setMessage(null); }}
                         >
                             Đổi email khác
                         </Button>

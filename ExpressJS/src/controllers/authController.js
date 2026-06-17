@@ -41,8 +41,12 @@ const forgotPassword = async (req, res) => {
         const { email } = req.body;
         if (!email)
             return res.status(400).json({ message: 'Vui lòng cung cấp email.' });
-        await authService.forgotPassword({ email });
-        return res.json({ message: 'OTP đã được gửi tới email. Vui lòng kiểm tra hộp thư.' });
+        const result = await authService.forgotPassword({ email });
+        return res.json({
+            message: 'OTP đã được gửi tới email. Vui lòng kiểm tra hộp thư.',
+            expiresAt: result.expiresAt,
+            expiresAtMs: result.expiresAtMs
+        });
     } catch (err) {
         return res.status(err.status || 500).json({ message: err.message });
     }
