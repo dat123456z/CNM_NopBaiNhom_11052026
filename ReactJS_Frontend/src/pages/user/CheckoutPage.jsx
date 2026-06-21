@@ -11,7 +11,7 @@ const fmt = (n) => Number(n).toLocaleString("vi-VN") + "đ";
 const MOMO_QR = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=MoMo-UTEShop-Payment";
 const VNPAY_QR = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=VNPay-UTEShop-Payment";
 
-const STEPS = ["Shipping", "Payment"];
+const STEPS = ["Giao hàng", "Thanh toán"];
 const VNPAY_TEST_FIELDS = [
     { label: "Ngân hàng", value: "NCB" },
     { label: "Số thẻ", value: "9704198526191432198" },

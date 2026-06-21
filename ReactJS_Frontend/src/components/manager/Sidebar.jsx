@@ -7,7 +7,7 @@ const ManagerSidebar = ({ tabs, activeTab, onTabChange, pendingCount = 0, onLogo
                 U
             </div>
             <div>
-                <p className="text-sm font-black text-[#9a4f00]">UTEShop Manager</p>
+                <p className="text-sm font-black text-[#9a4f00]">Quản lý UTEShop</p>
                 <p className="text-[10px] font-semibold text-slate-500">Quản lý hệ thống</p>
             </div>
         </div>

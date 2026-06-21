@@ -11,13 +11,13 @@ const init = (httpServer) => {
 
     io.use((socket, next) => {
         const token = socket.handshake.auth?.token;
-        if (!token) return next(new Error('Unauthorized'));
+        if (!token) return next(new Error('Chưa được xác thực'));
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
             socket.user = decoded;
             next();
         } catch {
-            next(new Error('Invalid token'));
+            next(new Error('Mã xác thực không hợp lệ'));
         }
     });
 

@@ -47,11 +47,11 @@ const CartPage = () => {
 
     return (
         <main className="flex-1 max-w-7xl mx-auto px-6 py-10 w-full">
-            <h1 className="text-3xl font-extrabold text-gray-900 mb-1">Your Shopping Cart</h1>
+            <h1 className="text-3xl font-extrabold text-gray-900 mb-1">Giỏ hàng của bạn</h1>
             <p className="text-gray-500 text-sm mb-8">
                 {items.length > 0
-                    ? `You have ${items.length} item${items.length > 1 ? "s" : ""} in your cart.`
-                    : "Your cart is empty."}
+                    ? `Bạn có ${items.length} sản phẩm trong giỏ hàng.`
+                    : "Giỏ hàng của bạn đang trống."}
             </p>
 
             {items.length === 0 ? (
@@ -101,7 +101,7 @@ const CartPage = () => {
                                                     className="text-xs text-red-400 hover:text-red-600 mt-1 flex items-center gap-1 transition-colors"
                                                 >
                                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                                                    Remove
+                                                    Xóa
                                                 </button>
                                             </div>
                                         </div>
@@ -137,11 +137,11 @@ const CartPage = () => {
                         <div className="flex justify-between items-center mt-4">
                             <Link to="/products" className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 transition-colors font-medium">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
-                                Continue Shopping
+                                Tiếp tục mua sắm
                             </Link>
                             <div className="flex gap-3">
                                 <button onClick={handleClear} className="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-red-500 transition-colors font-medium">
-                                    Clear Cart
+                                    Xóa giỏ hàng
                                 </button>
                             </div>
                         </div>
@@ -150,23 +150,23 @@ const CartPage = () => {
                     {/* Order Summary */}
                     <div className="lg:w-80 shrink-0">
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-6">
-                            <h2 className="font-bold text-gray-900 text-lg mb-5">Order Summary</h2>
+                            <h2 className="font-bold text-gray-900 text-lg mb-5">Tóm tắt đơn hàng</h2>
 
                             <div className="space-y-3 text-sm">
                                 <div className="flex justify-between text-gray-600">
-                                    <span>Subtotal</span>
+                                    <span>Tạm tính</span>
                                     <span className="font-medium text-gray-900">{fmt(subtotal)}</span>
                                 </div>
                                 <div className="flex justify-between text-gray-600">
-                                    <span>Shipping</span>
-                                    <span className="text-[#00b14f] font-semibold">Free</span>
+                                    <span>Phí vận chuyển</span>
+                                    <span className="text-[#00b14f] font-semibold">Miễn phí</span>
                                 </div>
                                 <div className="flex justify-between text-gray-600">
-                                    <span>Estimated Tax (8%)</span>
+                                    <span>Thuế VAT (8%)</span>
                                     <span className="font-medium text-gray-900">{fmt(tax)}</span>
                                 </div>
                                 <div className="border-t border-gray-100 pt-3 flex justify-between">
-                                    <span className="font-bold text-gray-900 text-base">Total</span>
+                                    <span className="font-bold text-gray-900 text-base">Tổng cộng</span>
                                     <span className="font-extrabold text-gray-900 text-xl">{fmt(finalTotal)}</span>
                                 </div>
                             </div>
@@ -175,13 +175,13 @@ const CartPage = () => {
                                 onClick={() => navigate("/checkout")}
                                 className="w-full mt-6 bg-[#00b14f] hover:bg-[#009943] text-white font-bold py-3.5 rounded-xl transition-colors text-sm tracking-wide shadow-sm"
                             >
-                                Proceed to Checkout
+                                Tiến hành thanh toán
                             </button>
 
                             <div className="mt-5 p-3.5 bg-green-50 rounded-xl flex items-start gap-3">
                                 <svg className="w-5 h-5 text-[#00b14f] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
                                 <div>
-                                    <p className="text-sm font-semibold text-gray-800">Free Enterprise Shipping</p>
+                                    <p className="text-sm font-semibold text-gray-800">Miễn phí vận chuyển</p>
                                     <p className="text-xs text-gray-500 mt-0.5">Dự kiến giao trong 3–5 ngày.</p>
                                 </div>
                             </div>

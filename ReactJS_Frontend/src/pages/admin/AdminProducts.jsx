@@ -77,7 +77,7 @@ const AdminProducts = ({ products, stats }) => {
                     </button>
                 </div>
                 <table className="w-full text-left text-sm">
-                    <thead className="bg-slate-50 text-[10px] uppercase text-slate-400"><tr><th className="px-5 py-3">Sản phẩm</th><th>Shop</th><th>Ngày gửi</th><th>Trạng thái</th></tr></thead>
+                    <thead className="bg-slate-50 text-[10px] uppercase text-slate-400"><tr><th className="px-5 py-3">Sản phẩm</th><th>Cửa hàng</th><th>Ngày gửi</th><th>Trạng thái</th></tr></thead>
                     <tbody className="divide-y divide-slate-100">
                         {pagedProducts.map((product) => (
                             <tr key={product.id}>

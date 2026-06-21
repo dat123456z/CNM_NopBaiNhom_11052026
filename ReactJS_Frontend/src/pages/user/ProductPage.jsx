@@ -256,7 +256,7 @@ const ProductPage = () => {
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                         {/* Categories */}
                         <div className="mb-8">
-                            <h3 className="text-sm font-bold text-blue-900 mb-4 border-b border-gray-100 pb-2">Categories</h3>
+                            <h3 className="text-sm font-bold text-blue-900 mb-4 border-b border-gray-100 pb-2">Danh mục</h3>
                             <div className="flex flex-col gap-3">
                                 {categories.map((cat) => (
                                     <label key={cat} className="flex items-center gap-3 cursor-pointer group">
@@ -352,7 +352,7 @@ const ProductPage = () => {
                     {/* Top bar */}
                     <div className="flex items-center justify-end mb-6">
                         <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-500">Sort:</span>
+                            <span className="text-sm text-gray-500">Sắp xếp:</span>
                             <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="border border-gray-200 rounded-md text-sm py-1.5 px-3 text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer">
                                 {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                             </select>

@@ -94,7 +94,7 @@ const HomePage = () => {
     const bestsellers = useMemo(() => [...products].sort((a, b) => Number(b.sold || 0) - Number(a.sold || 0)).slice(0, 10), [products]);
     const mostViewed = useMemo(() => [...products].sort((a, b) => Number(b.views || 0) - Number(a.views || 0)).slice(0, 10), [products]);
 
-    if (loading) return <div className="p-4">Loading...</div>;
+    if (loading) return <div className="p-4">Đang tải...</div>;
     if (error) return <div className="p-4 text-red-500">{error}</div>;
 
     return (

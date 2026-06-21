@@ -62,7 +62,7 @@ const AdminUsers = ({ users, onSetUserStatus, onCreateUser, creatingUser }) => {
         }
 
         if (!formData.address.trim()) nextErrors.address = "Vui lòng nhập địa chỉ.";
-        if (!ROLE_OPTIONS.some((role) => role.value === formData.role)) nextErrors.role = "Role không hợp lệ.";
+        if (!ROLE_OPTIONS.some((role) => role.value === formData.role)) nextErrors.role = "Vai trò không hợp lệ.";
 
         return nextErrors;
     };
@@ -115,7 +115,7 @@ const AdminUsers = ({ users, onSetUserStatus, onCreateUser, creatingUser }) => {
             {showCreateForm && <AdminCard className="p-5">
                 <div className="mb-4">
                     <p className="text-lg font-black">Thêm người dùng</p>
-                    <p className="text-xs text-slate-500 mt-1">Nhập thông tin giống form đăng ký và chọn role cho account.</p>
+                    <p className="text-xs text-slate-500 mt-1">Nhập thông tin như biểu mẫu đăng ký và chọn vai trò cho tài khoản.</p>
                 </div>
                 <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     <label className="space-y-1">
@@ -149,7 +149,7 @@ const AdminUsers = ({ users, onSetUserStatus, onCreateUser, creatingUser }) => {
                     </label>
 
                     <label className="space-y-1">
-                        <span className="text-xs font-bold text-slate-500">Role</span>
+                        <span className="text-xs font-bold text-slate-500">Vai trò</span>
                         <select className={fieldClass("role")} name="role" value={formData.role} onChange={handleChange}>
                             {ROLE_OPTIONS.map((role) => (
                                 <option key={role.value} value={role.value}>{role.label}</option>
@@ -177,7 +177,7 @@ const AdminUsers = ({ users, onSetUserStatus, onCreateUser, creatingUser }) => {
                     <thead className="bg-slate-50 text-[10px] uppercase text-slate-400">
                         <tr>
                             <th className="px-5 py-3">Người dùng</th>
-                            <th>Role</th>
+                            <th>Vai trò</th>
                             <th>Trạng thái</th>
                             <th>Điểm</th>
                             <th className="text-right pr-5">Thao tác</th>

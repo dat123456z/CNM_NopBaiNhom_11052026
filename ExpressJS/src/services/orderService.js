@@ -441,7 +441,7 @@ const activatePaidOrders = async (orderIds = []) => {
     return orders;
 };
 
-const cancelUnpaidPaymentOrders = async (orderIds = [], reason = 'VNPay payment failed') => {
+const cancelUnpaidPaymentOrders = async (orderIds = [], reason = 'Thanh toán VNPay thất bại') => {
     if (!orderIds.length) return [];
     const orders = await Order.findAll({
         where: {

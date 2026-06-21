@@ -362,8 +362,8 @@ const Profile = () => {
 
                     {/* Page Header */}
                     <div className="mb-8">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-2">Account Settings</h1>
-                        <p className="text-gray-500">Manage your personal information, security, and addresses.</p>
+                        <h1 className="text-3xl font-bold text-gray-900 mb-2">Cài đặt tài khoản</h1>
+                        <p className="text-gray-500">Quản lý thông tin cá nhân, bảo mật và địa chỉ của bạn.</p>
                     </div>
 
                     {msg && (
@@ -402,7 +402,7 @@ const Profile = () => {
                                 Upload New Photo
                             </button>
                             <button onClick={handleRemoveAvatar} className="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50 transition-colors">
-                                Remove
+                                Xóa ảnh
                             </button>
                         </div>
                     </div>
@@ -438,28 +438,28 @@ const Profile = () => {
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                                     <div className="bg-[#f0f4f8] px-6 py-4 flex items-center gap-2 border-b border-gray-100">
                                         <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                                        <h3 className="font-semibold text-gray-800">Personal Information</h3>
+                                        <h3 className="font-semibold text-gray-800">Thông tin cá nhân</h3>
                                     </div>
                                     <div className="p-6 space-y-5">
                                         <div className="grid grid-cols-2 gap-5">
                                             <div>
-                                                <label className="block text-xs font-medium text-gray-500 mb-1.5">First Name</label>
+                                                <label className="block text-xs font-medium text-gray-500 mb-1.5">Họ và tên đệm</label>
                                                 <input type="text" value={form.firstName} onChange={(e) => setForm(p => ({ ...p, firstName: e.target.value }))}
                                                     className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f] ${errors.firstName ? 'border-red-500' : 'border-gray-200'}`} />
                                             </div>
                                             <div>
-                                                <label className="block text-xs font-medium text-gray-500 mb-1.5">Last Name</label>
+                                                <label className="block text-xs font-medium text-gray-500 mb-1.5">Tên</label>
                                                 <input type="text" value={form.lastName} onChange={(e) => setForm(p => ({ ...p, lastName: e.target.value }))}
                                                     className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f] ${errors.lastName ? 'border-red-500' : 'border-gray-200'}`} />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-medium text-gray-500 mb-1.5">Email Address</label>
+                                            <label className="block text-xs font-medium text-gray-500 mb-1.5">Địa chỉ email</label>
                                             <input type="email" value={form.email} disabled
                                                 className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed" />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-medium text-gray-500 mb-1.5">Phone Number</label>
+                                            <label className="block text-xs font-medium text-gray-500 mb-1.5">Số điện thoại</label>
                                             <input type="text" value={form.phone} onChange={(e) => setForm(p => ({ ...p, phone: e.target.value }))}
                                                 className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f] ${errors.phone ? 'border-red-500' : 'border-gray-200'}`} />
                                             {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
@@ -557,11 +557,11 @@ const Profile = () => {
                                     <div className="bg-[#f0f4f8] px-6 py-4 flex items-center justify-between border-b border-gray-100">
                                         <div className="flex items-center gap-2">
                                             <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                            <h3 className="font-semibold text-gray-800">Addresses</h3>
+                                            <h3 className="font-semibold text-gray-800">Địa chỉ</h3>
                                         </div>
                                         {!showAddressForm && (
                                             <button onClick={() => { setShowAddressForm(true); setEditingAddress(null); }} className="text-xs font-semibold text-[#008f3f] hover:underline">
-                                                + Add New
+                                                + Thêm địa chỉ
                                             </button>
                                         )}
                                     </div>
@@ -580,7 +580,7 @@ const Profile = () => {
                                             )}
 
                                             {addresses.length === 0 && !showAddressForm ? (
-                                                <p className="text-sm text-gray-500 text-center py-4">No addresses saved.</p>
+                                                <p className="text-sm text-gray-500 text-center py-4">Chưa lưu địa chỉ nào.</p>
                                             ) : (
                                                 <div className="space-y-4">
                                                     {addresses.map((addr) => (
@@ -591,7 +591,7 @@ const Profile = () => {
                                                                 <div className={`p-4 rounded-xl border ${addr.isDefault ? "border-[#008f3f] bg-green-50/20" : "border-gray-200"}`}>
                                                                     <div className="flex items-start justify-between">
                                                                         <div>
-                                                                            {addr.isDefault && <span className="text-[10px] uppercase font-bold text-[#008f3f] mb-1 block tracking-wider">Default</span>}
+                                                                            {addr.isDefault && <span className="text-[10px] uppercase font-bold text-[#008f3f] mb-1 block tracking-wider">Mặc định</span>}
                                                                             <p className="text-sm text-gray-800 font-medium">{addr.street}</p>
                                                                             {(addr.ward || addr.district || addr.city) && (
                                                                                 <p className="text-xs text-gray-500 mt-1">
@@ -605,7 +605,7 @@ const Profile = () => {
                                                                         </div>
                                                                     </div>
                                                                     {!addr.isDefault && (
-                                                                        <button onClick={() => handleSetDefault(addr.id)} className="text-xs text-[#008f3f] mt-3 font-semibold hover:underline">Set as default</button>
+                                                                        <button onClick={() => handleSetDefault(addr.id)} className="text-xs text-[#008f3f] mt-3 font-semibold hover:underline">Đặt làm mặc định</button>
                                                                     )}
                                                                 </div>
                                                             )}
@@ -692,15 +692,15 @@ const Profile = () => {
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                                     <div className="bg-[#f0f4f8] px-6 py-4 flex items-center gap-2 border-b border-gray-100">
                                         <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                                        <h3 className="font-semibold text-gray-800">Security</h3>
+                                        <h3 className="font-semibold text-gray-800">Bảo mật</h3>
                                     </div>
                                     <div className="p-6 space-y-5">
                                         <div>
-                                            <p className="text-[10px] uppercase font-bold text-gray-400 mb-3 tracking-wider">CHANGE PASSWORD</p>
+                                            <p className="text-[10px] uppercase font-bold text-gray-400 mb-3 tracking-wider">ĐỔI MẬT KHẨU</p>
                                             <div className="space-y-3">
-                                                <input type="password" placeholder="Current Password" value={securityForm.currentPassword} onChange={e => setSecurityForm(p => ({ ...p, currentPassword: e.target.value }))} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f]" />
-                                                <input type="password" placeholder="New Password" value={securityForm.newPassword} onChange={e => setSecurityForm(p => ({ ...p, newPassword: e.target.value }))} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f]" />
-                                                <input type="password" placeholder="Confirm New Password" value={securityForm.confirmPassword} onChange={e => setSecurityForm(p => ({ ...p, confirmPassword: e.target.value }))} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f]" />
+                                                <input type="password" placeholder="Mật khẩu hiện tại" value={securityForm.currentPassword} onChange={e => setSecurityForm(p => ({ ...p, currentPassword: e.target.value }))} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f]" />
+                                                <input type="password" placeholder="Mật khẩu mới" value={securityForm.newPassword} onChange={e => setSecurityForm(p => ({ ...p, newPassword: e.target.value }))} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f]" />
+                                                <input type="password" placeholder="Xác nhận mật khẩu mới" value={securityForm.confirmPassword} onChange={e => setSecurityForm(p => ({ ...p, confirmPassword: e.target.value }))} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:border-[#008f3f]" />
                                             </div>
                                         </div>
 
@@ -708,8 +708,8 @@ const Profile = () => {
 
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <p className="text-sm font-semibold text-gray-800">Two-Factor Auth</p>
-                                                <p className="text-[10px] font-bold text-[#008f3f] uppercase mt-0.5 tracking-wider">Currently Active</p>
+                                                <p className="text-sm font-semibold text-gray-800">Xác thực hai lớp</p>
+                                                <p className="text-[10px] font-bold text-[#008f3f] uppercase mt-0.5 tracking-wider">Đang hoạt động</p>
                                             </div>
                                             <div className="w-10 h-5 bg-[#008f3f] rounded-full relative cursor-pointer">
                                                 <div className="w-4 h-4 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div>
@@ -724,9 +724,9 @@ const Profile = () => {
 
                     {/* Bottom Actions */}
                     <div className="mt-8 flex justify-end gap-4 items-center">
-                        <button onClick={handleCancel} className="text-sm font-semibold text-gray-500 hover:text-gray-800 transition-colors">Cancel</button>
+                        <button onClick={handleCancel} className="text-sm font-semibold text-gray-500 hover:text-gray-800 transition-colors">Hủy</button>
                         <button onClick={handleSave} disabled={loading} className="px-6 py-2.5 bg-[#008f3f] text-white text-sm font-bold rounded-lg shadow-sm hover:bg-[#007a36] transition-colors disabled:opacity-70">
-                            {loading ? "Saving..." : "Save Changes"}
+                            {loading ? "Đang lưu..." : "Lưu thay đổi"}
                         </button>
                     </div>
 

@@ -84,7 +84,7 @@ const VendorSettings = ({ shop, onShopUpdate }) => {
                                 {previewUrl ? (
                                     <img src={previewUrl} className="w-full h-full object-cover" />
                                 ) : (
-                                    <span className="text-gray-400 text-xs">No Logo</span>
+                                    <span className="text-gray-400 text-xs">Chưa có logo</span>
                                 )}
                             </div>
                             <input

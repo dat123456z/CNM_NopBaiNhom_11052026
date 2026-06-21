@@ -29,7 +29,7 @@ const vendorMiddleware = async (req, res, next) => {
         }
         if (shop.status !== 'active') {
             return res.status(403).json({
-                message: 'Shop is not active. Please contact manager for support.',
+                message: 'Cửa hàng hiện không hoạt động. Vui lòng liên hệ quản lý để được hỗ trợ.',
                 shopStatus: shop.status
             });
         }

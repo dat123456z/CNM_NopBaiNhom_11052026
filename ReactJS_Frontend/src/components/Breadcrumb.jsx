@@ -2,8 +2,30 @@ import React, { useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const humanize = (seg) => {
+  const labels = {
+    products: "Sản phẩm",
+    product: "Sản phẩm",
+    cart: "Giỏ hàng",
+    checkout: "Thanh toán",
+    orders: "Đơn hàng",
+    profile: "Tài khoản",
+    wishlist: "Sản phẩm yêu thích",
+    vendor: "Kênh người bán",
+    manager: "Quản lý",
+    admin: "Quản trị",
+    dashboard: "Bảng điều khiển",
+    setup: "Đăng ký cửa hàng",
+    reviews: "Đánh giá",
+    revenue: "Doanh thu",
+    settings: "Cài đặt",
+    shippers: "Nhân viên giao hàng",
+    promotions: "Khuyến mãi",
+  };
+
   try {
     const d = decodeURIComponent(seg);
+    if (labels[d.toLowerCase()]) return labels[d.toLowerCase()];
+    if (/^\d+$/.test(d)) return `Chi tiết #${d}`;
     return d.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   } catch (e) {
     return seg;
@@ -16,7 +38,7 @@ const Breadcrumb = ({ items, showBack = false, align = "viewport", className = "
 
   const auto = useMemo(() => {
     const segs = location.pathname.split("/").filter(Boolean);
-    const list = [{ label: "Homepage", to: "/" }];
+    const list = [{ label: "Trang chủ", to: "/" }];
     segs.forEach((s, i) => {
       const to = "/" + segs.slice(0, i + 1).join("/");
       list.push({ label: humanize(s), to });
@@ -33,7 +55,7 @@ const Breadcrumb = ({ items, showBack = false, align = "viewport", className = "
   return (
     <div className={`w-full ${className}`}>
       <div style={viewportOffsetStyle} className="w-full">
-        <nav className="w-full flex items-center gap-3 text-sm text-gray-600" aria-label="Breadcrumb">
+        <nav className="w-full flex items-center gap-3 text-sm text-gray-600" aria-label="Đường dẫn điều hướng">
           {showBack && (
             <button
               onClick={() => navigate(-1)}

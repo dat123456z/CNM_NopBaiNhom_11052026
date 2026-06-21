@@ -7,7 +7,7 @@ const AdminSidebar = ({ tabs, activeTab, onTabChange, onLogout }) => (
                 U
             </div>
             <div>
-                <p className="text-sm font-black text-red-500">UTEShop Admin</p>
+                <p className="text-sm font-black text-red-500">Quản trị UTEShop</p>
                 <p className="text-[10px] font-semibold text-slate-500">Quản trị hệ thống</p>
             </div>
         </div>

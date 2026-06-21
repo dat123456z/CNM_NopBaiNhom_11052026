@@ -137,7 +137,7 @@ const VendorOnboarding = () => {
                                 <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Logo Cửa Hàng (Tùy chọn)</label>
                                 <div className="flex items-center gap-4 mt-1.5">
                                     <div className="w-16 h-16 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
-                                        {previewUrl ? <img src={previewUrl} className="w-full h-full object-cover" alt="logo" /> : <span className="text-gray-400 text-xs">No Logo</span>}
+                                        {previewUrl ? <img src={previewUrl} className="w-full h-full object-cover" alt="logo" /> : <span className="text-gray-400 text-xs">Chưa có logo</span>}
                                     </div>
                                     <input type="file" accept="image/*" onChange={handleLogoChange}
                                         className="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer" />

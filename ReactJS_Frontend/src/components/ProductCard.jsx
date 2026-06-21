@@ -48,7 +48,7 @@ const ProductCard = ({ product }) => {
                 <img src={imageSrc} alt={product.title} className="object-cover w-full h-full" />
             </div>
             <div className="p-4 flex flex-col flex-1">
-                <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">{product.category || 'Category'}</div>
+                <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">{product.category || 'Chưa phân loại'}</div>
                 <h3 className="text-[15px] font-bold text-gray-900 mb-3 leading-tight line-clamp-2">{product.title}</h3>
                 
                 <div className="mt-auto flex items-end justify-between mb-4">

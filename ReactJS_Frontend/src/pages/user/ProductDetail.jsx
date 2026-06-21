@@ -380,16 +380,16 @@ const ProductDetail = () => {
         }
     };
 
-    if (loading) return <div className="p-4">Loading...</div>;
+    if (loading) return <div className="p-4">Đang tải...</div>;
     if (error) return <div className="p-4 text-red-500">{error}</div>;
-    if (!product) return <div className="p-4">Not found</div>;
+    if (!product) return <div className="p-4">Không tìm thấy sản phẩm</div>;
 
     return (
         <>
 
             <Breadcrumb align="viewport" items={[
-                { label: 'Homepage', to: '/' },
-                { label: 'Product', to: '/products' },
+                { label: 'Trang chủ', to: '/' },
+                { label: 'Sản phẩm', to: '/products' },
                 { label: product.title }
             ]}/>
             <main className="max-w-6xl mx-auto p-4 pt-10">
