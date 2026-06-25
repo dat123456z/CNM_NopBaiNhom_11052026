@@ -42,7 +42,8 @@ const PaymentResult = () => {
     const orders = params.get("orders");
 
     useEffect(() => {
-        if (status === "success") fetchCart();
+        fetchCart();
+        if (status === "success") localStorage.removeItem("checkoutCartItemIds");
     }, [fetchCart, status]);
 
     return (

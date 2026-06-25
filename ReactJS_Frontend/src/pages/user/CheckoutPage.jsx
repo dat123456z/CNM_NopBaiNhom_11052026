@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import Breadcrumb from "../../components/Breadcrumb";
 import LineIcon from "../../components/LineIcon";
 import { useCart } from "../../context/CartContext";
@@ -22,7 +22,8 @@ const VNPAY_TEST_FIELDS = [
 
 const CheckoutPage = () => {
     const navigate = useNavigate();
-    const { items, total, fetchCart } = useCart();
+    const location = useLocation();
+    const { items, fetchCart } = useCart();
 
     const [step, setStep] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -49,6 +50,23 @@ const CheckoutPage = () => {
     const [usePoints, setUsePoints] = useState(false);
     const [userPoints, setUserPoints] = useState(0);
 
+    const checkoutCartItemIds = useMemo(() => {
+        const stateIds = location.state?.cartItemIds;
+        if (Array.isArray(stateIds) && stateIds.length > 0) return stateIds.map(Number);
+        try {
+            const storedIds = JSON.parse(localStorage.getItem("checkoutCartItemIds") || "[]");
+            if (Array.isArray(storedIds) && storedIds.length > 0) return storedIds.map(Number);
+        } catch {
+            return [];
+        }
+        return [];
+    }, [location.state]);
+
+    const checkoutItems = useMemo(() => {
+        if (checkoutCartItemIds.length === 0) return items;
+        return items.filter((item) => checkoutCartItemIds.includes(Number(item.id)));
+    }, [checkoutCartItemIds, items]);
+
     const handleApplyCoupon = async () => {
         if (!couponCode.trim()) return;
         setCouponError("");
@@ -63,7 +81,7 @@ const CheckoutPage = () => {
                 },
                 body: JSON.stringify({
                     couponCode: couponCode.trim(),
-                    items: items.map(i => ({ productId: i.productId, quantity: i.quantity }))
+                    items: checkoutItems.map(i => ({ productId: i.productId, quantity: i.quantity }))
                 })
             });
             const data = await res.json();
@@ -189,7 +207,7 @@ const CheckoutPage = () => {
         const token = localStorage.getItem("accessToken");
         if (!token) { navigate("/login"); return; }
         if (!validateShip()) { setStep(0); return; }
-        if (items.length === 0) { setMsg("Giỏ hàng trống."); return; }
+        if (checkoutItems.length === 0) { setMsg("Giỏ hàng trống."); return; }
 
         if (payMethod === "momo") {
             setMsg("MoMo sandbox chua duoc cau hinh. Vui long chon COD hoac VNPay de thanh toan.");
@@ -203,7 +221,8 @@ const CheckoutPage = () => {
                 phone: ship.phone,
                 street: ship.street
             };
-            const orderItems = items.map((i) => ({
+            const orderItems = checkoutItems.map((i) => ({
+                cartItemId: i.id,
                 productId: i.productId,
                 quantity: i.quantity,
                 color: i.color || null
@@ -243,10 +262,10 @@ const CheckoutPage = () => {
         }
     };
 
-    const subtotal = total;
+    const subtotal = checkoutItems.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0);
     const tax = Math.round(subtotal * 0.08);
     const couponDiscount = appliedCoupon ? appliedCoupon.discountAmount : 0;
-    const pointsDiscount = usePoints ? Math.min(userPoints * 1000, subtotal - couponDiscount) : 0;
+    const pointsDiscount = usePoints ? Math.min(userPoints * 1000, Math.max(0, subtotal - couponDiscount)) : 0;
     const finalTotal = Math.max(0, subtotal + tax - couponDiscount - pointsDiscount);
     const fmtCountdown = `${String(Math.floor(countdown / 60)).padStart(2, "0")}:${String(countdown % 60).padStart(2, "0")}`;
 
@@ -621,7 +640,7 @@ const CheckoutPage = () => {
 
                                 {/* Items Review */}
                                 <div className="space-y-3 mb-6">
-                                    {items.map((item) => (
+                                    {checkoutItems.map((item) => (
                                         <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100">
                                             <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 shrink-0">
                                                 {item.product?.image
@@ -672,7 +691,7 @@ const CheckoutPage = () => {
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-6">
                             <h2 className="font-bold text-gray-900 text-lg mb-4">Tổng đơn hàng</h2>
                             <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
-                                {items.map((item) => {
+                                {checkoutItems.map((item) => {
                                     const imgSrc = item.product?.image
                                         ? (item.product.image.startsWith("http") ? item.product.image : `${API_URL}${item.product.image}`)
                                         : null;

@@ -35,7 +35,12 @@ const getCart = async (userId) => {
                 price: Number(p.price),
                 image: p.images?.[0] || null,
                 stock: p.stock,
-                status: p.status
+                status: p.status,
+                shop: p.shop ? {
+                    id: p.shop.id,
+                    name: p.shop.name,
+                    status: p.shop.status
+                } : null
             } : null,
             lineTotal
         };

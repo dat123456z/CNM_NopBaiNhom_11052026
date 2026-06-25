@@ -33,7 +33,8 @@ const scheduleAutoConfirm = (orderId) => {
 const createOrder = async (userId, { items, couponCode, usePoints, shippingAddress, paymentMethod, note }) => {
     if (!items || items.length === 0) throw Object.assign(new Error('Giỏ hàng trống.'), { status: 400 });
 
-    const productIds = items.map((i) => i.productId);
+    const productIds = [...new Set(items.map((i) => i.productId))];
+    const cartItemIds = items.map((i) => i.cartItemId).filter(Boolean);
     const products = await Product.findAll({
         where: { id: { [Op.in]: productIds }, status: 'active' },
         include: [{
@@ -157,7 +158,11 @@ const createOrder = async (userId, { items, couponCode, usePoints, shippingAddre
             await user.decrement('points', { by: totalPointsUsed, transaction: t });
         }
 
-        await CartItem.destroy({ where: { userId, productId: { [Op.in]: productIds } }, transaction: t });
+        if (cartItemIds.length > 0) {
+            await CartItem.destroy({ where: { id: { [Op.in]: cartItemIds }, userId }, transaction: t });
+        } else {
+            await CartItem.destroy({ where: { userId, productId: { [Op.in]: productIds } }, transaction: t });
+        }
         await t.commit();
 
         for (const { order, shopId, orderItems } of orders) {
@@ -459,6 +464,25 @@ const cancelUnpaidPaymentOrders = async (orderIds = [], reason = 'Thanh toán VN
             for (const item of order.items || []) {
                 await Product.increment('stock', { by: item.quantity, where: { id: item.productId }, transaction: t });
                 await Product.decrement('sold', { by: item.quantity, where: { id: item.productId }, transaction: t });
+
+                const existingCartItem = await CartItem.findOne({
+                    where: {
+                        userId: order.userId,
+                        productId: item.productId,
+                        color: item.color || null
+                    },
+                    transaction: t
+                });
+                if (existingCartItem) {
+                    await existingCartItem.increment('quantity', { by: item.quantity, transaction: t });
+                } else {
+                    await CartItem.create({
+                        userId: order.userId,
+                        productId: item.productId,
+                        quantity: item.quantity,
+                        color: item.color || null
+                    }, { transaction: t });
+                }
             }
         }
         await t.commit();
