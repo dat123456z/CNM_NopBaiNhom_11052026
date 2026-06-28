@@ -3,8 +3,19 @@ import { sendChat } from '../api/chatApi';
 
 export default function Chatbot() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('chatbot_messages');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [input, setInput] = useState('');
+
+  useEffect(() => {
+    sessionStorage.setItem('chatbot_messages', JSON.stringify(messages));
+  }, [messages]);
   const [loading, setLoading] = useState(false);
   const panelRef = useRef();
 
