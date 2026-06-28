@@ -1,43 +1,77 @@
 const axios = require('axios');
 
 async function chat(messages = [], model) {
-    const apiType = process.env.CLAUDE_API_TYPE || 'anthropic';
-    const apiKey = process.env.CLAUDE_API_KEY;
-    const apiUrl = process.env.CLAUDE_API_URL || 'https://api.anthropic.com/v1/responses';
+    const apiType = process.env.API_TYPE || process.env.CLAUDE_API_TYPE || 'gemini';
 
-    if (!apiKey) throw new Error('Missing CLAUDE_API_KEY in environment variables');
+    if (apiType === 'gemini') {
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) throw new Error('Missing GEMINI_API_KEY in environment variables');
 
-    const prompt = (messages || []).map(m => `${m.role === 'user' ? 'Human' : 'Assistant'}: ${m.content}`).join('\n') + '\nAssistant:';
+        let systemInstruction = '';
+        const geminiMessages = [];
+        let lastRole = null;
 
-    if (apiType === 'anthropic') {
-        const body = {
-            model: model || 'claude-2',
-            input: prompt
-        };
-        const headers = {
-            'x-api-key': apiKey,
-            'Content-Type': 'application/json'
-        };
-
-        const resp = await axios.post(apiUrl, body, { headers });
-        const output = resp.data || {};
-
-        // Try to extract text from several possible response shapes
-        let text = '';
-        if (typeof output === 'string') text = output;
-        if (!text && output.completion) text = output.completion;
-        if (!text && output.output && Array.isArray(output.output) && output.output[0].content) {
-            const content = output.output[0].content;
-            if (Array.isArray(content)) text = content.map(c => c.text || '').join('');
-            else text = content.text || JSON.stringify(content);
+        for (const m of (messages || [])) {
+            if (m.role === 'system') {
+                systemInstruction += (systemInstruction ? '\n' : '') + m.content;
+                continue;
+            }
+            
+            // Gemini uses 'user' and 'model'
+            const role = m.role === 'user' ? 'user' : 'model';
+            
+            // Merge consecutive same roles
+            if (role === lastRole) {
+                const lastMsg = geminiMessages[geminiMessages.length - 1];
+                lastMsg.parts[0].text += '\n\n' + m.content;
+            } else {
+                geminiMessages.push({ role, parts: [{ text: m.content }] });
+                lastRole = role;
+            }
         }
 
-        return { raw: output, text };
+        // Must start with user
+        if (geminiMessages.length > 0 && geminiMessages[0].role === 'model') {
+            geminiMessages.unshift({ role: 'user', parts: [{ text: 'Hello' }] });
+        }
+        if (geminiMessages.length === 0) {
+            geminiMessages.push({ role: 'user', parts: [{ text: 'Hello' }] });
+        }
+
+        const body = {
+            contents: geminiMessages,
+        };
+
+        if (systemInstruction) {
+            body.systemInstruction = { parts: [{ text: systemInstruction }] };
+        }
+
+        // If the frontend sends a Claude model name, ignore it and use gemini
+        let targetModel = 'gemini-2.5-flash';
+        if (model && model.includes('gemini')) {
+            targetModel = model;
+        }
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`;
+
+        try {
+            const resp = await axios.post(url, body, { headers: { 'Content-Type': 'application/json' } });
+            const output = resp.data;
+
+            let text = '';
+            if (output.candidates && output.candidates.length > 0) {
+                const parts = output.candidates[0].content?.parts || [];
+                text = parts.map(p => p.text).join('');
+            }
+            return { raw: output, text };
+        } catch (e) {
+            console.error('Gemini API Error:', JSON.stringify(e.response?.data || e.message, null, 2));
+            throw e;
+        }
     }
 
-    // Generic proxy behaviour (forward body)
-    const resp = await axios.post(apiUrl, { messages, model }, { headers: { Authorization: `Bearer ${apiKey}` } });
-    return { raw: resp.data, text: resp.data?.text || resp.data?.message || JSON.stringify(resp.data) };
+    throw new Error('Unsupported API Type. Please set API_TYPE=gemini and provide GEMINI_API_KEY');
 }
 
 module.exports = { chat };
+
