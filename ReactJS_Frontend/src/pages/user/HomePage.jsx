@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ProductCard from "../../components/ProductCard";
+import Chatbot from "../../components/Chatbot";
 import { fetchAllProducts } from "../../api/productApi";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
@@ -124,6 +125,8 @@ const HomePage = () => {
                 <HorizontalProductSlider title="Xem nhiều nhất" products={mostViewed} navigate={navigate} />
                 <HorizontalProductSlider title="Sản phẩm đã xem gần đây" products={recentlyViewed} navigate={navigate} />
             </main>
+
+            <Chatbot />
         </>
     );
 };
