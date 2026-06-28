@@ -253,54 +253,57 @@ const getOrderDetail = async (orderId, userId, role) => {
 };
 
 const cancelOrder = async (orderId, userId, reason) => {
-    const order = await Order.findOne({ where: { id: orderId, userId } });
-    if (!order) throw Object.assign(new Error('Đơn hàng không tồn tại.'), { status: 404 });
+    const order = await Order.findOne({ where: { id: orderId, userId } }); // 1
+    if (!order) // 1
+        throw Object.assign(new Error('Đơn hàng không tồn tại.'), { status: 404 }); // 2
 
-    const now = new Date();
-    const createdAt = new Date(order.createdAt);
-    const diffMs = now - createdAt;
-    const THIRTY_MIN = 30 * 60 * 1000;
+    const now = new Date(); // 3
+    const createdAt = new Date(order.createdAt); // 3
+    const diffMs = now - createdAt; // 3
+    const THIRTY_MIN = 30 * 60 * 1000; // 3
 
-    if (order.status === 'preparing') {
-        await order.update({ status: 'cancel_requested', cancelReason: reason || null });
+    if (order.status === 'preparing') { // 3
+        await order.update({ status: 'cancel_requested', cancelReason: reason || null }); // 4
 
-        try {
-            const shop = await Shop.findByPk(order.shopId);
-            const shopOwner = shop ? await User.findByPk(shop.userId) : null;
-            const user = await User.findByPk(userId);
-            if (shopOwner && user) {
-                await notificationService.notifyCancelRequest({ order, shopOwner, user });
+        try { // 4
+            const shop = await Shop.findByPk(order.shopId); // 4
+            const shopOwner = shop ? await User.findByPk(shop.userId) : null; // 4
+            const user = await User.findByPk(userId); // 4
+            if (shopOwner && user) { // 5
+                await notificationService.notifyCancelRequest({ order, shopOwner, user }); // 6
             }
-        } catch (err) {
+        } catch (err) { // 7
             console.error('[Notify] cancelOrder (cancel_requested) error:', err.message);
         }
 
-        return order;
+        return order; // 8
     }
 
-    if (!['pending', 'confirmed'].includes(order.status)) {
-        throw Object.assign(new Error('Không thể huỷ đơn hàng ở trạng thái này.'), { status: 400 });
+    if (!['pending', 'confirmed'].includes(order.status)) { // 9
+        throw Object.assign(new Error('Không thể huỷ đơn hàng ở trạng thái này.'), { status: 400 }); // 10
     }
 
-    if (diffMs > THIRTY_MIN) {
-        throw Object.assign(new Error('Đã quá 30 phút, không thể hủy đơn hàng.'), { status: 400 });
+    if (diffMs > THIRTY_MIN) { // 11
+        throw Object.assign(new Error('Đã quá 30 phút, không thể hủy đơn hàng.'), { status: 400 }); // 12
     }
 
-    const t = await sequelize.transaction();
-    try {
-        await order.update({ status: 'cancelled', cancelledAt: new Date(), cancelReason: reason }, { transaction: t });
+    const t = await sequelize.transaction(); // 13
+    try { // 13
+        await order.update({ status: 'cancelled', cancelledAt: new Date(), cancelReason: reason }, { transaction: t }); // 13
 
-        const items = await OrderItem.findAll({ where: { orderId } });
-        for (const item of items) {
-            await Product.increment('stock', { by: item.quantity, where: { id: item.productId }, transaction: t });
-            await Product.decrement('sold', { by: item.quantity, where: { id: item.productId }, transaction: t });
+        const items = await OrderItem.findAll({ where: { orderId } }); // 13
+        for (const item of items) { // 14
+            await Product.increment('stock', { by: item.quantity, where: { id: item.productId }, transaction: t }); // 15
+            await Product.decrement('sold', { by: item.quantity, where: { id: item.productId }, transaction: t }); // 15
         }
-        await t.commit();
-    } catch (err) {
+        await t.commit(); // 16
+    } catch (err) { // 17
         await t.rollback();
         throw err;
-    }
-    return order;
+    } // 17
+    return order; // 18
+
+    // 19
 };
 
 const updateOrderStatus = async (orderId, shopId, newStatus) => {
@@ -314,7 +317,7 @@ const updateOrderStatus = async (orderId, shopId, newStatus) => {
 
     const order = await Order.findOne({ where: { id: orderId, shopId } });
     if (!order) throw Object.assign(new Error('Đơn hàng không tồn tại.'), { status: 404 });
-    if (!validTransitions[order.status]?.includes(newStatus))
+    if (!validTransitions[order.status]?.includes(newStatus)) 
         throw Object.assign(new Error(`Không thể chuyển sang trạng thái "${newStatus}".`), { status: 400 });
 
     const updates = { status: newStatus };
@@ -352,8 +355,8 @@ const updateOrderStatus = async (orderId, shopId, newStatus) => {
             await order.update(updates, { transaction: t });
             const items = await OrderItem.findAll({ where: { orderId } });
             for (const item of items) {
-                await Product.increment('stock', { by: item.quantity, where: { id: item.productId }, transaction: t });
-                await Product.decrement('sold', { by: item.quantity, where: { id: item.productId }, transaction: t });
+                await Product.increment('stock', { by: item.quantity, where: { id: item.productId }, transaction: t }); // 14
+                await Product.decrement('sold', { by: item.quantity, where: { id: item.productId }, transaction: t }); // 14
             }
             await t.commit();
         } catch (err) {

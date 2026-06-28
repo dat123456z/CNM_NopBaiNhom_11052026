@@ -102,20 +102,39 @@ const HomePage = () => {
         <>
             <style>{`.scrollbar-none::-webkit-scrollbar{display:none}.scrollbar-none{-ms-overflow-style:none;scrollbar-width:none}`}</style>
 
-            <div className="max-w-7xl mx-auto px-6 mt-6 mb-2">
-                <div className="w-full relative rounded-2xl overflow-hidden shadow-lg group" style={{ minHeight: '320px' }}>
-                    <img src="/homepage_banner.png" alt="Khuyến mãi đặc biệt" className="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                    <div className="absolute inset-0 bg-linear-to-r from-black/70 via-black/40 to-transparent flex flex-col justify-center px-10 md:px-16">
-                        <span className="text-[#00b14f] font-bold tracking-wider uppercase mb-2">Ưu đãi mùa hè</span>
-                        <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4 drop-shadow-lg leading-tight">
-                            Bùng nổ phong cách <br /> <span className="text-transparent bg-clip-text bg-linear-to-r from-[#00b14f] to-green-300">Sale Up To 50%</span>
-                        </h2>
-                        <p className="text-base text-gray-200 mb-8 max-w-md drop-shadow">Khám phá ngay bộ sưu tập thời trang và công nghệ mới nhất. Số lượng có hạn, chốt đơn liền tay!</p>
-                        <div>
-                            <button onClick={() => navigate('/products')} className="bg-[#00b14f] hover:bg-[#008a3d] text-white px-8 py-3 rounded-full font-bold text-lg transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(0,177,79,0.5)]">
-                                Mua sắm ngay
-                            </button>
-                        </div>
+            {/* Banner full width, không bọc trong max-w */}
+            <div style={{ position: 'relative', width: '100%', height: '360px', overflow: 'hidden', marginBottom: '2rem' }}>
+                <img
+                    src="/homepage_banner.png"
+                    alt="Banner"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
+                />
+                <div style={{
+                    position: 'absolute',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    padding: '0 5rem',
+                }}>
+                    <span style={{ color: '#00b14f', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px', fontSize: '0.875rem' }}>
+                        Ưu đãi mùa hè
+                    </span>
+                    <h2 style={{ fontSize: '2.8rem', fontWeight: 800, color: 'white', margin: '0 0 16px 0', lineHeight: 1.2, textShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
+                        Bùng nổ phong cách <br />
+                        <span style={{ color: '#00b14f' }}>Sale Up To 50%</span>
+                    </h2>
+                    <p style={{ color: '#e5e7eb', margin: '0 0 28px 0', maxWidth: '420px', fontSize: '1rem', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+                        Khám phá ngay bộ sưu tập thời trang và công nghệ mới nhất. Số lượng có hạn, chốt đơn liền tay!
+                    </p>
+                    <div>
+                        <button
+                            onClick={() => navigate('/products')}
+                            style={{ background: '#00b14f', color: 'white', padding: '12px 36px', borderRadius: '9999px', fontWeight: 700, fontSize: '1.1rem', border: 'none', cursor: 'pointer' }}
+                        >
+                            Mua sắm ngay
+                        </button>
                     </div>
                 </div>
             </div>
