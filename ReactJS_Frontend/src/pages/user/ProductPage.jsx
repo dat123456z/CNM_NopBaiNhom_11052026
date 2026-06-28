@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ProductCard from "../../components/ProductCard";
 import Breadcrumb from "../../components/Breadcrumb";
@@ -70,6 +70,16 @@ const ProductPage = () => {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [filterShopId, setFilterShopId] = useState(null);
+    const [imageSearchResults, setImageSearchResults] = useState(null);
+    const [imageAnalysis, setImageAnalysis] = useState(null);
+    const [imagePreview, setImagePreview] = useState("");
+    const [imageSearchLoading, setImageSearchLoading] = useState(false);
+    const [imageSearchError, setImageSearchError] = useState("");
+    const imageInputRef = useRef(null);
+
+    useEffect(() => () => {
+        if (imagePreview) URL.revokeObjectURL(imagePreview);
+    }, [imagePreview]);
 
     useEffect(() => {
         setCurrentPage(1);
@@ -140,6 +150,55 @@ const ProductPage = () => {
         setSearch(searchInput.trim());
     }, [searchInput]);
 
+    const handleImageSearch = async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = "";
+        if (!file) return;
+        if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+            setImageSearchError("Chỉ hỗ trợ ảnh JPG, PNG hoặc WEBP.");
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            setImageSearchError("Ảnh không được vượt quá 5MB.");
+            return;
+        }
+
+        setImagePreview(URL.createObjectURL(file));
+        setImageSearchLoading(true);
+        setImageSearchError("");
+        setImageSearchResults(null);
+        setImageAnalysis(null);
+
+        try {
+            const formData = new FormData();
+            formData.append("image", file);
+            const token = localStorage.getItem("accessToken");
+            const res = await fetch(`${API_BASE}/api/ai/image-search`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Không thể tìm sản phẩm bằng ảnh.");
+
+            setImageAnalysis(data.analysis || null);
+            setImageSearchResults(Array.isArray(data.products) ? data.products : []);
+            setCurrentPage(1);
+        } catch (err) {
+            setImageSearchError(err.message);
+        } finally {
+            setImageSearchLoading(false);
+        }
+    };
+
+    const clearImageSearch = () => {
+        setImageSearchResults(null);
+        setImageAnalysis(null);
+        setImagePreview("");
+        setImageSearchError("");
+        setCurrentPage(1);
+    };
+
     const clearFilters = () => {
         setSearch("");
         setSearchInput("");
@@ -203,6 +262,7 @@ const ProductPage = () => {
 
         return list;
     }, [products, search, selectedCategory, priceRange, customMin, customMax, stockFilter, onlyDiscount, sortBy, filterShopId]);
+    const visibleProducts = imageSearchResults ?? filtered;
 
     const activeFilterCount = [
         selectedCategory !== "all",
@@ -350,7 +410,25 @@ const ProductPage = () => {
                 {/* Main Content */}
                 <div className="flex-1 min-w-0">
                     {/* Top bar */}
-                    <div className="flex items-center justify-end mb-6">
+                    <div className="flex items-center justify-between gap-4 mb-6">
+                        <div>
+                            <input
+                                ref={imageInputRef}
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                onChange={handleImageSearch}
+                                className="hidden"
+                            />
+                            <button
+                                type="button"
+                                disabled={imageSearchLoading}
+                                onClick={() => imageInputRef.current?.click()}
+                                className="inline-flex items-center gap-2 rounded-md border border-[#004b87] bg-[#004b87] px-4 py-2 text-sm font-semibold text-white transition-colors hover:border-[#003666] hover:bg-[#003666] disabled:cursor-wait disabled:opacity-60"
+                            >
+                                <LineIcon name="search" size={17} />
+                                {imageSearchLoading ? "AI đang nhận diện..." : "Tìm bằng hình ảnh"}
+                            </button>
+                        </div>
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-gray-500">Sắp xếp:</span>
                             <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="border border-gray-200 rounded-md text-sm py-1.5 px-3 text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer">
@@ -359,16 +437,74 @@ const ProductPage = () => {
                         </div>
                     </div>
 
-                    {filtered.length === 0 ? (
+                    {(imagePreview || imageSearchError) && (
+                        <div className="mb-6 flex items-center gap-4 rounded-xl border border-blue-100 bg-white p-4 shadow-sm">
+                            {imagePreview && (
+                                <img
+                                    src={imagePreview}
+                                    alt="Ảnh tìm kiếm"
+                                    className="h-20 w-20 shrink-0 rounded-lg border border-gray-200 object-cover"
+                                />
+                            )}
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm font-bold text-gray-900">
+                                    {imageSearchLoading
+                                        ? "Gemini đang phân tích ảnh..."
+                                        : "Kết quả tìm kiếm bằng hình ảnh"}
+                                </p>
+                                {imageAnalysis && (
+                                    <>
+                                        <p className="mt-1 text-xs text-gray-600">
+                                            {imageAnalysis.description || imageAnalysis.object}
+                                        </p>
+                                        <div className="mt-2 flex flex-wrap gap-1.5">
+                                            {[
+                                                imageAnalysis.object,
+                                                imageAnalysis.category,
+                                                ...(imageAnalysis.colors || []),
+                                                ...(imageAnalysis.keywords || [])
+                                            ].filter(Boolean).slice(0, 8).map((term, index) => (
+                                                <span
+                                                    key={`${term}-${index}`}
+                                                    className="rounded-full bg-blue-50 px-2 py-1 text-[10px] font-semibold text-[#004b87]"
+                                                >
+                                                    {term}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                                {imageSearchError && (
+                                    <p className="mt-1 text-xs font-semibold text-red-600">{imageSearchError}</p>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={clearImageSearch}
+                                className="shrink-0 rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                            >
+                                Xóa
+                            </button>
+                        </div>
+                    )}
+
+                    {visibleProducts.length === 0 ? (
                         <div className="text-center py-20 text-gray-500">
                             <LineIcon name="cart" size={48} className="mx-auto mb-4 text-gray-300" />
-                            <p className="font-bold text-lg text-gray-800 mb-2">Không tìm thấy sản phẩm</p>
-                            <button onClick={clearFilters} className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-md font-semibold text-sm">Xóa bộ lọc</button>
+                            <p className="font-bold text-lg text-gray-800 mb-2">
+                                {imageSearchResults ? "Không có sản phẩm tương tự" : "Không tìm thấy sản phẩm"}
+                            </p>
+                            <button
+                                onClick={imageSearchResults ? clearImageSearch : clearFilters}
+                                className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-md font-semibold text-sm"
+                            >
+                                {imageSearchResults ? "Quay lại tất cả sản phẩm" : "Xóa bộ lọc"}
+                            </button>
                         </div>
                     ) : (
                         <>
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                {filtered.slice((currentPage - 1) * 9, currentPage * 9).map((p, i) => (
+                                {visibleProducts.slice((currentPage - 1) * 9, currentPage * 9).map((p) => (
                                     <div key={p.id} className="cursor-pointer h-full" onClick={() => navigate(`/product/${p.id}`)}>
                                         <ProductCard product={p} />
                                     </div>
@@ -376,7 +512,7 @@ const ProductPage = () => {
                             </div>
 
                             {/* Pagination */}
-                            {Math.ceil(filtered.length / 9) > 1 && (
+                            {Math.ceil(visibleProducts.length / 9) > 1 && (
                                 <div className="flex justify-center items-center gap-2 mt-12 mb-8">
                                     <button 
                                         onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
@@ -384,7 +520,7 @@ const ProductPage = () => {
                                         className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-900 disabled:opacity-50"
                                     >&lt;</button>
                                     
-                                    {Array.from({ length: Math.ceil(filtered.length / 9) }, (_, i) => i + 1).map(page => (
+                                    {Array.from({ length: Math.ceil(visibleProducts.length / 9) }, (_, i) => i + 1).map(page => (
                                         <button 
                                             key={page}
                                             onClick={() => setCurrentPage(page)}
@@ -395,8 +531,8 @@ const ProductPage = () => {
                                     ))}
                                     
                                     <button 
-                                        onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filtered.length / 9), prev + 1))}
-                                        disabled={currentPage === Math.ceil(filtered.length / 9)}
+                                        onClick={() => setCurrentPage(prev => Math.min(Math.ceil(visibleProducts.length / 9), prev + 1))}
+                                        disabled={currentPage === Math.ceil(visibleProducts.length / 9)}
                                         className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-900 disabled:opacity-50"
                                     >&gt;</button>
                                 </div>

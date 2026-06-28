@@ -73,5 +73,63 @@ async function chat(messages = [], model) {
     throw new Error('Unsupported API Type. Please set API_TYPE=gemini and provide GEMINI_API_KEY');
 }
 
-module.exports = { chat };
+async function analyzeProductImage(imageBuffer, mimeType, model) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) throw new Error('Missing GEMINI_API_KEY in environment variables');
+    if (!imageBuffer?.length) throw new Error('Không có dữ liệu ảnh để phân tích.');
+
+    const targetModel = model?.includes('gemini')
+        ? model
+        : process.env.GEMINI_VISION_MODEL || 'gemini-2.5-flash';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`;
+    const prompt = `Phân tích sản phẩm chính trong ảnh để tìm kiếm trong một sàn thương mại điện tử.
+Chỉ trả về JSON hợp lệ, không Markdown, theo cấu trúc:
+{
+  "object": "tên loại sản phẩm ngắn gọn bằng tiếng Việt",
+  "category": "danh mục có khả năng phù hợp",
+  "colors": ["màu nổi bật"],
+  "keywords": ["tối đa 8 tên gọi đồng nghĩa hoặc cụm từ mô tả đúng loại sản phẩm"],
+  "description": "mô tả ngắn các đặc điểm nhìn thấy"
+}
+Không đoán thương hiệu hoặc thông số không nhìn thấy rõ.
+Trong keywords, ưu tiên tên loại sản phẩm và từ đồng nghĩa; không đưa từ quá chung như
+"thời trang nam", "thời trang nữ", "sản phẩm", màu sắc hoặc phong cách đứng riêng lẻ.`;
+
+    const body = {
+        contents: [{
+            role: 'user',
+            parts: [
+                { text: prompt },
+                {
+                    inline_data: {
+                        mime_type: mimeType,
+                        data: imageBuffer.toString('base64')
+                    }
+                }
+            ]
+        }],
+        generationConfig: {
+            temperature: 0.1,
+            responseMimeType: 'application/json'
+        }
+    };
+
+    try {
+        const resp = await axios.post(url, body, {
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 30000
+        });
+        const parts = resp.data?.candidates?.[0]?.content?.parts || [];
+        const text = parts.map((part) => part.text || '').join('').trim();
+        if (!text) throw new Error('Gemini không nhận diện được sản phẩm trong ảnh.');
+
+        const cleaned = text.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
+        return JSON.parse(cleaned);
+    } catch (err) {
+        const apiMessage = err.response?.data?.error?.message || err.message;
+        throw new Error(`Không thể phân tích ảnh: ${apiMessage}`);
+    }
+}
+
+module.exports = { chat, analyzeProductImage };
 
