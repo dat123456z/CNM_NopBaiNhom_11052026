@@ -24,5 +24,6 @@ router.post(
     imageUpload.single('image'),
     aiController.imageSearch
 );
+router.post('/recommend', aiController.recommend);
 
 module.exports = router;
