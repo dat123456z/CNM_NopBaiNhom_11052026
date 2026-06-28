@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ProductCard from "../../components/ProductCard";
 import { fetchAllProducts } from "../../api/productApi";
+import { getAiRecommendations } from "../../api/chatApi";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
 
@@ -54,6 +55,7 @@ const HomePage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [recentlyViewed, setRecentlyViewed] = useState([]);
+    const [aiRecommended, setAiRecommended] = useState([]);
 
     useEffect(() => {
         try {
@@ -93,6 +95,22 @@ const HomePage = () => {
 
     const bestsellers = useMemo(() => [...products].sort((a, b) => Number(b.sold || 0) - Number(a.sold || 0)).slice(0, 10), [products]);
     const mostViewed = useMemo(() => [...products].sort((a, b) => Number(b.views || 0) - Number(a.views || 0)).slice(0, 10), [products]);
+
+    // Fetch AI recommendations when products and recentlyViewed are ready
+    useEffect(() => {
+        if (products.length > 0 && recentlyViewed.length > 0) {
+            getAiRecommendations(recentlyViewed)
+                .then(data => {
+                    if (data?.ok && Array.isArray(data.recommendedIds)) {
+                        const recs = data.recommendedIds
+                            .map(id => products.find(p => String(p.id) === String(id)))
+                            .filter(Boolean);
+                        setAiRecommended(recs);
+                    }
+                })
+                .catch(err => console.error("Lỗi lấy gợi ý AI:", err));
+        }
+    }, [products, recentlyViewed]);
 
     if (loading) return <div className="p-4">Đang tải...</div>;
     if (error) return <div className="p-4 text-red-500">{error}</div>;
@@ -139,6 +157,9 @@ const HomePage = () => {
             </div>
 
             <main className="max-w-7xl mx-auto px-6 mt-8">
+                {aiRecommended.length > 0 && (
+                    <HorizontalProductSlider title="✨ Dành riêng cho bạn (AI Đề xuất)" products={aiRecommended} navigate={navigate} />
+                )}
                 <HorizontalProductSlider title="Bán chạy nhất" products={bestsellers} navigate={navigate} />
                 <HorizontalProductSlider title="Xem nhiều nhất" products={mostViewed} navigate={navigate} />
                 <HorizontalProductSlider title="Sản phẩm đã xem gần đây" products={recentlyViewed} navigate={navigate} />

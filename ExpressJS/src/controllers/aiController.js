@@ -185,3 +185,44 @@ exports.imageSearch = async (req, res) => {
         });
     }
 };
+        
+exports.recommend = async (req, res) => {
+    try {
+        const { recentlyViewed } = req.body;
+        if (!recentlyViewed || !Array.isArray(recentlyViewed)) {
+            return res.status(400).json({ ok: false, message: 'Thiếu mảng recentlyViewed.' });
+        }
+
+        // Lấy danh sách sản phẩm từ DB
+        const products = await Product.findAll({
+            where: { status: 'active' },
+            attributes: ['id', 'title', 'price', 'category'],
+            limit: 100 // Đủ lượng để lựa chọn
+        });
+
+        // Tạo context danh mục sản phẩm
+        const catalogContext = products.map(p => 
+            `{ "id": ${p.id}, "title": "${p.title}", "category": "${p.category}" }`
+        ).join(',\n');
+
+        // Tạo context lịch sử xem
+        const historyContext = recentlyViewed.map(p => p.title || p.name || p.id).join(', ');
+
+        const prompt = `Bạn là hệ thống gợi ý sản phẩm bán lẻ.
+Lịch sử xem sản phẩm của khách hàng: [${historyContext}]
+Danh mục sản phẩm hiện có:
+[
+${catalogContext}
+]
+
+Nhiệm vụ: Dựa vào lịch sử xem của khách hàng, hãy chọn ra đúng 4 sản phẩm (id) phù hợp nhất từ danh mục hiện có để bán chéo hoặc gợi ý thêm.
+YÊU CẦU BẮT BUỘC: Bạn CHỈ ĐƯỢC PHÉP trả về một mảng JSON thuần túy chứa 4 số nguyên là ID của sản phẩm. Không có bất kỳ đoạn text nào khác.
+Ví dụ định dạng trả về: [12, 45, 8, 23]`;
+
+        const recommendedIds = await aiService.getRecommendations(prompt);
+        return res.json({ ok: true, recommendedIds });
+    } catch (err) {
+        console.error('AI recommend error:', err);
+        return res.status(500).json({ ok: false, message: err.message || 'Lỗi gọi AI recommend.' });
+    }
+};
