@@ -2,6 +2,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import Navbar from "./Navbar";
 import UserFooter from "./user/Footer";
 import VendorFooter from "./vendor/Footer";
+import Chatbot from "./Chatbot";
 
 const Layout = () => {
     const { pathname } = useLocation();
@@ -19,6 +20,7 @@ const Layout = () => {
             <div className="flex-1 flex flex-col">
                 <Outlet />
             </div>
+            {!isVendor && <Chatbot />}
             {isVendor ? <VendorFooter /> : <UserFooter />}
         </div>
     );
