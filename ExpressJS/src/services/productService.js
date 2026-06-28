@@ -303,35 +303,80 @@ const getSimilarProducts = async (id) => {
     const product = await Product.findByPk(id);
     if (!product) return [];
 
-    const category = product.category || '';
-    const catWords = category.split(/[\s,]+/);
-    const mainCatWord = catWords[0] ? catWords[0].trim() : '';
-
-    const clauses = [];
-    if (category) {
-        clauses.push({ category: { [Op.like]: `%${category}%` } });
-    }
-    if (mainCatWord && mainCatWord.length >= 2) {
-        clauses.push({ category: { [Op.like]: `%${mainCatWord}%` } });
-        clauses.push({ title: { [Op.like]: `%${mainCatWord}%` } });
-    }
-
-    if (clauses.length === 0) {
-        clauses.push({ category: 'others' });
-    }
-
-    const similar = await Product.findAll({
+    const candidates = await Product.findAll({
         where: {
             id: { [Op.ne]: id },
-            status: 'active',
-            [Op.or]: clauses
+            status: 'active'
         },
         include: [activeShopInclude],
-        limit: 4,
-        order: [['sold', 'DESC']]
+        limit: 200
     });
 
-    return similar.map(normalizeProduct);
+    const normalizeText = (value) =>
+        String(value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/đ/g, 'd')
+            .toLowerCase();
+    const stopWords = new Set([
+        'nam', 'nu', 'thoi', 'trang', 'san', 'pham', 'chinh', 'hang',
+        'cao', 'cap', 'dang', 'ong', 'phoi', 'bo', 'cho', 'voi', 'va',
+        'mini', 'classic', 'premium', 'moi'
+    ]);
+    const tokenize = (value) =>
+        normalizeText(value)
+            .split(/[^a-z0-9]+/)
+            .filter((word) => word.length >= 2 && !stopWords.has(word));
+    const sourceTokens = [...new Set(tokenize(product.title))];
+    const sourceCategory = normalizeText(product.category);
+    const sourcePrice = Number(product.price);
+    const sourceColors = new Set(
+        (Array.isArray(product.colors) ? product.colors : [])
+            .map((color) => normalizeText(color?.label || color))
+            .filter(Boolean)
+    );
+
+    const ranked = candidates
+        .map((candidate) => {
+            const tokens = [...new Set(tokenize(candidate.title))];
+            const sharedTokens = tokens.filter((token) => sourceTokens.includes(token));
+            const sameCategory =
+                sourceCategory && normalizeText(candidate.category) === sourceCategory;
+            const sameLeadingType =
+                sourceTokens[0] && tokens[0] && sourceTokens[0] === tokens[0];
+            const candidatePrice = Number(candidate.price);
+            const priceSimilarity = sourcePrice > 0 && candidatePrice > 0
+                ? Math.min(sourcePrice, candidatePrice) / Math.max(sourcePrice, candidatePrice)
+                : 0;
+            const sharedColors = (Array.isArray(candidate.colors) ? candidate.colors : [])
+                .map((color) => normalizeText(color?.label || color))
+                .filter((color) => sourceColors.has(color)).length;
+
+            const score =
+                (sameCategory ? 40 : 0) +
+                sharedTokens.length * 25 +
+                (sameLeadingType ? 30 : 0) +
+                priceSimilarity * 15 +
+                Math.min(sharedColors, 2) * 2 +
+                Math.min(Number(candidate.rating || 0), 5);
+
+            return {
+                candidate,
+                score,
+                relevant:
+                    sameCategory ||
+                    sameLeadingType
+            };
+        })
+        .filter((item) => item.relevant)
+        .sort((a, b) =>
+            b.score - a.score ||
+            Number(b.candidate.sold || 0) - Number(a.candidate.sold || 0)
+        )
+        .slice(0, 4)
+        .map(({ candidate }) => normalizeProduct(candidate));
+
+    return ranked;
 };
 
 const getManagerProducts = async ({ status, page = 1, limit = 20 }) => {
