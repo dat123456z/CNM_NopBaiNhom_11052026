@@ -13,6 +13,10 @@ const PRODUCT_STATUS = {
     rejected: { label: "Từ chối", className: "bg-red-50 text-red-500 cursor-not-allowed" },
     deleted: { label: "Đã xóa", className: "bg-gray-100 text-gray-400 cursor-not-allowed" }
 };
+const OUT_OF_STOCK_STATUS = {
+    label: "Hết hàng",
+    className: "bg-red-50 text-red-600 hover:bg-red-100"
+};
 
 const VendorProducts = ({ shop }) => {
     const [products, setProducts] = useState([]);
@@ -255,7 +259,9 @@ const VendorProducts = ({ shop }) => {
                                     {paginatedProducts.map(p => {
                                         const img = p.images && p.images.length > 0 ? p.images[0] : "";
                                         const imgSrc = img.startsWith("http") ? img : `${API_URL}${img}`;
-                                        const statusMeta = PRODUCT_STATUS[p.status] || PRODUCT_STATUS.hidden;
+                                        const statusMeta = p.status === "active" && Number(p.stock) <= 0
+                                            ? OUT_OF_STOCK_STATUS
+                                            : PRODUCT_STATUS[p.status] || PRODUCT_STATUS.hidden;
                                         const canToggleStatus = ["active", "hidden"].includes(p.status);
                                         return (
                                             <tr key={p.id} className="hover:bg-gray-50/50 transition-colors">

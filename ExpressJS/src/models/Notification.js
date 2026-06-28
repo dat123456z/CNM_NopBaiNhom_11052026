@@ -10,13 +10,15 @@ const Notification = sequelize.define('Notification', {
             'order_delivered', 'order_cancelled', 'order_cancel_requested',
             'review_new', 'review_reply',
             'manager_product_pending', 'manager_product_updated_pending',
-            'manager_vendor_new', 'product_rejected', 'system'
+            'manager_vendor_new', 'product_rejected',
+            'price_drop', 'back_in_stock', 'system'
         ),
         allowNull: false
     },
     title: { type: DataTypes.STRING(255), allowNull: false },
     message: { type: DataTypes.TEXT, allowNull: false },
     orderId: { type: DataTypes.INTEGER, allowNull: true, defaultValue: null },
+    productId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true, defaultValue: null },
     isRead: { type: DataTypes.BOOLEAN, defaultValue: false }
 }, {
     tableName: 'notifications',

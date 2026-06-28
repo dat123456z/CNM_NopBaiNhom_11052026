@@ -4,6 +4,7 @@ const { ProductReview } = require('../models/Review');
 const Shop = require('../models/Shop');
 const { sequelize } = require('../config/database');
 const notificationService = require('./notificationService');
+const productAlertService = require('./productAlertService');
 
 const slugify = (text) =>
     text
@@ -169,22 +170,67 @@ const createProduct = async (shopId, data) => {
 const updateProduct = async (productId, shopId, data) => {
     const product = await Product.findOne({ where: { id: productId, shopId } });
     if (!product) throw Object.assign(new Error('Sản phẩm không tồn tại.'), { status: 404 });
-    if (data.title && data.title !== product.title) {
-        data.slug = `${slugify(data.title)}-${Date.now()}`;
-    }
-    data.status = 'pending';
-    data.rejectionReason = null;
-    await product.update(data);
 
-    try {
-        const shop = await Shop.findByPk(shopId, { attributes: ['name'] });
-        await notificationService.notifyManagers({
-            type: 'manager_product_updated_pending',
-            title: 'Sản phẩm vừa cập nhật chờ duyệt',
-            message: `Vendor ${shop?.name || `Shop #${shopId}`} vừa cập nhật sản phẩm "${product.title}" và cần manager duyệt lại.`
-        });
-    } catch (err) {
-        console.error('[Notify] manager product update moderation error:', err.message);
+    const allowedFields = [
+        'title', 'description', 'price', 'originalPrice',
+        'images', 'category', 'stock', 'colors'
+    ];
+    const updates = Object.fromEntries(
+        allowedFields
+            .filter((field) => data[field] !== undefined)
+            .map((field) => [field, data[field]])
+    );
+
+    const sameNumber = (a, b) => {
+        if (a == null && b == null) return true;
+        return Number(a) === Number(b);
+    };
+    const sameJson = (a, b) =>
+        JSON.stringify(a || []) === JSON.stringify(b || []);
+    const moderationFields = [
+        'title', 'description', 'price', 'originalPrice',
+        'images', 'category', 'colors'
+    ];
+    const moderationChanged = moderationFields.some((field) => {
+        if (updates[field] === undefined) return false;
+        if (['price', 'originalPrice'].includes(field)) {
+            return !sameNumber(updates[field], product[field]);
+        }
+        if (['images', 'colors'].includes(field)) {
+            return !sameJson(updates[field], product[field]);
+        }
+        return String(updates[field] ?? '').trim() !== String(product[field] ?? '').trim();
+    });
+    const stockChanged =
+        updates.stock !== undefined && Number(updates.stock) !== Number(product.stock);
+
+    if (moderationChanged) {
+        if (updates.title && updates.title !== product.title) {
+            updates.slug = `${slugify(updates.title)}-${Date.now()}`;
+        }
+        updates.status = 'pending';
+        updates.rejectionReason = null;
+    }
+
+    await product.update(updates);
+
+    if (moderationChanged) {
+        try {
+            const shop = await Shop.findByPk(shopId, { attributes: ['name'] });
+            await notificationService.notifyManagers({
+                type: 'manager_product_updated_pending',
+                title: 'Sản phẩm vừa cập nhật chờ duyệt',
+                message: `Vendor ${shop?.name || `Shop #${shopId}`} vừa cập nhật sản phẩm "${product.title}" và cần manager duyệt lại.`
+            });
+        } catch (err) {
+            console.error('[Notify] manager product update moderation error:', err.message);
+        }
+    } else if (stockChanged && product.status === 'active') {
+        try {
+            await productAlertService.processProductAlerts(product);
+        } catch (err) {
+            console.error('[Notify] product stock alert error:', err.message);
+        }
     }
 
     return normalizeProduct(product);
@@ -225,6 +271,14 @@ const setProductStatus = async (productId, status, options = {}) => {
     if (['active', 'pending'].includes(status)) updates.rejectionReason = null;
 
     await product.update(updates);
+
+    if (status === 'active') {
+        try {
+            await productAlertService.processProductAlerts(product);
+        } catch (err) {
+            console.error('[Notify] product alert error:', err.message);
+        }
+    }
 
     if (status === 'rejected') {
         try {

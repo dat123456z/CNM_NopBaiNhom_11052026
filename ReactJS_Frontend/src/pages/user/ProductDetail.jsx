@@ -46,6 +46,12 @@ const ProductDetail = () => {
     // Engagement & History states
     const [recentlyViewed, setRecentlyViewed] = useState([]);
     const [isFavorite, setIsFavorite] = useState(false);
+    const [alertSettings, setAlertSettings] = useState({
+        priceDrop: false,
+        backInStock: false
+    });
+    const [savingAlert, setSavingAlert] = useState(false);
+    const [alertMessage, setAlertMessage] = useState("");
 
     // Reviews states
     const [reviews, setReviews] = useState([]);
@@ -226,6 +232,25 @@ const ProductDetail = () => {
         }
     }, [product]);
 
+    useEffect(() => {
+        if (!product) return;
+        const token = localStorage.getItem("accessToken");
+        if (!token) return;
+
+        fetch(`${API_BASE}/api/product-alerts/${product.id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(async (res) => {
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || "Không thể tải cài đặt thông báo.");
+                setAlertSettings({
+                    priceDrop: Boolean(data.priceDrop),
+                    backInStock: Boolean(data.backInStock)
+                });
+            })
+            .catch((err) => setAlertMessage(err.message));
+    }, [product]);
+
     // Track recently viewed history
     useEffect(() => {
         if (!product) return;
@@ -309,6 +334,41 @@ const ProductDetail = () => {
         localStorage.setItem("wishlist", JSON.stringify(favorites));
     };
 
+    const toggleProductAlert = async (key) => {
+        if (!product || savingAlert) return;
+
+        const token = localStorage.getItem("accessToken");
+        const nextSettings = {
+            ...alertSettings,
+            [key]: !alertSettings[key]
+        };
+
+        setSavingAlert(true);
+        setAlertMessage("");
+        try {
+            const res = await fetch(`${API_BASE}/api/product-alerts/${product.id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify(nextSettings)
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Không thể cập nhật thông báo.");
+
+            setAlertSettings({
+                priceDrop: Boolean(data.priceDrop),
+                backInStock: Boolean(data.backInStock)
+            });
+            setAlertMessage("Đã lưu lựa chọn thông báo.");
+        } catch (err) {
+            setAlertMessage(err.message);
+        } finally {
+            setSavingAlert(false);
+        }
+    };
+
     const handleReviewSubmit = async (e) => {
         e.preventDefault();
         if (!commentInput.trim()) return;
@@ -353,12 +413,12 @@ const ProductDetail = () => {
     };
 
     const handleQuantityChange = (val) => {
-        if (val < 1) return;
+        if (val < 1 || val > Number(product.stock)) return;
         setQuantity(val);
     };
 
     const handleAddToCart = async () => {
-        if (adding) return;
+        if (adding || Number(product.stock) <= 0) return;
         setAdding(true);
         try {
             await addToCart(product.id, quantity, selectedColor);
@@ -372,6 +432,7 @@ const ProductDetail = () => {
     };
 
     const handleBuyNow = async () => {
+        if (Number(product.stock) <= 0) return;
         try {
             await addToCart(product.id, quantity, selectedColor);
             navigate("/checkout");
@@ -383,6 +444,7 @@ const ProductDetail = () => {
     if (loading) return <div className="p-4">Đang tải...</div>;
     if (error) return <div className="p-4 text-red-500">{error}</div>;
     if (!product) return <div className="p-4">Không tìm thấy sản phẩm</div>;
+    const outOfStock = Number(product.stock) <= 0;
 
     return (
         <>
@@ -464,6 +526,49 @@ const ProductDetail = () => {
                                 <span className="text-xl text-gray-400 line-through ml-3 font-medium">{Number(product.originalPrice).toLocaleString()}đ</span>
                             )}
                         </div>
+                        {outOfStock && (
+                            <div className="mt-3 inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-600">
+                                Hết hàng
+                            </div>
+                        )}
+
+                        <div className="mt-5 rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
+                            <div className="flex items-center gap-2 text-sm font-bold text-gray-800">
+                                <LineIcon name="bell" size={17} className="text-[#00b14f]" />
+                                Theo dõi sản phẩm
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                                <button
+                                    type="button"
+                                    disabled={savingAlert}
+                                    onClick={() => toggleProductAlert("priceDrop")}
+                                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+                                        alertSettings.priceDrop
+                                            ? "border-[#00b14f] bg-[#00b14f] text-white"
+                                            : "border-gray-200 bg-white text-gray-600 hover:border-[#00b14f]"
+                                    }`}
+                                >
+                                    {alertSettings.priceDrop ? "✓ " : ""}Báo khi giảm giá
+                                </button>
+                                {Number(product.stock) === 0 && (
+                                    <button
+                                        type="button"
+                                        disabled={savingAlert}
+                                        onClick={() => toggleProductAlert("backInStock")}
+                                        className={`rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+                                            alertSettings.backInStock
+                                                ? "border-[#00b14f] bg-[#00b14f] text-white"
+                                                : "border-gray-200 bg-white text-gray-600 hover:border-[#00b14f]"
+                                        }`}
+                                    >
+                                        {alertSettings.backInStock ? "✓ " : ""}Báo khi có hàng
+                                    </button>
+                                )}
+                            </div>
+                            {alertMessage && (
+                                <p className="mt-2 text-xs text-gray-500">{alertMessage}</p>
+                            )}
+                        </div>
 
                         <p className="mt-5 text-gray-600 leading-relaxed text-sm">
                             {product.description || "Chưa có mô tả cho sản phẩm này."}
@@ -500,6 +605,7 @@ const ProductDetail = () => {
                             <div className="flex items-center border border-gray-300 rounded-md w-28 h-10 bg-white overflow-hidden">
                                 <button
                                     onClick={() => handleQuantityChange(quantity - 1)}
+                                    disabled={outOfStock}
                                     className="w-1/3 h-full flex items-center justify-center text-gray-600 hover:bg-gray-100 font-medium transition-colors"
                                 >
                                     -
@@ -512,6 +618,7 @@ const ProductDetail = () => {
                                 />
                                 <button
                                     onClick={() => handleQuantityChange(quantity + 1)}
+                                    disabled={outOfStock || quantity >= Number(product.stock)}
                                     className="w-1/3 h-full flex items-center justify-center text-gray-600 hover:bg-gray-100 font-medium transition-colors"
                                 >
                                     +
@@ -523,20 +630,27 @@ const ProductDetail = () => {
                         <div className="mt-8 flex flex-col gap-3">
                             <button
                                 onClick={handleAddToCart}
-                                disabled={adding}
-                                className={`w-full text-white font-semibold py-3.5 rounded-md transition flex items-center justify-center gap-2 ${success
+                                disabled={adding || outOfStock}
+                                className={`w-full text-white font-semibold py-3.5 rounded-md transition flex items-center justify-center gap-2 ${outOfStock
+                                    ? "bg-gray-400 cursor-not-allowed"
+                                    : success
                                     ? "bg-green-600 hover:bg-green-700"
                                     : "bg-[#0057b7] hover:bg-blue-700"
                                     }`}
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                {adding ? "Đang thêm..." : success ? "Đã thêm vào giỏ thành công! ✓" : "Thêm vào giỏ hàng"}
+                                {outOfStock ? "Hết hàng" : adding ? "Đang thêm..." : success ? "Đã thêm vào giỏ thành công! ✓" : "Thêm vào giỏ hàng"}
                             </button>
                             <button
                                 onClick={handleBuyNow}
-                                className="w-full bg-white text-[#0057b7] border border-blue-300 font-semibold py-3.5 rounded-md hover:bg-blue-50 transition"
+                                disabled={outOfStock}
+                                className={`w-full border font-semibold py-3.5 rounded-md transition ${
+                                    outOfStock
+                                        ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                        : "bg-white text-[#0057b7] border-blue-300 hover:bg-blue-50"
+                                }`}
                             >
-                                Mua ngay
+                                {outOfStock ? "Tạm hết hàng" : "Mua ngay"}
                             </button>
                         </div>
 

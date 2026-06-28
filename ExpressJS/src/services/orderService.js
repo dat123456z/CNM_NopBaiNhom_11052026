@@ -9,6 +9,7 @@ const WalletTransaction = require('../models/WalletTransaction');
 const { ProductReview } = require('../models/Review');
 const { Op } = require('sequelize');
 const notificationService = require('./notificationService');
+const productAlertService = require('./productAlertService');
 
 const scheduleAutoConfirm = (orderId) => {
     const THIRTY_MIN = 30 * 60 * 1000;
@@ -165,6 +166,12 @@ const createOrder = async (userId, { items, couponCode, usePoints, shippingAddre
         }
         await t.commit();
 
+        try {
+            await productAlertService.processProductAlertsByIds(productIds);
+        } catch (err) {
+            console.error('[Notify] sync product stock alerts error:', err.message);
+        }
+
         for (const { order, shopId, orderItems } of orders) {
             if (order.paymentMethod === 'vnpay') continue;
             scheduleAutoConfirm(order.id);
@@ -288,10 +295,12 @@ const cancelOrder = async (orderId, userId, reason) => {
     }
 
     const t = await sequelize.transaction(); // 13
+    let restoredProductIds = [];
     try { // 13
         await order.update({ status: 'cancelled', cancelledAt: new Date(), cancelReason: reason }, { transaction: t }); // 13
 
         const items = await OrderItem.findAll({ where: { orderId } }); // 13
+        restoredProductIds = items.map((item) => item.productId);
         for (const item of items) { // 14
             await Product.increment('stock', { by: item.quantity, where: { id: item.productId }, transaction: t }); // 15
             await Product.decrement('sold', { by: item.quantity, where: { id: item.productId }, transaction: t }); // 15
@@ -301,6 +310,11 @@ const cancelOrder = async (orderId, userId, reason) => {
         await t.rollback();
         throw err;
     } // 17
+    try {
+        await productAlertService.processProductAlertsByIds(restoredProductIds);
+    } catch (err) {
+        console.error('[Notify] restored stock alerts error:', err.message);
+    }
     return order; // 18
 
     // 19
@@ -351,9 +365,11 @@ const updateOrderStatus = async (orderId, shopId, newStatus) => {
         }
     } else if (newStatus === 'cancelled') {
         const t = await sequelize.transaction();
+        let restoredProductIds = [];
         try {
             await order.update(updates, { transaction: t });
             const items = await OrderItem.findAll({ where: { orderId } });
+            restoredProductIds = items.map((item) => item.productId);
             for (const item of items) {
                 await Product.increment('stock', { by: item.quantity, where: { id: item.productId }, transaction: t }); // 14
                 await Product.decrement('sold', { by: item.quantity, where: { id: item.productId }, transaction: t }); // 14
@@ -362,6 +378,11 @@ const updateOrderStatus = async (orderId, shopId, newStatus) => {
         } catch (err) {
             await t.rollback();
             throw err;
+        }
+        try {
+            await productAlertService.processProductAlertsByIds(restoredProductIds);
+        } catch (err) {
+            console.error('[Notify] restored stock alerts error:', err.message);
         }
     } else {
         await order.update(updates);
@@ -489,6 +510,14 @@ const cancelUnpaidPaymentOrders = async (orderIds = [], reason = 'Thanh toán VN
             }
         }
         await t.commit();
+        try {
+            const restoredProductIds = orders.flatMap((order) =>
+                (order.items || []).map((item) => item.productId)
+            );
+            await productAlertService.processProductAlertsByIds(restoredProductIds);
+        } catch (err) {
+            console.error('[Notify] restored unpaid-order stock alerts error:', err.message);
+        }
         return orders;
     } catch (err) {
         await t.rollback();

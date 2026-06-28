@@ -36,6 +36,7 @@ require('./models/Coupon');
 require('./models/WalletTransaction');
 require('./models/Shipper');
 require('./models/Notification');
+require('./models/ProductAlert');
 require('./models/association');
 
 app.use('/api/auth', require('./routes/auth'));
@@ -50,6 +51,7 @@ app.use('/api/revenues', require('./routes/revenue'));
 app.use('/api/coupons', require('./routes/coupon'));
 app.use('/api/shippers', require('./routes/shipper'));
 app.use('/api/notifications', require('./routes/notification'));
+app.use('/api/product-alerts', require('./routes/productAlert'));
 app.use('/api/payments', require('./routes/payment'));
 app.use('/api/ai', require('./routes/ai'));
 
@@ -86,9 +88,17 @@ const start = async () => {
         }
 
         try {
-            await sequelize.query("ALTER TABLE notifications MODIFY COLUMN type ENUM('order_new', 'order_confirmed', 'order_preparing', 'order_shipping', 'order_delivered', 'order_cancelled', 'order_cancel_requested', 'review_new', 'review_reply', 'manager_product_pending', 'manager_product_updated_pending', 'manager_vendor_new', 'product_rejected', 'system') NOT NULL;");
+            await sequelize.query("ALTER TABLE notifications MODIFY COLUMN type ENUM('order_new', 'order_confirmed', 'order_preparing', 'order_shipping', 'order_delivered', 'order_cancelled', 'order_cancel_requested', 'review_new', 'review_reply', 'manager_product_pending', 'manager_product_updated_pending', 'manager_vendor_new', 'product_rejected', 'price_drop', 'back_in_stock', 'system') NOT NULL;");
         } catch (e) {
             console.error('>>> Error altering notifications type ENUM:', e.message);
+        }
+
+        try {
+            await sequelize.query("ALTER TABLE notifications ADD COLUMN productId INT UNSIGNED NULL;");
+        } catch (e) {
+            if (!String(e.message).includes('Duplicate column')) {
+                console.error('>>> Error adding notifications productId:', e.message);
+            }
         }
 
         await seedIfEmpty();

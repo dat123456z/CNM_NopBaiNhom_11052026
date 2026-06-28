@@ -17,6 +17,8 @@ const TYPE_ICON = {
     review_reply:           'edit',
     manager_product_pending: 'clipboard',
     manager_vendor_new:      'shop',
+    price_drop:               'coin',
+    back_in_stock:            'box',
     system:                 'bell'
 };
 
@@ -127,6 +129,10 @@ const NotificationBell = () => {
         }
         if (n.type === 'review_new') {
             navigate('/vendor/dashboard/reviews');
+            return;
+        }
+        if (n.productId) {
+            navigate(`/product/${n.productId}`);
             return;
         }
         if (n.orderId) {

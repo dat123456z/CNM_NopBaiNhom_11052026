@@ -29,8 +29,8 @@ const statusLabels = {
     cancel_requested: 'Yêu cầu hủy đang được xử lý'
 };
 
-const notify = async ({ userId, type, title, message, orderId = null, email = null }) => {
-    const notification = await Notification.create({ userId, type, title, message, orderId });
+const notify = async ({ userId, type, title, message, orderId = null, productId = null, email = null }) => {
+    const notification = await Notification.create({ userId, type, title, message, orderId, productId });
 
     socketManager.emitToUser(userId, 'notification', {
         id:        notification.id,
@@ -38,6 +38,7 @@ const notify = async ({ userId, type, title, message, orderId = null, email = nu
         title,
         message,
         orderId,
+        productId,
         isRead:    false,
         createdAt: notification.createdAt
     });
