@@ -51,6 +51,7 @@ app.use('/api/coupons', require('./routes/coupon'));
 app.use('/api/shippers', require('./routes/shipper'));
 app.use('/api/notifications', require('./routes/notification'));
 app.use('/api/payments', require('./routes/payment'));
+app.use('/api/ai', require('./routes/ai'));
 
 app.use((err, req, res, next) => {
     const multer = require('multer');
