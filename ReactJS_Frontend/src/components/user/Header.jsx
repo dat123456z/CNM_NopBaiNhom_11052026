@@ -54,11 +54,39 @@ const UserHeader = ({ user, token, cartCount = 0, onLogout }) => (
                     </>
                 ) : (
                     <>
-                        <Link to="/login" className="text-sm font-semibold text-gray-700 hover:text-[#00b14f] transition-colors">
-                            Đăng nhập
+                        <Link
+                            to="/login?redirect=/"
+                            className="p-2 text-gray-500 hover:text-[#00b14f] hover:bg-gray-50 rounded-lg transition-colors"
+                            title="Đăng nhập để xem thông báo"
+                        >
+                            <LineIcon name="bell" size={20} />
                         </Link>
-                        <Link to="/register" className="text-sm font-bold px-4 py-1.5 bg-[#00b14f] hover:bg-[#009943] text-white rounded-lg transition-colors">
-                            Đăng ký
+                        <Link
+                            to="/login?redirect=/orders"
+                            className="p-2 text-gray-500 hover:text-[#00b14f] hover:bg-gray-50 rounded-lg transition-colors"
+                            title="Đơn hàng"
+                        >
+                            <LineIcon name="clipboard" size={20} />
+                        </Link>
+                        <Link
+                            to="/login?redirect=/wishlist"
+                            className="p-2 text-gray-500 hover:text-[#00b14f] hover:bg-gray-50 rounded-lg transition-colors"
+                            title="Yêu thích"
+                        >
+                            <LineIcon name="heart" size={20} />
+                        </Link>
+                        <Link
+                            to="/login?redirect=/cart"
+                            className="p-2 text-gray-500 hover:text-[#00b14f] hover:bg-gray-50 rounded-lg transition-colors"
+                            title="Giỏ hàng"
+                        >
+                            <LineIcon name="cart" size={20} />
+                        </Link>
+                        <Link
+                            to="/login"
+                            className="text-sm font-bold px-4 py-1.5 bg-[#00b14f] hover:bg-[#009943] text-white rounded-lg transition-colors"
+                        >
+                            Đăng nhập
                         </Link>
                     </>
                 )}

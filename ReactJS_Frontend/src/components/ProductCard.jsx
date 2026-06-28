@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import LineIcon from "./LineIcon";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
 
 const ProductCard = ({ product }) => {
+    const navigate = useNavigate();
     const { addToCart } = useCart();
     const [adding, setAdding] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -26,6 +28,10 @@ const ProductCard = ({ product }) => {
     const handleAddToCart = async (e) => {
         e.stopPropagation();
         if (adding || outOfStock) return;
+        if (!localStorage.getItem("accessToken")) {
+            navigate(`/login?redirect=${encodeURIComponent(`/product/${product.id}`)}`);
+            return;
+        }
         setAdding(true);
         try {
             // Lấy màu đầu tiên làm mặc định nếu có
