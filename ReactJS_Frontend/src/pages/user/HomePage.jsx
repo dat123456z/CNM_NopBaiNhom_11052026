@@ -158,7 +158,7 @@ const HomePage = () => {
 
             <main className="max-w-7xl mx-auto px-6 mt-8">
                 {aiRecommended.length > 0 && (
-                    <HorizontalProductSlider title="✨ Dành riêng cho bạn (AI Đề xuất)" products={aiRecommended} navigate={navigate} />
+                    <HorizontalProductSlider title="Dành riêng cho bạn" products={aiRecommended} navigate={navigate} />
                 )}
                 <HorizontalProductSlider title="Bán chạy nhất" products={bestsellers} navigate={navigate} />
                 <HorizontalProductSlider title="Xem nhiều nhất" products={mostViewed} navigate={navigate} />
