@@ -132,39 +132,3 @@ Trong keywords, ưu tiên tên loại sản phẩm và từ đồng nghĩa; khô
 }
 
 module.exports = { chat, analyzeProductImage };
-async function getRecommendations(prompt) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error('Missing GEMINI_API_KEY in environment variables');
-
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-
-    const body = {
-        contents: [
-            {
-                role: 'user',
-                parts: [{ text: prompt }]
-            }
-        ],
-        generationConfig: {
-            responseMimeType: "application/json"
-        }
-    };
-
-    try {
-        const resp = await axios.post(url, body, { headers: { 'Content-Type': 'application/json' } });
-        const output = resp.data;
-
-        let text = '';
-        if (output.candidates && output.candidates.length > 0) {
-            const parts = output.candidates[0].content?.parts || [];
-            text = parts.map(p => p.text).join('');
-        }
-        
-        return JSON.parse(text); // Return parsed JSON array
-    } catch (e) {
-        console.error('Gemini Recommendation API Error:', JSON.stringify(e.response?.data || e.message, null, 2));
-        throw e;
-    }
-}
-
-module.exports = { chat, getRecommendations };
