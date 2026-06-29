@@ -101,25 +101,6 @@ const ProductPage = () => {
     }, [location.search]);
 
     useEffect(() => {
-        const token = localStorage.getItem("accessToken");
-        const userRaw = localStorage.getItem("user");
-
-        if (!token || !userRaw) {
-            navigate("/login", { replace: true });
-            return;
-        }
-
-        try {
-            const user = JSON.parse(userRaw);
-            if (user?.role !== "user" && user?.role !== "vendor") {
-                navigate("/login", { replace: true });
-            }
-        } catch {
-            navigate("/login", { replace: true });
-        }
-    }, [navigate]);
-
-    useEffect(() => {
         const controller = new AbortController();
         const load = async () => {
             try {
@@ -172,10 +153,8 @@ const ProductPage = () => {
         try {
             const formData = new FormData();
             formData.append("image", file);
-            const token = localStorage.getItem("accessToken");
             const res = await fetch(`${API_BASE}/api/ai/image-search`, {
                 method: "POST",
-                headers: { Authorization: `Bearer ${token}` },
                 body: formData
             });
             const data = await res.json();

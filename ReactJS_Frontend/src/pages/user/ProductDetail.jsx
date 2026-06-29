@@ -291,6 +291,10 @@ const ProductDetail = () => {
     const toggleFavorite = async () => {
         if (!product) return;
         const token = localStorage.getItem("accessToken");
+        if (!token) {
+            navigate(`/login?redirect=${encodeURIComponent(`/product/${product.id}`)}`);
+            return;
+        }
         if (token) {
             try {
                 const res = await fetch(`${API_BASE}/api/wishlists/${product.id}`, {
@@ -338,6 +342,10 @@ const ProductDetail = () => {
         if (!product || savingAlert) return;
 
         const token = localStorage.getItem("accessToken");
+        if (!token) {
+            navigate(`/login?redirect=${encodeURIComponent(`/product/${product.id}`)}`);
+            return;
+        }
         const nextSettings = {
             ...alertSettings,
             [key]: !alertSettings[key]
@@ -419,6 +427,10 @@ const ProductDetail = () => {
 
     const handleAddToCart = async () => {
         if (adding || Number(product.stock) <= 0) return;
+        if (!localStorage.getItem("accessToken")) {
+            navigate(`/login?redirect=${encodeURIComponent(`/product/${product.id}`)}`);
+            return;
+        }
         setAdding(true);
         try {
             await addToCart(product.id, quantity, selectedColor);
@@ -433,6 +445,10 @@ const ProductDetail = () => {
 
     const handleBuyNow = async () => {
         if (Number(product.stock) <= 0) return;
+        if (!localStorage.getItem("accessToken")) {
+            navigate(`/login?redirect=${encodeURIComponent(`/product/${product.id}`)}`);
+            return;
+        }
         try {
             await addToCart(product.id, quantity, selectedColor);
             navigate("/checkout");

@@ -123,6 +123,20 @@ const Login = () => {
                     <Message text={msg} type={msgType} />
                 </form>
 
+                <div className="my-6 flex items-center gap-3">
+                    <div className="h-px flex-1 bg-gray-200" />
+                    <span className="text-xs font-medium text-gray-400">Hoặc</span>
+                    <div className="h-px flex-1 bg-gray-200" />
+                </div>
+
+                <button
+                    type="button"
+                    onClick={() => navigate("/")}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:border-[#00b14f] hover:bg-green-50 hover:text-[#00b14f]"
+                >
+                    Tiếp tục với vai trò khách
+                </button>
+
                 <div className="mt-8 pt-6 border-t border-gray-100 text-center">
                     <p className="text-gray-600">
                         Chưa có tài khoản?{" "}

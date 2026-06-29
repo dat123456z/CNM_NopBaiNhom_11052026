@@ -1,6 +1,5 @@
 const express = require('express');
 const multer = require('multer');
-const { authMiddleware } = require('../middleware/auth');
 const router = express.Router();
 const aiController = require('../controllers/aiController');
 
@@ -20,7 +19,6 @@ const imageUpload = multer({
 router.post('/chat', aiController.chat);
 router.post(
     '/image-search',
-    authMiddleware,
     imageUpload.single('image'),
     aiController.imageSearch
 );
